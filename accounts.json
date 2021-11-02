@@ -1,0 +1,11 @@
+{
+  "Accounts": [
+    "email:password"
+  ],
+  "Bearers": null,
+  "Config": [
+    "250",
+    "http://exampleskinurl",
+    "http://examplewebhookurl"
+  ]
+}
