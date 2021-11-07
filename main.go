@@ -4,15 +4,9 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
-	"github.com/Liza-Developer/mcapi"
-)
-
-var (
-	name     string
-	delay    float64
-	dropTime int64
-	y        mcapi.Payload
+	"github.com/Liza-Developer/mcap"
 )
 
 func main() {
@@ -21,7 +15,7 @@ func main() {
 	delay, _ = strconv.ParseFloat(os.Args[2], 64)
 	spread, _ := strconv.Atoi(config[`Config`].([]interface{})[0].(string))
 
-	dropTime = mcapi.DropTime(name)
+	dropTime = mcap.DropTime(name)
 
 	fmt.Printf(`
     Name: %v
@@ -30,25 +24,44 @@ Droptime: %v
 
 `, name, delay, dropTime)
 
-	mcapi.PreSleep(dropTime)
+	mcap.PreSleep(dropTime)
 
-	y = bearers.CreatePayloads(name)
+	y := bearers.CreatePayloads(name)
 
-	mcapi.Sleep(dropTime, delay)
+	mcap.Sleep(dropTime, delay)
 
-	g, j, i := y.SocketSending(int64(spread))
-
-	for _, send := range g {
-		fmt.Printf("[%v] Sent @ %v\n", name, formatTime(send))
-	}
-
-	fmt.Println()
-
-	for num, recv := range j {
-		if i[num] == "200" {
-			fmt.Printf("[%v] Recv @ %v | Got %v Succesfully.\n", i[num], formatTime(recv), name)
-		} else {
-			fmt.Printf("[%v] Recv @ %v\n", i[num], formatTime(recv))
+	func() {
+		for _, accountType := range y.AccountType {
+			switch accountType {
+			case "Giftcard":
+				for i := 0; i < 6; i++ {
+					go func() {
+						sends, recvs, statuscodes = y.SocketSending(int64(spread))
+					}()
+				}
+			case "Microsoft":
+				for i := 0; i < 2; i++ {
+					go func() {
+						sends, recvs, statuscodes = y.SocketSending(int64(spread))
+					}()
+				}
+			}
 		}
-	}
+
+		time.Sleep(6 * time.Second)
+
+		for _, send := range sends {
+			fmt.Printf("[%v] Sent @ %v\n", name, formatTime(send))
+		}
+
+		fmt.Println()
+
+		for i, recv := range recvs {
+			if statuscodes[i] == "200" {
+				fmt.Printf("[%v] Recv @ %v | Got %v Succesfully.\n", statuscodes[i], formatTime(recv), name)
+			} else {
+				fmt.Printf("[%v] Recv @ %v\n", statuscodes[i], formatTime(recv))
+			}
+		}
+	}()
 }
