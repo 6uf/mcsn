@@ -2,7 +2,7 @@
   "Accounts": [
     "email:password"
   ],
-  "Bearers": null,
+  "Bearers": [],
   "Config": [
     "250",
     "http://exampleskinurl",
