@@ -1,5 +1,4 @@
 ### Hi there 👋, my names Liza.
-#### i am the owner of Dismal.
 This project was made for fun in the span of a few hours, it uses a library i made, the sniper itself is a wip and will be updated over time.
 
 Usages:
