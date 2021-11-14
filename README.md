@@ -7,7 +7,7 @@ Usages:
 - Can mix and match giftcard and microsoft accs to snipe with (preferablly 1 microsoft)
 - uses command line arguments to run, Example;
     - mcsn.exe snipe -u name -d 10 | "-u meow" Meow being the name you want so example "-u wow", "-d 10" 10 being your delay!
-    - mcsn.exe ping | This gives you a rouch estimate of your ping to the minecraft servers, use it as a estimated delay range.
+    - mcsn.exe ping | This gives you a rough estimate of your ping to the minecraft servers, use it as a estimated delay range.
     - mcsn.exe auto 3c | automatically snipes all upcoming 3 characters onto your account(s).
     - mcsn.exe auto 3l | automatically snipes all upcoming 3 letters onto your account(s).
     - mcsn.exe auto 3n | automatically snipes all upcoming 3 numbers onto your account(s).
