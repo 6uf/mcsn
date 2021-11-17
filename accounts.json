@@ -2,30 +2,18 @@
   "Accounts": [
     "email:password"
   ],
-  "Bearers": [
-  ],
+  "Bearers": [],
   "Config": [
-    "0",
-    "your minecraft skin link here plz ty",
-    "put your webhook here for accouncements.",
-    "put your discord token here, so the discord bot script can log into it, https://discord.com/developers/docs",
-    "your discord id goes here, its so if you run the discord bot you will be the only one allowed to run commands."
+    "X",
+    "Minecraft Skin Link [Optional]",
+    "Discord Webhook Link [Optional]",
+    "Discord Bot Token [Optional]",
+    "Discord ID [REQUIRED]"
   ],
   "Names": [
-    "testName"
+    "placeholder"
   ],
-  "Vps": null,
-  "WebhookBody":
-  {
-    "content": null,
-    "embeds": [
-      {
-        "description": "Succesfully sniped %v",
-        "color": null,
-        "footer": {
-          "text": "MCSN"
-        }
-      }
-    ]
-  }
+  "Vps": [
+    "placeholder"
+  ]
 }
