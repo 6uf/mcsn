@@ -9,20 +9,51 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/Liza-Developer/mcapi2"
 )
+
+type embeds struct {
+	Content interface{} `json:"content"`
+	Embeds  []embed `json:"embeds"`
+}
+
+type embed struct {
+	Description string      `json:"description"`
+	Color       interface{} `json:"color"`
+}
 
 type Name struct {
 	Names string `json:"name"`
 }
 
 func init() {
+
+	content += fmt.Sprintf(`
++    __  ______________ _   __
+-   /  |/  / ____/ ___// | / /
++  / /|_/ / /    \__ \/  |/ / 
+- / /  / / /___ ___/ / /|  /  
++/_/  /_/\____//____/_/ |_/
+
+`)
+
 	q, _ := ioutil.ReadFile("accounts.json")
 
 	config = mcapi2.GetConfig(q)
+
+	if config[`Config`].([]interface{})[4].(string) == "Discord ID [REQUIRED]" {
+		var ID string
+		fmt.Print("Enter your discord ID: \n>> ")
+		fmt.Scanln(&ID); fmt.Println()
+
+		config[`Config`].([]interface{})[4] = ID
+
+		writetoFile(config)
+
+		panic("Please restart the program")
+	}
 
 	flag.Parse()
 
@@ -32,18 +63,22 @@ func init() {
 	}
 }
 
-func auto(option string) {
-
-	tick := 0
+func auto(option string, delay float64) {
 	leng := 0
 
+	switch delay {case 0: useAuto = true}
+
 	if option == "list" {
+
 		var name []string
 		for _, names := range config["Names"].([]interface{}) {
 			name = append(name, names.(string))
 		}
 
 		for _, names := range name {
+
+			if useAuto {delay = AutoOffset(false)}
+
 			if bearers.Bearers == nil || len(bearers.Bearers) == 0 {
 				fmt.Println("Attempting to reauth accounts..")
 				authAccs()
@@ -51,17 +86,17 @@ func auto(option string) {
 
 			dropTime := mcapi2.DropTime(names)
 
-			fmt.Printf("   Name: %v\n   Delay: %v\nDroptime: %v\n\n", names, AutoOffset(false), dropTime)
+			fmt.Printf("    Name: %v\n   Delay: %v\nDroptime: %v\n\n", names, delay, dropTime)
 
 			mcapi2.PreSleep(dropTime)
 
 			payload := bearers.CreatePayloads(names)
 
-			mcapi2.Sleep(dropTime, AutoOffset(false))
+			mcapi2.Sleep(dropTime, delay)
 
 			fmt.Println()
 
-			for _, accType := range bearers.AccountType {
+			for f, accType := range bearers.AccountType {
 				switch accType {
 				case "Giftcard":
 					leng = 6
@@ -71,27 +106,52 @@ func auto(option string) {
 
 				for i := 0; i < leng; {
 					go func() {
-						send, recv, status := payload.SocketSending(10)
+						send, recv, status := payload.SocketSending(int64(f))
 						if status == "200" {
+							content += fmt.Sprintf("+ [%v] Succesfully sniped %v\n", status, names)
 							fmt.Printf("[%v] Succesfully sniped %v\n", status, names)
-							f, _ := json.Marshal(config[`WebhookBody`])
-							sendInfo.SendWebhook([]byte(strings.Replace(string(f), "{name}", names, 1)))
-							sendInfo.ChangeSkin(nil, bearers.Bearers[tick])
-							bearers.Bearers = remove(bearers.Bearers, bearers.Bearers[tick])
-							bearers.AccountType = remove(bearers.AccountType, bearers.AccountType[tick])
+							sendInfo.ChangeSkin(nil, bearers.Bearers[f])
+							bearers.Bearers = remove(bearers.Bearers, bearers.Bearers[f])
+							bearers.AccountType = remove(bearers.AccountType, bearers.AccountType[f])
+							payload.Payload = remove(payload.Payload, payload.Payload[f])
+
+							sendInfo.SendWebhook(jsonValue(embeds{Content: nil, Embeds: []embed{embed{Description: fmt.Sprintf("```diff\n%v\n```", content), Color: nil}}}))
+
+							content = fmt.Sprintf(`
++    __  ______________ _   __
+-   /  |/  / ____/ ___// | / /
++  / /|_/ / /    \__ \/  |/ / 
+- / /  / / /___ ___/ / /|  /  
++/_/  /_/\____//____/_/ |_/
+
+`)
+
 						} else {
+							content += fmt.Sprintf("- [%v] Sent @ %v | Recv @ %v\n", status, formatTime(send), formatTime(recv))
 							fmt.Printf("[%v] Sent @ %v | Recv @ %v\n", status, formatTime(send), formatTime(recv))
 						}
 					}()
 					i++
+					time.Sleep(80 * time.Microsecond)
 				}
-				tick++
 			}
+
+			content = fmt.Sprintf(`
++    __  ______________ _   __
+-   /  |/  / ____/ ___// | / /
++  / /|_/ / /    \__ \/  |/ / 
+- / /  / / /___ ___/ / /|  /  
++/_/  /_/\____//____/_/ |_/
+
+`)
 		}
 	} else {
+
 		names := threeLetters(option)
 
 		for _, name :=  range names {
+
+			if useAuto {delay = AutoOffset(false)}
 
 			if bearers.Bearers == nil || len(bearers.Bearers) == 0 {
 				fmt.Println("Attempting to reauth accounts..")
@@ -100,17 +160,17 @@ func auto(option string) {
 
 			dropTime := mcapi2.DropTime(name)
 
-			fmt.Printf("   Name: %v\n   Delay: %v\nDroptime: %v\n\n", name, AutoOffset(false), dropTime)
+			fmt.Printf("    Name: %v\n   Delay: %v\nDroptime: %v\n\n", name, delay, dropTime)
 
 			mcapi2.PreSleep(dropTime)
 
 			payload := bearers.CreatePayloads(name)
 
-			mcapi2.Sleep(dropTime, AutoOffset(false))
+			mcapi2.Sleep(dropTime, delay)
 
 			fmt.Println()
 
-			for _, accType := range bearers.AccountType {
+			for f, accType := range bearers.AccountType {
 				switch accType {
 				case "Giftcard":
 					leng = 6
@@ -120,27 +180,50 @@ func auto(option string) {
 
 				for i := 0; i < leng; {
 					go func() {
-						send, recv, status := payload.SocketSending(10)
+						send, recv, status := payload.SocketSending(int64(f))
 						if status == "200" {
+							content += fmt.Sprintf("+ [%v] Succesfully sniped %v\n", status, name)
 							fmt.Printf("[%v] Succesfully sniped %v\n", status, name)
-							f, _ := json.Marshal(config[`WebhookBody`])
-							sendInfo.SendWebhook([]byte(strings.Replace(string(f), "{name}", name, 1)))
-							sendInfo.ChangeSkin(nil, bearers.Bearers[tick])
-							bearers.Bearers = remove(bearers.Bearers, bearers.Bearers[tick])
-							bearers.AccountType = remove(bearers.AccountType, bearers.AccountType[tick])
+							sendInfo.ChangeSkin(nil, bearers.Bearers[f])
+							bearers.Bearers = remove(bearers.Bearers, bearers.Bearers[f])
+							bearers.AccountType = remove(bearers.AccountType, bearers.AccountType[f])
+							payload.Payload = remove(payload.Payload, payload.Payload[f])
+
+							sendInfo.SendWebhook(jsonValue(embeds{Content: nil, Embeds: []embed{embed{Description: fmt.Sprintf("```diff\n%v\n```", content), Color: nil}}}))
+
+							content = fmt.Sprintf(`
++    __  ______________ _   __
+-   /  |/  / ____/ ___// | / /
++  / /|_/ / /    \__ \/  |/ / 
+- / /  / / /___ ___/ / /|  /  
++/_/  /_/\____//____/_/ |_/
+
+`)
 						} else {
+							content += fmt.Sprintf("- [%v] Sent @ %v | Recv @ %v\n", status, formatTime(send), formatTime(recv))
 							fmt.Printf("[%v] Sent @ %v | Recv @ %v\n", status, formatTime(send), formatTime(recv))
 						}
 					}()
 					i++
+					time.Sleep(80 * time.Microsecond)
 				}
-				tick++
 			}
-			if len(names) < 1 {
-				names = threeLetters(option)
-			}
+
+			content = fmt.Sprintf(`
++    __  ______________ _   __
+-   /  |/  / ____/ ___// | / /
++  / /|_/ / /    \__ \/  |/ / 
+- / /  / / /___ ___/ / /|  /  
++/_/  /_/\____//____/_/ |_/
+
+`)
 		}
 	}
+}
+
+func jsonValue(f interface{}) []byte {
+	g, _ := json.Marshal(f)
+	return g
 }
 
 func remove(l []string, item string) []string {
@@ -153,17 +236,15 @@ func remove(l []string, item string) []string {
 }
 
 func singlesniper(name string, delay float64) {
-
-	spread, _ := strconv.Atoi(config[`Config`].([]interface{})[0].(string))
+	var leng int
 
 	dropTime = mcapi2.DropTime(name)
 
 	fmt.Printf(`    Name: %v
    Delay: %v
-  Spread: %v
 Droptime: %v
 
-`, name, delay, spread, formatTime(time.Unix(dropTime, 0)))
+`, name, delay, formatTime(time.Unix(dropTime, 0)))
 
 	mcapi2.PreSleep(dropTime)
 
@@ -173,9 +254,7 @@ Droptime: %v
 
 	fmt.Println()
 
-	func() {
-		var leng int
-		for _, accountType := range y.AccountType {
+		for length, accountType := range y.AccountType {
 			switch accountType {
 			case "Giftcard":
 				leng = 6
@@ -183,23 +262,26 @@ Droptime: %v
 				leng = 2
 			}
 
-			for i := 0; i < leng; i++ {
+			for i := 0; i < leng; {
 				go func() {
-					send, recv, status := y.SocketSending(int64(spread))
+					send, recv, status := y.SocketSending(int64(length))
 					if status == "200" {
+						content += fmt.Sprintf("+ [%v] Recv @ %v | Got %v Succesfully.\n", status, formatTime(recv), name)
 						fmt.Printf("[%v] Recv @ %v | Got %v Succesfully.\n", status, formatTime(recv), name)
-						f, _ := json.Marshal(config[`WebhookBody`])
-						sendInfo.SendWebhook([]byte(strings.Replace(string(f), "{name}", name, 1)))
-						sendInfo.ChangeSkin([]byte(""), bearers.Bearers[gotNum])
+						sendInfo.SendWebhook(jsonValue(embeds{Content: nil, Embeds: []embed{embed{Description: fmt.Sprintf("```diff\n%v\n```", content), Color: nil}}}))
+						sendInfo.ChangeSkin([]byte(""), bearers.Bearers[length])
 					} else {
+						content += fmt.Sprintf("- [%v] Sent @ %v | Recv @ %v\n", status, formatTime(send), formatTime(recv))
 						fmt.Printf("[%v] Sent @ %v | Recv @ %v\n", status, formatTime(send), formatTime(recv))
 					}
 				}()
+				i++
+				time.Sleep(80 * time.Microsecond)
 			}
 		}
 
-		time.Sleep(time.Second)
-	}()
+
+	time.Sleep(5* time.Second)
 }
 
 func formatTime(t time.Time) string {
