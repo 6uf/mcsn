@@ -62,7 +62,7 @@ var (
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
 					Name:        "queue",
-					Description: "`3nl`, `3c`, or `name-list` OR type a name and itll only queue that",
+					Description: "`3nl`, `3c`, `list`, `3l` OR type a name and it'll only queue that",
 					Required:    true,
 				},
 			},
@@ -149,11 +149,6 @@ var (
 		"add-names": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			go func() {
 				var id string
-				var namestoAdd []string
-				var accounttoUse []string
-				var configOption []string
-				var bearerstoUse []string
-				var vps []string
 
 				q, _ := ioutil.ReadFile("accounts.json")
 
@@ -186,49 +181,14 @@ var (
 				})
 
 				accounts := strings.Split((i.ApplicationCommandData().Options[0].StringValue()), ",")
-				func() {
 
-					if config[`Vps`] == nil || len(config[`Vps`].([]interface{})) == 0 {
-					} else {
-						for _, accs := range config[`Vps`].([]interface{}) {
-							vps = append(vps, accs.(string))
-						}
-					}
+				authAccs()
 
-					if config[`Names`] == nil || len(config[`Names`].([]interface{})) == 0 {
-						for _, names := range accounts {
-							namestoAdd = append(namestoAdd, names)
-						}
-					} else {
-						for _, accs := range config[`Names`].([]interface{}) {
-							namestoAdd = append(namestoAdd, accs.(string))
-						}
+				for _, acc := range accounts {
+					AccountsVer = append(AccountsVer, acc)
+				}
 
-						for _, names := range accounts {
-							namestoAdd = append(namestoAdd, names)
-						}
-					}
-
-					if config[`Accounts`] != nil {
-						for _, accs := range config[`Accounts`].([]interface{}) {
-							accounttoUse = append(accounttoUse, accs.(string))
-						}
-					}
-
-					if config[`Config`] != nil {
-						for _, accs := range config[`Config`].([]interface{}) {
-							configOption = append(configOption, accs.(string))
-						}
-					}
-
-					if config[`Bearers`] != nil {
-						for _, accs := range config[`Bearers`].([]interface{}) {
-							bearerstoUse = append(bearerstoUse, accs.(string))
-						}
-					}
-				}()
-
-				v, _ := json.MarshalIndent(jsonValues{Accounts: accounttoUse, Bearers: bearerstoUse, Config: configOption, Names: namestoAdd, Vps: vps}, "", "  ")
+				v, _ := json.MarshalIndent(jsonValues{Accounts: AccountsVer, Bearers: BearersVer, Config: ConfigsVer, Names: NamesVer, Vps: VpsesVer}, "", "  ")
 
 				err := ioutil.WriteFile("accounts.json", v, 0)
 				if err == nil {
@@ -260,11 +220,6 @@ var (
 		"delete-names": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			go func() {
 				var id string
-				var namestoAdd []string
-				var accounttoUse []string
-				var configOption []string
-				var bearerstoUse []string
-				var vps []string
 
 				q, _ := ioutil.ReadFile("accounts.json")
 
@@ -296,33 +251,9 @@ var (
 					},
 				})
 
-				func() {
-					if config[`Accounts`] != nil {
-						for _, accs := range config[`Accounts`].([]interface{}) {
-							accounttoUse = append(accounttoUse, accs.(string))
-						}
-					}
+				authAccs()
 
-					if config[`Config`] != nil {
-						for _, accs := range config[`Config`].([]interface{}) {
-							configOption = append(configOption, accs.(string))
-						}
-					}
-
-					if config[`Bearers`] != nil {
-						for _, accs := range config[`Bearers`].([]interface{}) {
-							bearerstoUse = append(bearerstoUse, accs.(string))
-						}
-					}
-
-					if config[`Vps`] != nil {
-						for _, accs := range config[`Vps`].([]interface{}) {
-							vps = append(vps, accs.(string))
-						}
-					}
-				}()
-
-				v, _ := json.MarshalIndent(jsonValues{Accounts: accounttoUse, Bearers: bearerstoUse, Config: configOption, Names: namestoAdd, Vps: vps}, "", "  ")
+				v, _ := json.MarshalIndent(jsonValues{Accounts: AccountsVer, Bearers: BearersVer, Config: ConfigsVer, Names: []string{"placeholder"}, Vps: VpsesVer}, "", "  ")
 
 				err := ioutil.WriteFile("accounts.json", v, 0)
 				if err == nil {
@@ -349,11 +280,6 @@ var (
 		"add-vps": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			go func() {
 				var id string
-				var namestoAdd []string
-				var accounttoUse []string
-				var configOption []string
-				var bearerstoUse []string
-				var vps []string
 
 				q, _ := ioutil.ReadFile("accounts.json")
 
@@ -385,29 +311,7 @@ var (
 					},
 				})
 
-				if config[`Accounts`] != nil {
-					for _, accs := range config[`Accounts`].([]interface{}) {
-						accounttoUse = append(accounttoUse, accs.(string))
-					}
-				}
-
-				if config[`Config`] != nil {
-					for _, accs := range config[`Config`].([]interface{}) {
-						configOption = append(configOption, accs.(string))
-					}
-				}
-
-				if config[`Bearers`] != nil {
-					for _, accs := range config[`Bearers`].([]interface{}) {
-						bearerstoUse = append(bearerstoUse, accs.(string))
-					}
-				}
-
-				if config[`Names`] != nil {
-					for _, accs := range config[`Names`].([]interface{}) {
-						namestoAdd = append(namestoAdd, accs.(string))
-					}
-				}
+				authAccs()
 
 				embed := &discordgo.MessageEmbed{
 					Author:      &discordgo.MessageEmbedAuthor{},
@@ -468,7 +372,7 @@ var (
 				}
 				defer sesh.Close()
 
-				file, err := os.Open("test.exe")
+				file, err := os.Open("sniper")
 				if err != nil {
 					embed := &discordgo.MessageEmbed{
 						Author:      &discordgo.MessageEmbedAuthor{},
@@ -506,18 +410,14 @@ var (
 					sendEmbed(embed, id)
 					return
 				} else {
-					if config[`Vps`] != nil {
-						for _, accs := range config[`Vps`].([]interface{}) {
-							vps = append(vps, accs.(string))
-						}
-
-						vps = append(vps, fmt.Sprintf("%v-%v-%v", i.ApplicationCommandData().Options[0].StringValue()+":22", i.ApplicationCommandData().Options[1].StringValue(), i.ApplicationCommandData().Options[2].StringValue()))
+					if VpsesVer != nil {
+						VpsesVer = append(VpsesVer, fmt.Sprintf("%v-%v-%v", i.ApplicationCommandData().Options[0].StringValue()+":22", i.ApplicationCommandData().Options[1].StringValue(), i.ApplicationCommandData().Options[2].StringValue()))
 					} else {
-						vps = append(vps, fmt.Sprintf("%v-%v-%v", i.ApplicationCommandData().Options[0].StringValue()+":22", i.ApplicationCommandData().Options[1].StringValue(), i.ApplicationCommandData().Options[2].StringValue()))
+						VpsesVer = append(VpsesVer, fmt.Sprintf("%v-%v-%v", i.ApplicationCommandData().Options[0].StringValue()+":22", i.ApplicationCommandData().Options[1].StringValue(), i.ApplicationCommandData().Options[2].StringValue()))
 					}
 				}
 
-				v, _ := json.MarshalIndent(jsonValues{Accounts: accounttoUse, Bearers: bearerstoUse, Config: configOption, Names: namestoAdd, Vps: vps}, "", "  ")
+				v, _ := json.MarshalIndent(jsonValues{Accounts: AccountsVer, Bearers: BearersVer, Config: ConfigsVer, Names: NamesVer, Vps: VpsesVer}, "", "  ")
 
 				err = ioutil.WriteFile("accounts.json", v, 0)
 				if err == nil {
@@ -556,11 +456,6 @@ var (
 		"add-accounts": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			go func() {
 				var id string
-				var namestoAdd []string
-				var accounttoUse []string
-				var configOption []string
-				var bearerstoUse []string
-				var vps []string
 
 				q, _ := ioutil.ReadFile("accounts.json")
 
@@ -592,59 +487,16 @@ var (
 					},
 				})
 
-				if config[`Vps`] != nil {
-					for _, accs := range config[`Vps`].([]interface{}) {
-						vps = append(vps, accs.(string))
-					}
-				}
-
-				if config[`Config`] != nil {
-					for _, accs := range config[`Config`].([]interface{}) {
-						configOption = append(configOption, accs.(string))
-					}
-				}
-
-				if config[`Bearers`] != nil {
-					for _, accs := range config[`Bearers`].([]interface{}) {
-						bearerstoUse = append(bearerstoUse, accs.(string))
-					}
-				}
-
-				if config[`Names`] != nil {
-					for _, accs := range config[`Names`].([]interface{}) {
-						namestoAdd = append(namestoAdd, accs.(string))
-					}
-				}
-
-				if config[`Accounts`] != nil {
-					for _, accs := range config[`Accounts`].([]interface{}) {
-						accounttoUse = append(accounttoUse, accs.(string))
-					}
-
-					accs := strings.Split(i.ApplicationCommandData().Options[0].StringValue(), ",")
-
-					for _, m := range accs {
-						accounttoUse = append(accounttoUse, m)
-					}
-
-				} else {
-					accs := strings.Split(i.ApplicationCommandData().Options[0].StringValue(), ",")
-					fmt.Println("test2")
-					for _, m := range accs {
-						accounttoUse = append(accounttoUse, m)
-					}
-				}
-
 				authAccs()
 
-				v, _ := json.MarshalIndent(jsonValues{Accounts: accounttoUse, Bearers: bearerstoUse, Config: configOption, Names: namestoAdd, Vps: vps}, "", "  ")
+				v, _ := json.MarshalIndent(jsonValues{Accounts: AccountsVer, Bearers: BearersVer, Config: ConfigsVer, Names: NamesVer, Vps: VpsesVer}, "", "  ")
 
 				err := ioutil.WriteFile("accounts.json", v, 0)
 				if err == nil {
 					embed := &discordgo.MessageEmbed{
 						Author:      &discordgo.MessageEmbedAuthor{},
 						Color:       000000, // Green
-						Description: fmt.Sprintf("```Succesfully added your names %v.```", i.ApplicationCommandData().Options[0].StringValue()),
+						Description: fmt.Sprintf("```Succesfully added your accounts %v.```", i.ApplicationCommandData().Options[0].StringValue()),
 						Timestamp:   time.Now().Format(time.RFC3339), // Discord wants ISO8601; RFC3339 is an extension of ISO8601 and should be completely compatible.
 						Title:       "Dismal Logs",
 					}
@@ -656,7 +508,7 @@ var (
 					embed := &discordgo.MessageEmbed{
 						Author:      &discordgo.MessageEmbedAuthor{},
 						Color:       000000, // Green
-						Description: fmt.Sprintf("```Unsuccesfully added your names.. %v```", err),
+						Description: fmt.Sprintf("```Unsuccesfully added your accounts.. %v```", err),
 						Timestamp:   time.Now().Format(time.RFC3339), // Discord wants ISO8601; RFC3339 is an extension of ISO8601 and should be completely compatible.
 						Title:       "Dismal Logs",
 					}
@@ -739,12 +591,14 @@ var (
 
 				config = mcapi2.GetConfig(q)
 
-				if i.ApplicationCommandData().Options[1].StringValue() == "3nl" {
-					choiceofSnipe = "3nl"
+				if i.ApplicationCommandData().Options[1].StringValue() == "3n" {
+					choiceofSnipe = "3n"
 				} else if i.ApplicationCommandData().Options[1].StringValue() == "3c" {
 					choiceofSnipe = "3c"
-				} else if i.ApplicationCommandData().Options[1].StringValue() == "name-list" {
-					choiceofSnipe = "name-list"
+				} else if i.ApplicationCommandData().Options[1].StringValue() == "list" {
+					choiceofSnipe = "list"
+				} else if i.ApplicationCommandData().Options[1].StringValue() == "3l" {
+					choiceofSnipe = "3l"
 				} else {
 					choiceofSnipe = "singlename"
 				}
@@ -802,50 +656,19 @@ var (
 					for i := 0; i < len(config[`Vps`].([]interface{})); i++ {
 						var uwu []string
 						Listofstring = append(Listofstring, uwu)
-
-					}
-
-					for i := 0; i < len(config[`Vps`].([]interface{})); i++ {
-						var uwu []string
 						ListofstringAccType = append(ListofstringAccType, uwu)
+
 					}
 
 					accNum := 0
 
-					if config[`Bearers`] == nil || len(config[`Bearers`].([]interface{})) == 0 {
-						var temp []string
-						for _, meow := range config[`Accounts`].([]interface{}) {
-							temp = append(temp, meow.(string))
-						}
-
-						bearers, _ := mcapi2.Auth(temp)
-
-						for _, nums := range bearers.Bearers {
-							Listofstring[accNum] = append(Listofstring[accNum], nums)
-							accNum++
-							if accNum == len(Listofstring) {
-								accNum = 0
-							}
-						}
-
-						for _, nums := range bearers.AccountType {
-							ListofstringAccType[accNum] = append(ListofstringAccType[accNum], nums)
-							accNum++
-							if accNum == len(ListofstringAccType) {
-								accNum = 0
-							}
-						}
-
-						go addToFile(bearers)
-					} else {
-						for _, nums := range config[`Bearers`].([]interface{}) {
-							bearer := strings.Split(nums.(string), "`")
-							Listofstring[accNum] = append(Listofstring[accNum], bearer[0])
-							ListofstringAccType[accNum] = append(ListofstringAccType[accNum], bearer[2])
-							accNum++
-							if accNum == len(Listofstring) {
-								accNum = 0
-							}
+					for _, nums := range config[`Bearers`].([]interface{}) {
+						bearer := strings.Split(nums.(string), "`")
+						Listofstring[accNum] = append(Listofstring[accNum], bearer[0])
+						ListofstringAccType[accNum] = append(ListofstringAccType[accNum], bearer[2])
+						accNum++
+						if accNum == len(Listofstring) {
+							accNum = 0
 						}
 					}
 
@@ -926,13 +749,39 @@ var (
 
 						meow := rand2.Intn(3)
 
-						fmt.Println(i.ApplicationCommandData().Options[0].IntValue()+int64(meow), List, choiceofSnipe, i.ApplicationCommandData().Options[1].StringValue(), id, Lists, config[`Config`].([]interface{})[1].(string), config[`Config`].([]interface{})[2].(string), config[`Config`].([]interface{})[3].(string))
+						sesh, err := sftp.NewClient(conn)
+						file, err := os.Open("accounts.json")
+						dstFile, err := sesh.Create("/root/accounts.json")
+						if err != nil {
+							embed := &discordgo.MessageEmbed{
+								Author:      &discordgo.MessageEmbedAuthor{},
+								Color:       000000, // Green
+								Description: fmt.Sprintf("```Failed to find Directory: %v```", err),
+								Timestamp:   time.Now().Format(time.RFC3339), // Discord wants ISO8601; RFC3339 is an extension of ISO8601 and should be completely compatible.
+								Title:       "Dismal Errors",
+							}
+							sendEmbed(embed, id)
+							return
+						}
+						defer dstFile.Close()
+
+						if _, err := dstFile.ReadFrom(file); err != nil {
+							embed := &discordgo.MessageEmbed{
+								Author:      &discordgo.MessageEmbedAuthor{},
+								Color:       000000, // Green
+								Description: fmt.Sprintf("```Failed to find Directory: %v```", err),
+								Timestamp:   time.Now().Format(time.RFC3339), // Discord wants ISO8601; RFC3339 is an extension of ISO8601 and should be completely compatible.
+								Title:       "Dismal Errors",
+							}
+							sendEmbed(embed, id)
+							return
+						}
 
 						go func() {
 							if choiceofSnipe == "singlename" {
-								err = session.Run(fmt.Sprintf("nohup ./snipee %v %v %v %v %v %v %v %v %v &", i.ApplicationCommandData().Options[0].IntValue()+int64(meow), List, choiceofSnipe, i.ApplicationCommandData().Options[1].StringValue(), id, Lists, config[`Config`].([]interface{})[1].(string), config[`Config`].([]interface{})[2].(string), config[`Config`].([]interface{})[3].(string)))
+								err = session.Run(fmt.Sprintf("nohup ./snipe %v %v %v %v %v &", i.ApplicationCommandData().Options[0].IntValue()+int64(meow), i.ApplicationCommandData().Options[1].StringValue(), List, Lists, choiceofSnipe))
 							} else {
-								err = session.Run(fmt.Sprintf("nohup ./snipee %v %v %v %v %v %v %v %v &", i.ApplicationCommandData().Options[0].IntValue()+int64(meow), List, choiceofSnipe, id, Lists, config[`Config`].([]interface{})[1].(string), config[`Config`].([]interface{})[2].(string), config[`Config`].([]interface{})[3].(string)))
+								err = session.Run(fmt.Sprintf("nohup ./snipe %v %v %v %v &", i.ApplicationCommandData().Options[0].IntValue()+int64(meow), List, Lists, choiceofSnipe))
 							}
 							if err == nil {
 								session.Close()
@@ -1189,7 +1038,7 @@ var (
 						return
 					}
 
-					dstFile, err := session.Create("/root/snipee")
+					dstFile, err := session.Create("/root/snipe")
 					if err != nil {
 						embed := &discordgo.MessageEmbed{
 							Author:      &discordgo.MessageEmbedAuthor{},
@@ -1270,42 +1119,3 @@ func runBot() {
 	log.Println("Gracefully shutdowning")
 }
 
-func addToFile(bearers mcapi2.MCbearers) {
-	var namestoAdd []string
-	var accounttoUse []string
-	var configOption []string
-	var vps []string
-	var newBearers []string
-
-	if config[`Vps`] != nil {
-		for _, accs := range config[`Vps`].([]interface{}) {
-			vps = append(vps, accs.(string))
-		}
-	}
-
-	if config[`Config`] != nil {
-		for _, accs := range config[`Config`].([]interface{}) {
-			configOption = append(configOption, accs.(string))
-		}
-	}
-
-	if config[`Names`] != nil {
-		for _, accs := range config[`Names`].([]interface{}) {
-			namestoAdd = append(namestoAdd, accs.(string))
-		}
-	}
-
-	for e, bearerz := range bearers.Bearers {
-		newBearers = append(newBearers, bearerz+"`"+time.Now().Add(time.Duration(time.Second*86400)).Format(time.RFC850)+"`"+bearers.AccountType[e])
-	}
-
-	if config[`Accounts`] != nil {
-		for _, accs := range config[`Accounts`].([]interface{}) {
-			accounttoUse = append(accounttoUse, accs.(string))
-		}
-	}
-
-	v, _ := json.MarshalIndent(jsonValues{Accounts: accounttoUse, Bearers: newBearers, Config: configOption, Names: namestoAdd, Vps: vps}, "", "  ")
-
-	ioutil.WriteFile("accounts.json", v, 0)
-}
