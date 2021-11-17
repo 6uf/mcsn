@@ -839,7 +839,7 @@ var (
 					return
 				}
 
-				if config[`Vpses`] == nil || len(config[`Vps`].([]interface{})) == 0 {
+				if config[`Vps`] == nil || len(config[`Vps`].([]interface{})) == 0 {
 					s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 						Type: discordgo.InteractionResponseChannelMessageWithSource,
 						Data: &discordgo.InteractionResponseData{
