@@ -3,7 +3,7 @@ module main
 go 1.17
 
 require (
-	github.com/Liza-Developer/mcapi2 v0.0.0-20211113210917-400b521a182c
+	github.com/Liza-Developer/mcapi2 v0.0.0-20211114212922-b6ca4c93d460
 	github.com/bwmarrin/discordgo v0.23.3-0.20210821175000-0fad116c6c2a
 	github.com/pkg/sftp v1.13.4
 	github.com/urfave/cli/v2 v2.3.0
