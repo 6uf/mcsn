@@ -1,8 +1,6 @@
 package main
 
 import (
-	"time"
-
 	"github.com/Liza-Developer/mcapi2"
 )
 
@@ -18,18 +16,22 @@ var (
 	bearers       mcapi2.MCbearers
 	config        map[string]interface{}
 	err           error
-	Accounts      []string
 	removeBearers []string
 	accountType   []string
 	dropTime      int64
-	sends         []time.Time
-	recvs         []time.Time
-	statuscodes   []string
 	sendInfo      mcapi2.ServerInfo
-	gotNum        int
-	m             []string
 	configOptions []string
 	invalidAccs   []string
-	names         []string
-	vpses         []string
+	content string
+	useAuto bool
+	authbytes []byte
+	auth map[string]interface{}
+	securityResult bool
+
+	AccountsVer []string
+	BearersVer []string
+	ConfigsVer []string
+	NamesVer []string
+	VpsesVer []string
+	Confirmed []string
 )
