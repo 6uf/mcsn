@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -88,8 +90,15 @@ func main() {
 						Usage: "Snipe names are are a combination of Numeric and Alphabetic.",
 						Action: func(c *cli.Context) error {
 							authAccs()
-							auto("3c")
+							auto("3c", c.Float64("d"))
 							return nil
+						},
+						Flags: []cli.Flag{
+							&cli.Float64Flag{
+								Name:  "d",
+								Usage: "Snipes a few ms earlier so you can counter ping lag.",
+								Value: 0,
+							},
 						},
 					},
 					{
@@ -97,8 +106,15 @@ func main() {
 						Usage: "Snipe only Alphabetic names.",
 						Action: func(c *cli.Context) error {
 							authAccs()
-							auto("3l")
+							auto("3l", c.Float64("d"))
 							return nil
+						},
+						Flags: []cli.Flag{
+							&cli.Float64Flag{
+								Name:  "d",
+								Usage: "Snipes a few ms earlier so you can counter ping lag.",
+								Value: 0,
+							},
 						},
 					},
 					{
@@ -106,8 +122,15 @@ func main() {
 						Usage: "Snipe only Numeric names.",
 						Action: func(c *cli.Context) error {
 							authAccs()
-							auto("3n")
+							auto("3n", c.Float64("d"))
 							return nil
+						},
+						Flags: []cli.Flag{
+							&cli.Float64Flag{
+								Name:  "d",
+								Usage: "Snipes a few ms earlier so you can counter ping lag.",
+								Value: 0,
+							},
 						},
 					},
 					{
@@ -115,7 +138,7 @@ func main() {
 						Usage: "Snipe names you have added to your `Names` in the config.",
 						Action: func(c *cli.Context) error {
 							authAccs()
-							auto("list")
+							auto("list", 0)
 							return nil
 						},
 					},
@@ -127,7 +150,7 @@ func main() {
 				Aliases: []string{"p"},
 				Usage:   "ping helps give you a rough estimate of your connection to the minecraft API.",
 				Action: func(c *cli.Context) error {
-					fmt.Printf("Estimated Delay: %v", math.Round(AutoOffset(true)))
+					fmt.Printf("Estimated Delay: %v\n", math.Round(AutoOffset(true)))
 					return nil
 				},
 			},
@@ -139,231 +162,162 @@ func main() {
 }
 
 func authAccs() {
-
 	q, _ := ioutil.ReadFile("accounts.json")
 
 	config = mcapi2.GetConfig(q)
 
-	if config[`Accounts`] == nil {
+	grabDetails()
+
+	if BearersVer == nil {
+		os.Exit(0)
+	} else {
+		checkifValid()
+
+		writetoFile(jsonValues{Accounts: AccountsVer, Bearers: Confirmed, Config: ConfigsVer, Names: NamesVer, Vps: VpsesVer})
+
+		for _, acc := range Confirmed {
+			bearers.Bearers = append(bearers.Bearers, strings.Split(acc, "`")[0])
+			bearers.AccountType = append(bearers.AccountType, strings.Split(acc, "`")[2])
+		}
+	}
+}
+
+func grabArray(array []interface{}) ([]string, error) {
+	var list []string; for _, names := range array {list = append(list, names.(string))}; if list == nil || len(list) == 0 {return nil, errors.New("empty")}; return list, nil
+}
+
+func writetoFile(str interface{}) {
+	v, _ := json.MarshalIndent(str, "", "  ")
+
+	ioutil.WriteFile("accounts.json", v, 0)
+}
+
+func grabDetails() {
+	AccountsVer, err = grabArray(config[`Accounts`].([]interface{}))
+	if err != nil {
 		log.Println("unable to continue, you have no accounts added.")
 		os.Exit(0)
 	}
 
-	if config[`Bearers`] == nil || len(config[`Bearers`].([]interface{})) == 0 {
-		func() {
-			var configOptions []string
-			for _, accs := range config[`Accounts`].([]interface{}) {
-				Accounts = append(Accounts, accs.(string))
+	BearersVer, err = grabArray(config[`Bearers`].([]interface{}))
+	if err != nil {
+		bearers, err = mcapi2.Auth(AccountsVer)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		if len(bearers.Bearers) == 0 {
+			log.Println("Unable to authenticate your account(s), please Reverify your login details and make sure the accounts are Microsoft OR Giftcard accounts.")
+		} else {
+			for i := range bearers.Bearers {
+				BearersVer = append(BearersVer, bearers.Bearers[i]+"`"+time.Now().Add(time.Duration(time.Second*86400)).Format(time.RFC850)+"`"+bearers.AccountType[i])
 			}
-
-			for _, accs := range config[`Config`].([]interface{}) {
-				configOptions = append(configOptions, accs.(string))
-			}
-
-			if config[`Names`] != nil {
-				for _, accs := range config[`Names`].([]interface{}) {
-					names = append(names, accs.(string))
-				}
-			}
-
-			if config[`Vps`] != nil {
-				for _, accs := range config[`Vps`].([]interface{}) {
-					vpses = append(vpses, accs.(string))
-				}
-			}
-
-			bearers, err = mcapi2.Auth(Accounts)
-			if err != nil {
-				fmt.Println(err)
-			}
-
-			if bearers.Bearers == nil {
-				fmt.Println("Was unable to auth accs")
-				os.Exit(0)
-			} else {
-				var newBearers []string
-
-				for e, bearerz := range bearers.Bearers {
-					newBearers = append(newBearers, bearerz+"`"+time.Now().Add(time.Duration(time.Second*86400)).Format(time.RFC850)+"`"+bearers.AccountType[e])
-				}
-
-				v, _ := json.MarshalIndent(jsonValues{Accounts: Accounts, Bearers: newBearers, Config: configOptions, Names: names, Vps: vpses}, "", "  ")
-
-				ioutil.WriteFile("accounts.json", v, 0)
-
-				if len(newBearers) == 0 {
-					fmt.Println("No valid accounts.")
-					os.Exit(0)
-				}
-			}
-		}()
+		}
 	} else {
-
-		if len(config[`Bearers`].([]interface{})) > len(config[`Accounts`].([]interface{})) {
+		if len(BearersVer) < len(AccountsVer) {
 			func() {
-				var configOptions []string
-				for _, accs := range config[`Accounts`].([]interface{}) {
-					Accounts = append(Accounts, accs.(string))
-				}
-
-				for _, accs := range config[`Config`].([]interface{}) {
-					configOptions = append(configOptions, accs.(string))
-				}
-
-				if config[`Names`] != nil {
-					for _, accs := range config[`Names`].([]interface{}) {
-						names = append(names, accs.(string))
-					}
-				}
-
-				if config[`Vps`] != nil {
-					for _, accs := range config[`Vps`].([]interface{}) {
-						vpses = append(vpses, accs.(string))
-					}
-				}
-
-				bearers, err = mcapi2.Auth(Accounts)
+				BearersVer = []string{}
+				bearers, err = mcapi2.Auth(AccountsVer)
 				if err != nil {
 					fmt.Println(err)
 				}
 
-				if bearers.Bearers == nil {
-					fmt.Println("Was unable to auth accs")
-					os.Exit(0)
+				if len(bearers.Bearers) == 0 {
 				} else {
-					var newBearers []string
-
-					for e, bearerz := range bearers.Bearers {
-						newBearers = append(newBearers, bearerz+"`"+time.Now().Add(time.Duration(time.Second*86400)).Format(time.RFC850)+"`"+bearers.AccountType[e])
-					}
-
-					v, _ := json.MarshalIndent(jsonValues{Accounts: Accounts, Bearers: newBearers, Config: configOptions, Names: names, Vps: vpses}, "", "  ")
-
-					ioutil.WriteFile("accounts.json", v, 0)
-
-					if len(newBearers) == 0 {
-						fmt.Println("No valid accounts.")
-						os.Exit(0)
+					for i := range bearers.Bearers {
+						BearersVer = append(BearersVer, bearers.Bearers[i]+"`"+time.Now().Add(time.Duration(time.Second*86400)).Format(time.RFC850)+"`"+bearers.AccountType[i] + "`" + strings.Split(AccountsVer[i], ":")[0])
 					}
 				}
 			}()
+		} else if len(AccountsVer) < len(BearersVer) {
+			var confirmedBearers []string
+			for _, acc := range AccountsVer {
+				for _, num := range BearersVer {
+					if acc == strings.Split(num, "`")[3] {
+						confirmedBearers = append(confirmedBearers, strings.Split(num, "`")[0]+"`"+time.Now().Add(time.Duration(time.Second*86400)).Format(time.RFC850)+"`"+strings.Split(num, "`")[2] + "`" + acc)
+					}
+				}
+			}
+
+			BearersVer = confirmedBearers
+		}
+	}
+
+	ConfigsVer, err = grabArray(config[`Config`].([]interface{}))
+	if err != nil {
+		log.Println("could not find anything from Config in your accounts.json THIS is a critical error, please head to the github and reinstall the accounts.json file")
+		os.Exit(0)
+	}
+
+	NamesVer, err = grabArray(config[`Names`].([]interface{}))
+	if err != nil {
+		log.Println("could not find anything from Names in your accounts.json THIS is not a required value.")
+	}
+
+	VpsesVer, err = grabArray(config[`Vps`].([]interface{}))
+	if err != nil {
+		log.Println("could not find anything from Vps in your accounts.json THIS is not a required value.")
+		VpsesVer = append(VpsesVer, "placeholder")
+	}
+}
+
+func checkifValid() {
+	var reAuth []string
+	for number, accs := range BearersVer {
+		m := strings.Split(accs, "`")
+		f, _ := http.NewRequest("GET", "https://api.minecraftservices.com/minecraft/profile/name/boom/available", nil)
+		f.Header.Set("Authorization", "Bearer "+m[0])
+		j, _ := http.DefaultClient.Do(f)
+
+		if j.StatusCode == 401 {
+			fmt.Printf("Account %v turned up invalid. Attempted to Reauth\n", AccountsVer[number])
+			bearers, err = mcapi2.Auth([]string{AccountsVer[number]})
+			if err == nil {
+				Confirmed = append(Confirmed, bearers.Bearers[0] + "`" + time.Now().Add(time.Duration(time.Second*86400)).Format(time.RFC850)+"`" + bearers.AccountType[0] + "`" + strings.Split(AccountsVer[number], ":")[0])
+			}
+
 		} else {
-			for number, accs := range config[`Bearers`].([]interface{}) {
+			wdad, _ := time.Parse(time.RFC850, m[1])
 
-				m := strings.Split(accs.(string), "`")
-
-				f, _ := http.NewRequest("GET", "https://api.minecraftservices.com/minecraft/profile/name/boom/available", nil)
-				f.Header.Set("Authorization", "Bearer "+m[0])
-				j, _ := http.DefaultClient.Do(f)
-
-				if j.StatusCode == 401 {
-					fmt.Printf("Account %v turned up invalid. Attempted to Reauth\n", config[`Accounts`].([]interface{})[number])
-
-					invalidAccs = append(invalidAccs, config[`Accounts`].([]interface{})[number].(string))
-
-				} else {
-					wdad, _ := time.Parse(time.RFC850, m[1])
-
-					if time.Now().After(wdad) {
-					} else {
-						removeBearers = append(removeBearers, m[0]+"`"+m[1]+"`"+m[2])
-						Accounts = append(Accounts, m[0])
-						accountType = append(accountType, m[2])
-					}
-				}
-			}
-
-			if len(invalidAccs) != 0 {
-				g, _ := mcapi2.Auth(invalidAccs)
-				for i, _ := range invalidAccs {
-					Accounts = append(Accounts, g.Bearers...)
-					removeBearers = append(removeBearers, g.Bearers[i]+"`"+time.Now().Add(time.Duration(time.Second*86400)).Format(time.RFC850)+"`"+g.AccountType[i])
-					accountType = append(accountType, g.AccountType[i])
-				}
-			}
-
-			var accz []string
-
-			for _, accs := range config[`Accounts`].([]interface{}) {
-				accz = append(accz, accs.(string))
-			}
-			for _, accs := range config[`Config`].([]interface{}) {
-				configOptions = append(configOptions, accs.(string))
-			}
-
-			if config[`Names`] != nil {
-				for _, accs := range config[`Names`].([]interface{}) {
-					names = append(names, accs.(string))
-				}
-			}
-
-			if config[`Vps`] != nil {
-				for _, accs := range config[`Vps`].([]interface{}) {
-					vpses = append(vpses, accs.(string))
-				}
-			}
-
-			if removeBearers == nil {
-				removeBearers = []string{}
+			if time.Now().After(wdad) {
+				reAuth = append(reAuth, AccountsVer[number])
 			} else {
-				bearers.Bearers = Accounts
-				bearers.AccountType = accountType
-			}
-
-			v, _ := json.MarshalIndent(jsonValues{Accounts: accz, Bearers: removeBearers, Config: configOptions, Names: names, Vps: vpses}, "", "  ")
-
-			ioutil.WriteFile("accounts.json", v, 0)
-
-			if len(bearers.Bearers) == 0 {
-				fmt.Println("No valid accounts.. Attempting to reauth..")
-				func() {
-					var configOptions []string
-					Accounts = []string{}
-					for _, accs := range config[`Accounts`].([]interface{}) {
-						Accounts = append(Accounts, accs.(string))
-					}
-
-					for _, accs := range config[`Config`].([]interface{}) {
-						configOptions = append(configOptions, accs.(string))
-					}
-
-					if config[`Names`] != nil {
-						for _, accs := range config[`Names`].([]interface{}) {
-							names = append(names, accs.(string))
-						}
-					}
-
-					if config[`Vps`] != nil {
-						for _, accs := range config[`Vps`].([]interface{}) {
-							vpses = append(vpses, accs.(string))
-						}
-					}
-
-					bearers, err = mcapi2.Auth(Accounts)
-					if err != nil {
-						fmt.Println(err)
-					}
-
-					if bearers.Bearers == nil {
-						bearers.Bearers = []string{}
-					}
-
-					var newBearers []string
-
-					for e, bearerz := range bearers.Bearers {
-						newBearers = append(newBearers, bearerz+"`"+time.Now().Add(time.Duration(time.Second*86400)).Format(time.RFC850)+"`"+bearers.AccountType[e])
-					}
-
-					v, _ := json.MarshalIndent(jsonValues{Accounts: Accounts, Bearers: newBearers, Config: configOptions, Names: names, Vps: vpses}, "", "  ")
-
-					ioutil.WriteFile("accounts.json", v, 0)
-
-					if len(newBearers) == 0 {
-						fmt.Println("No valid accounts.")
-						os.Exit(0)
-					}
-				}()
+				Confirmed = append(Confirmed, m[0] + "`" + m[1] + "`" + m[2] + "`" + strings.Split(AccountsVer[number], "`")[0])
 			}
 		}
 	}
+
+	if len(reAuth) != 0 {
+		log.Println("Reauthing some accounts..")
+		bearers, _ = mcapi2.Auth(reAuth)
+
+		for i, acc := range bearers.Bearers {
+			if checkChange(acc) == true {
+				Confirmed = append(Confirmed, acc + "`" + time.Now().Add(time.Duration(time.Second*86400)).Format(time.RFC850) + "`" + bearers.AccountType[i]+ "`" + strings.Split(AccountsVer[i], ":")[0])
+			} else {
+				log.Printf("Account #%v cannot be name changed.\n", i)
+			}
+		}
+	}
+}
+
+func checkChange(bearer string) bool {
+	conn, _ := tls.Dial("tcp", "api.minecraftservices.com"+":443", nil)
+	defer conn.Close()
+
+	fmt.Fprintln(conn, "GET /minecraft/profile/namechange HTTP/1.1\r\nHost: api.minecraftservices.com\r\nUser-Agent: Dismal/1.0\r\nAuthorization: Bearer "+bearer+"\r\n\r\n")
+
+	conn.Read(authbytes)
+
+	authbytes = []byte(strings.Split(strings.Split(string(authbytes), "\x00")[0], "\r\n\r\n")[1])
+	json.Unmarshal(authbytes, &auth)
+
+	switch auth["nameChangeAllowed"].(bool) {
+	case true:
+		securityResult = true
+	case false:
+		securityResult = false
+	}
+
+	return securityResult
 }
