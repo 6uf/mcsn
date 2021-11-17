@@ -779,9 +779,9 @@ var (
 
 						go func() {
 							if choiceofSnipe == "singlename" {
-								err = session.Run(fmt.Sprintf("nohup ./snipe %v %v %v %v %v &", i.ApplicationCommandData().Options[0].IntValue()+int64(meow), i.ApplicationCommandData().Options[1].StringValue(), List, Lists, choiceofSnipe))
+								err = session.Run(fmt.Sprintf("tmux\n./snipe %v %v %v %v %v &", i.ApplicationCommandData().Options[0].IntValue()+int64(meow), i.ApplicationCommandData().Options[1].StringValue(), List, Lists, choiceofSnipe))
 							} else {
-								err = session.Run(fmt.Sprintf("nohup ./snipe %v %v %v %v &", i.ApplicationCommandData().Options[0].IntValue()+int64(meow), List, Lists, choiceofSnipe))
+								err = session.Run(fmt.Sprintf("tmux\n./snipe %v %v %v %v &", i.ApplicationCommandData().Options[0].IntValue()+int64(meow), List, Lists, choiceofSnipe))
 							}
 							if err == nil {
 								session.Close()
@@ -887,6 +887,8 @@ var (
 
 					session.Stdout = &stdoutBuf
 					session.Run(`ps ax`)
+
+					os.Create("logs.txt")
 
 					ioutil.WriteFile("logs.txt", stdoutBuf.Bytes(), 0644)
 
