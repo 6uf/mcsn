@@ -1,6 +1,6 @@
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/Liza-Developer/mcapi2 v0.0.0-20211113210917-400b521a182c h1:deGpbrTV8asbheoeaIjFkc8gRvlAiAsPoATZypfVvNE=
-github.com/Liza-Developer/mcapi2 v0.0.0-20211113210917-400b521a182c/go.mod h1:m30CRVZ7q6ILl39XdIg5Mc1ntsmkjvDyelWSJO2eqwY=
+github.com/Liza-Developer/mcapi2 v0.0.0-20211114212922-b6ca4c93d460 h1:AMEKvSRzDGPesBBmZAryKW5vAz0gC/6lPbQHFJsHK5c=
+github.com/Liza-Developer/mcapi2 v0.0.0-20211114212922-b6ca4c93d460/go.mod h1:m30CRVZ7q6ILl39XdIg5Mc1ntsmkjvDyelWSJO2eqwY=
 github.com/bwmarrin/discordgo v0.23.3-0.20210821175000-0fad116c6c2a h1:L7EuIzka83l5Z7LQqpSBfvmTNvUdr9tGhBa0mDBgSsc=
 github.com/bwmarrin/discordgo v0.23.3-0.20210821175000-0fad116c6c2a/go.mod h1:NJZpH+1AfhIcyQsPeuBKsUtYrRnjkyu0kIVMCHkZtRY=
 github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d h1:U+s90UTSYgptZMwQh2aRr3LuazLJIa+Pg3Kc1ylSYVY=
