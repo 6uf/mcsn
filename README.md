@@ -1,5 +1,5 @@
 ### Hi there 👋, my names Liza.
-This project was made for fun in the span of a few hours, it uses a library i made, the sniper itself is a wip and will be updated over time.
+This project was made for fun in the span of a few hours, it uses a library i made, the sniper itself is a wip and will be updated over time. [Discord](https://discord.gg/usZQYuXdeU)
 
 Usages:
 - Only supports Giftcard and Microsoft accounts
