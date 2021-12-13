@@ -1,19 +1,28 @@
 {
+  "Tutorial": [
+    "in Config where it says 40, that is the spread i normally sleep for microseconds so 40 would be 0.04 milliseconds, to get 1 ms put 1000.",
+    "For accounts the format is 'email:password' but if your using more then one account do: 'email:pass', 'email:pass' the , seperates the items",
+    "for the skin link, webhook link those are optional but the discord id is required just in case you wish to use the discord bot.",
+    "Before adding a vps to the config, remove the placeholder value and replace it with ur vps info in the format IP:22-username-password",
+    "The ID value is the ID to the role you want to ping when you snipe a name.",
+    "in names remove the placeholder value and put in a name u want to snipe."
+  ],
   "Accounts": [
     "email:password"
   ],
   "Bearers": [],
   "Config": [
-    "X",
+    "40",
     "Minecraft Skin Link [Optional]",
     "Discord Webhook Link [Optional]",
     "Discord Bot Token [Optional]",
     "Discord ID [REQUIRED]"
   ],
   "Names": [
-    "placeholder"
+    ""
   ],
   "Vps": [
-    "placeholder"
-  ]
+    ""
+  ],
+  "RoleID": ""
 }
