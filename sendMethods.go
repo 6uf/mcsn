@@ -87,27 +87,30 @@ func sendAuto(option string, delay float64) {
 				} else {
 					content += fmt.Sprintf("+ [%v] Succesfully sniped %v | %v\n", statuscodes[f], name, email[i])
 					fmt.Printf("[%v] Recv @ %v | %v\n", statuscodes[f], formatTime(recvs[f]), email[i])
-					req, err := sendInfo.ChangeSkin(jsonValue(skinUrls{Url: sendInfo.SkinUrl, Varient: "slim"}), check(statuscodes[f], name))
-					if err != nil {
-						log.Println(err)
-					} else {
-						if req.StatusCode == 200 {
-							fmt.Println("[200] Changed Skin")
-						} else if req.StatusCode == 400 {
-							fmt.Println("[400] Used wrong bearer during name change. (acc is giftcard :skull:)")
+					go func() {
+						time.Sleep(time.Second)
+						req, err := sendInfo.ChangeSkin(jsonValue(skinUrls{Url: sendInfo.SkinUrl, Varient: "slim"}), check(statuscodes[f], name))
+						if err != nil {
+							log.Println(err)
 						} else {
-							fmt.Println("[401] Unauthorized")
+							if req.StatusCode == 200 {
+								fmt.Println("[200] Changed Skin")
+							} else if req.StatusCode == 400 {
+								fmt.Println("[400] Used wrong bearer during Skin Change. (acc is giftcard :skull:)")
+							} else {
+								fmt.Println("[401] Unauthorized")
+							}
 						}
-					}
 
-					rep, err := sendInfo.SendWebhook(jsonValue(embeds{Content: fmt.Sprintf("<@&%v>", config["RoleID"]), Embeds: []embed{{Description: fmt.Sprintf("Succesfully sniped %v :skull:", name), Color: 770000, Footer: footer{Text: "MCSN"}, Time: time.Now().Format(time.RFC3339)}}}))
-					if err != nil {
-						log.Println(err)
-					} else {
-						if rep.StatusCode == 204 {
-							fmt.Println("[204] Sent Webhook")
+						rep, err := sendInfo.SendWebhook(jsonValue(embeds{Content: fmt.Sprintf("<@&%v>", config["RoleID"]), Embeds: []embed{{Description: fmt.Sprintf("Succesfully sniped %v :skull:", name), Color: 770000, Footer: footer{Text: "MCSN"}, Time: time.Now().Format(time.RFC3339)}}}))
+						if err != nil {
+							log.Println(err)
+						} else {
+							if rep.StatusCode == 204 {
+								fmt.Println("[204] Sent Webhook")
+							}
 						}
-					}
+					}()
 
 					bearers.Bearers = remove(bearers.Bearers, bearers.Bearers[i])
 					bearers.AccountType = remove(bearers.AccountType, bearers.AccountType[i])
@@ -194,30 +197,35 @@ Droptime: %v
 			} else {
 				content += fmt.Sprintf("+ [%v] Succesfully sniped %v | %v\n", statuscodes[num], name, email[i])
 				fmt.Printf("[%v] Recv @ %v | %v\n", statuscodes[num], formatTime(recvs[num]), email[i])
-				req, err := sendInfo.ChangeSkin(jsonValue(skinUrls{Url: sendInfo.SkinUrl, Varient: "slim"}), check(statuscodes[f], name))
-				if err != nil {
-					log.Println(err)
-				} else {
-					if req.StatusCode == 200 {
-						fmt.Println("[200] Changed Skin")
-					} else if req.StatusCode == 400 {
-						fmt.Println("[400] Used wrong bearer during name change. (acc is giftcard :skull:)")
+				go func() {
+					time.Sleep(time.Second)
+					req, err := sendInfo.ChangeSkin(jsonValue(skinUrls{Url: sendInfo.SkinUrl, Varient: "slim"}), check(statuscodes[f], name))
+					if err != nil {
+						log.Println(err)
 					} else {
-						fmt.Println("[401] Unauthorized")
+						if req.StatusCode == 200 {
+							fmt.Println("[200] Changed Skin")
+						} else if req.StatusCode == 400 {
+							fmt.Println("[400] Used wrong bearer during Skin Change. (acc is giftcard :skull:)")
+						} else {
+							fmt.Println("[401] Unauthorized")
+						}
 					}
-				}
 
-				rep, err := sendInfo.SendWebhook(jsonValue(embeds{Content: fmt.Sprintf("<@&%v>", config["RoleID"]), Embeds: []embed{{Description: fmt.Sprintf("Succesfully sniped %v :skull:", name), Color: 770000, Footer: footer{Text: "MCSN"}, Time: time.Now().Format(time.RFC3339)}}}))
-				if err != nil {
-					log.Println(err)
-				} else {
-					if rep.StatusCode == 204 {
-						fmt.Println("[204] Sent Webhook")
+					rep, err := sendInfo.SendWebhook(jsonValue(embeds{Content: fmt.Sprintf("<@&%v>", config["RoleID"]), Embeds: []embed{{Description: fmt.Sprintf("Succesfully sniped %v :skull:", name), Color: 770000, Footer: footer{Text: "MCSN"}, Time: time.Now().Format(time.RFC3339)}}}))
+					if err != nil {
+						log.Println(err)
+					} else {
+						if rep.StatusCode == 204 {
+							fmt.Println("[204] Sent Webhook")
+						}
 					}
-				}
+				}()
 				num++
 			}
 			f++
 		}
 	}
+
+	time.Sleep(time.Second * 3)
 }
