@@ -1,0 +1,20 @@
+{
+    "Accounts": [
+        "email:password",
+        "email:password"
+    ],
+    "Bearers": [],
+    "Config": [
+        "1",
+        "https://textures.minecraft.net/texture/516accb84322ca168a8cd06b4d8cc28e08b31cb0555eee01b64f9175cefe7b75",
+        "Discord Token",
+        "314194500983455744"
+    ],
+    "Names": [
+        ""
+    ],
+    "Vps": [
+        ""
+    ],
+    "RoleID": "917914507752407150"
+}
