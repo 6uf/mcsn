@@ -6,11 +6,9 @@
     ],
     "Bearers": [],
     "DiscordBotToken": "",
-    "DiscordID": 0,
+    "DiscordID": "0",
     "RoleID": "",
     "SkinURL": "https://textures.minecraft.net/texture/516accb84322ca168a8cd06b4d8cc28e08b31cb0555eee01b64f9175cefe7b75",
     "Spread": 80,
-    "Vps": [
-        "ip:22-username-password"
-    ]
+    "Vps": []
 }
