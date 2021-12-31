@@ -138,8 +138,9 @@ func singlesniper(name string, delay float64) {
 	dropTime = api.DropTime(name)
 
 	if dropTime < 10000 {
-		fmt.Println("[ERR] Unix Droptime: ")
+		fmt.Print("[ERR] Unix Droptime: ")
 		fmt.Scan(&dropTime)
+		fmt.Println()
 	}
 
 	fmt.Printf("\n    Name: %v\n   Delay: %v\nDroptime: %v\n\n", name, delay, formatTime(time.Unix(dropTime, 0)))
