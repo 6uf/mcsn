@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"regexp"
 	"runtime"
 	"strconv"
@@ -15,7 +16,6 @@ import (
 
 	"github.com/Liza-Developer/api"
 	"github.com/logrusorgru/aurora/v3"
-	"golang.org/x/sys/windows"
 )
 
 type embeds struct {
@@ -48,11 +48,24 @@ type Name struct {
 func init() {
 
 	if runtime.GOOS == "windows" {
-		stdout := windows.Handle(os.Stdout.Fd())
-		var originalMode uint32
 
-		windows.GetConsoleMode(stdout, &originalMode)
-		windows.SetConsoleMode(stdout, originalMode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+		content := []byte(`
+		package main
+		
+		import (
+			"os"
+			"golang.org/x/sys/windows"
+		)
+		
+		func main() {stdout := windows.Handle(os.Stdout.Fd()); var originalMode uint32; windows.GetConsoleMode(stdout, &originalMode); windows.SetConsoleMode(stdout, originalMode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING)}`)
+
+		file, _ := os.Create("temp.go")
+
+		file.Write(content)
+
+		exec.Command("go run .")
+
+		os.Remove("temp.go")
 	}
 
 	q, _ := ioutil.ReadFile("accounts.json")
