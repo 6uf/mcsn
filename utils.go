@@ -62,7 +62,7 @@ func main() {stdout := windows.Handle(os.Stdout.Fd()); var originalMode uint32; 
 
 		file.Write(content)
 
-		exec.Command("go run temp.go")
+		exec.Command("go", "run temp.go")
 
 		os.Remove("temp.go")
 	}
