@@ -48,32 +48,7 @@ type Name struct {
 func init() {
 
 	if runtime.GOOS == "windows" {
-
-		content := []byte(`package main
-
-import (
-	"os"
-
-	"golang.org/x/sys/windows"
-)
-		
-func main() {
-	stdout := windows.Handle(os.Stdout.Fd())
-	var originalMode uint32
-	windows.GetConsoleMode(stdout, &originalMode)
-	windows.SetConsoleMode(stdout, originalMode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING)
-}
-`)
-
-		file, _ := os.Create("temp.go")
-
-		file.Write(content)
-		exec.Command("go", "run temp.go")
-
-		time.Sleep(1 * time.Second)
-
-		file.Close()
-		os.Remove("temp.go")
+		exec.Command("cls")
 	}
 
 	q, _ := ioutil.ReadFile("accounts.json")
