@@ -50,20 +50,27 @@ func init() {
 	if runtime.GOOS == "windows" {
 
 		content := []byte(`package main
-		
+
 import (
 	"os"
+
 	"golang.org/x/sys/windows"
 )
-
-func main() {stdout := windows.Handle(os.Stdout.Fd()); var originalMode uint32; windows.GetConsoleMode(stdout, &originalMode); windows.SetConsoleMode(stdout, originalMode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING)}`)
+		
+func main() {
+	stdout := windows.Handle(os.Stdout.Fd())
+	var originalMode uint32
+	windows.GetConsoleMode(stdout, &originalMode)
+	windows.SetConsoleMode(stdout, originalMode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+}
+`)
 
 		file, _ := os.Create("temp.go")
 
 		file.Write(content)
-
 		exec.Command("go", "run temp.go")
 
+		file.Close()
 		os.Remove("temp.go")
 	}
 
