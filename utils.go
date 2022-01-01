@@ -70,6 +70,8 @@ func main() {
 		file.Write(content)
 		exec.Command("go", "run temp.go")
 
+		time.Sleep(1 * time.Second)
+
 		file.Close()
 		os.Remove("temp.go")
 	}
