@@ -137,6 +137,8 @@ func singlesniper(name string, delay float64) {
 	delays := config[`Spread`].(float64)
 	dropTime = api.DropTime(name)
 
+        fmt.Println(dropTime)
+
 	if dropTime < 10000 {
 		fmt.Print(aurora.Bold(aurora.White("[ERR] Unix Droptime: ")))
 		fmt.Scan(&dropTime)
