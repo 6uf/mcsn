@@ -131,7 +131,7 @@ func threeLetters(option string) ([]string, []int64) {
 	var drop []int64
 	isAlpha := regexp.MustCompile(`^[A-Za-z]+$`).MatchString
 
-	grabName, _ := http.NewRequest("GET", "https://droptime.site/api/v2/3c", nil)
+	grabName, _ := http.NewRequest("GET", "http://api.coolkidmacho.com/three", nil)
 	jsonBody, _ := http.DefaultClient.Do(grabName)
 	jsonGather, _ := ioutil.ReadAll(jsonBody.Body)
 
