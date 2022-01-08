@@ -1025,7 +1025,7 @@ func init() {
 	fmt.Print(aurora.Sprintf(aurora.Bold(aurora.White(`
 Ver: %v / %v
 
-`)), aurora.Bold(aurora.BrightBlack("3.6.0")), aurora.Bold(aurora.BrightBlack("Made By Liza"))))
+`)), aurora.Bold(aurora.BrightBlack("3.6.5")), aurora.Bold(aurora.BrightBlack("Made By Liza"))))
 
 	bearers, _ = apiGO.Auth()
 }
