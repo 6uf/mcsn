@@ -1222,11 +1222,7 @@ func logSnipe(content string, name string) {
 
 func rewrite(accounts string) {
 
-	if os.Remove("accounts.txt") != nil {
-		os.Create("accounts.txt")
-	} else {
-		os.Create("accounts.txt")
-	}
+	os.Create("accounts.txt")
 
 	file, _ := os.OpenFile("accounts.txt", os.O_RDWR, 0644)
 	defer file.Close()
