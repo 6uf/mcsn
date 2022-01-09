@@ -127,7 +127,7 @@ func init() {
 	fmt.Print(aurora.Sprintf(aurora.Bold(aurora.White(`
 Ver: %v / %v
 
-`)), aurora.Bold(aurora.BrightBlack("3.6.0")), aurora.Bold(aurora.BrightBlack("Made By Liza"))))
+`)), aurora.Bold(aurora.BrightBlack("3.66")), aurora.Bold(aurora.BrightBlack("Made By Liza"))))
 }
 
 func formatTime(t time.Time) string {
