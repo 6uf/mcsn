@@ -105,33 +105,37 @@ func init() {
 		os.MkdirAll("cropped/logs", 0755)
 	}
 
-	header := `
-·▄▄▄▄  ▪  .▄▄ · • ▌ ▄ ·.  ▄▄▄· ▄▄▌  
-██▪ ██ ██ ▐█ ▀. ·██ ▐███▪▐█ ▀█ ██•  
-▐█· ▐█▌▐█·▄▀▀▀█▄▐█ ▌▐▌▐█·▄█▀▀█ ██▪  
-██. ██ ▐█▌▐█▄▪▐███ ██▌▐█▌▐█ ▪▐▌▐█▌▐▌
-▀▀▀▀▀• ▀▀▀ ▀▀▀▀ ▀▀  █▪▀▀▀ ▀  ▀ .▀▀▀ `
+	fmt.Print(aurora.White(`
+    __  _____________  __
+   /  |/  / ___/ __/ |/ /
+  / /|_/ / /___\ \/    / 
+ /_/  /_/\___/___/_/|_/
+ `))
 
-	for _, char := range []string{"•", "·", ".", "▪"} {
-		header = strings.ReplaceAll(header, char, aurora.Sprintf(aurora.Faint(aurora.White("%v")), char))
-	}
-	for _, char := range []string{"█", "▄", "▌", "▀", "▌", "▀"} {
-		header = strings.ReplaceAll(header, char, aurora.Sprintf(aurora.Bold(aurora.BrightWhite(("%v"))), char))
-	}
-	for _, char := range []string{"▐"} {
-		header = strings.ReplaceAll(header, char, aurora.Sprintf(aurora.Faint(aurora.White(("%v"))), char))
-	}
-
-	fmt.Print(header)
-
-	fmt.Print(aurora.Sprintf(aurora.Bold(aurora.White(`
+	fmt.Print(aurora.Sprintf(aurora.White(`
 Ver: %v / %v
 
-`)), aurora.Bold(aurora.BrightBlack("3.66")), aurora.Bold(aurora.BrightBlack("Made By Liza"))))
+`), aurora.Bold(aurora.BrightBlack("4.10")), aurora.Bold(aurora.BrightBlack("Made By Liza"))))
 }
 
 func formatTime(t time.Time) string {
 	return t.Format("05.00000")
+}
+
+func sendE(content string) {
+	fmt.Println(aurora.Sprintf(aurora.White("[%v] "+content), aurora.Bold(aurora.Red("ERROR"))))
+}
+
+func sendI(content string) {
+	fmt.Println(aurora.Sprintf(aurora.White("[%v] "+content), aurora.Yellow("INFO")))
+}
+
+func sendS(content string) {
+	fmt.Println(aurora.Sprintf(aurora.White("[%v] "+content), aurora.Green("SUCCESS")))
+}
+
+func sendW(content string) {
+	fmt.Print(aurora.Sprintf(aurora.White("[%v] "+content), aurora.Green("INPUT")))
 }
 
 func sendInfo(status string, dropTime int64) {
@@ -322,7 +326,7 @@ func threeLetters(option string) ([]string, []int64) {
 func logSnipe(content string, name string) {
 	logFile, err := os.OpenFile(fmt.Sprintf("logs/%v.txt", strings.ToLower(name)), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		fmt.Println("[MCSN] Failed to log snipe.")
+		sendE(err.Error())
 	}
 
 	defer logFile.Close()
@@ -331,17 +335,17 @@ func logSnipe(content string, name string) {
 }
 
 func skinart(name string) {
-	fmt.Println(aurora.Bold(aurora.White("This uses the first bearer within your config.json, please change the order if this is a issue.\nPress enter to continue: ")))
-	fmt.Scanf("h")
+	sendI("This uses the first bearer within your config.json, please change the order if this is a issue.")
+	sendW("Press enter to continue: ")
 
 	img, err := readImage("images/image.png")
 	if err != nil {
-		fmt.Println(err)
+		sendE(err.Error())
 	}
 
 	base, err := readImage("images/base.png")
 	if err != nil {
-		fmt.Println(err)
+		sendE(err.Error())
 	}
 
 	if img.Bounds().Size() != image.Pt(72, 24) {
@@ -372,7 +376,7 @@ func skinart(name string) {
 	}
 
 	if len(bearers.Bearers) == 0 {
-		bearers, _ = apiGO.Auth()
+		authAccs()
 	}
 
 	for i := 0; i < 26; {
@@ -431,24 +435,20 @@ func DecodePixelsFromImage(img image.Image, offsetX, offsetY int) []*Pixel {
 }
 
 func changeSkin(num int) {
-
 	client := resty.New()
 	skin, _ := client.R().SetAuthToken(bearers.Bearers[0]).SetFormData(map[string]string{
 		"variant": "slim",
 	}).SetFile(fmt.Sprintf("cropped/logs/base_%v.png", num), fmt.Sprintf("cropped/logs/base_%v.png", num)).Post("https://api.minecraftservices.com/minecraft/profile/skins")
 
 	if skin.StatusCode() == 200 {
-		fmt.Println("[DISMAL] Skin changed")
+		sendI("Skin Changed")
 	} else {
+		sendE("Failed skin change. (sleeping for 30 seconds)")
 		time.Sleep(30 * time.Second)
-		fmt.Printf("[%v] Failed", skin.StatusCode())
 	}
 
-	fmt.Println(aurora.Sprintf(aurora.White(aurora.Bold("\nPress CTRL+C to Continue"))))
-	fmt.Print(aurora.Sprintf(aurora.Red(aurora.Bold(">> "))))
+	sendW("Press CTRL+C to Continue : ")
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
 	<-stop
-
-	fmt.Println("\n")
 }
