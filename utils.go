@@ -149,7 +149,7 @@ func sendInfo(status string, dropTime int64) {
 	switch {
 	case config[`ChangeskinOnSnipe`] == true:
 		sendInfo := apiGO.ServerInfo{
-			SkinUrl: config[`SkinURL`].(string),
+			SkinUrl: config[`ChangeSkinLink`].(string),
 		}
 
 		sendInfo.ChangeSkin(jsonValue(skinUrls{Url: sendInfo.SkinUrl, Varient: "slim"}), bearerGot)
