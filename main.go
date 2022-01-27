@@ -482,11 +482,6 @@ func checkVer(name string, delay float64, dropTime int64) {
 				payload.Conns[e].Read(ea)
 				recv = append(recv, time.Now())
 				statusCode = append(statusCode, string(ea[9:12]))
-
-				if string(ea[9:12]) == `200` {
-					sendInfo(string(ea[9:12]), dropTime)
-				}
-
 				wg.Done()
 			}(e)
 			time.Sleep(time.Duration(config["SpreadPerReq"].(float64)) * time.Microsecond)
@@ -508,6 +503,7 @@ func checkVer(name string, delay float64, dropTime int64) {
 			content += fmt.Sprintf("- [DISMAL] Sent @ %v | [%v] @ %v\n", formatTime(sendTime[e]), status, formatTime(recv[e]))
 			sendI(fmt.Sprintf("Sent @ %v | [%v] @ %v", formatTime(sendTime[e]), status, formatTime(recv[e])))
 		} else {
+			sendInfo(string(status), dropTime)
 			sendS(fmt.Sprintf("Sent @ %v | [%v] @ %v ~ %v", formatTime(sendTime[e]), status, formatTime(recv[e]), strings.Split(emailGot, ":")[0]))
 			content += fmt.Sprintf("+ [DISMAL] Sent @ %v | [%v] @ %v ~ %v\n", formatTime(sendTime[e]), status, formatTime(recv[e]), strings.Split(emailGot, ":")[0])
 		}

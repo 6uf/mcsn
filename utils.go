@@ -139,8 +139,6 @@ func sendW(content string) {
 }
 
 func sendInfo(status string, dropTime int64) {
-	time.Sleep(time.Second)
-
 	bearerGot, emailGots, _, acc := check(status, name, fmt.Sprintf("%v", dropTime))
 
 	bearers.Bearers = remove(bearers.Bearers, bearerGot)
