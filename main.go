@@ -143,7 +143,10 @@ func main() {
 				Aliases: []string{"p"},
 				Usage:   "ping helps give you a rough estimate of your connection to the minecraft API.",
 				Action: func(c *cli.Context) error {
-					sendS(fmt.Sprintf("Estimated (Mean) Delay: %v\n", MeanPing()))
+
+					delay, time := MeanPing()
+
+					sendS(fmt.Sprintf("Estimated (Mean) Delay: %v ~ Took: %v\n", delay, time))
 					return nil
 				},
 			},
@@ -586,8 +589,9 @@ func droptimeSiteSearches(username string) string {
 
 //
 
-func MeanPing() float64 {
+func MeanPing() (float64, time.Duration) {
 	var values []float64
+	time1 := time.Now()
 	for i := 1; i < 11; i++ {
 		value := AutoOffset()
 		sendI(fmt.Sprintf("%v`st Request(s) gave %v as a estimated delay", i, value))
@@ -600,6 +604,6 @@ func MeanPing() float64 {
 		total += v
 	}
 
-	return math.Round(total / float64(len(values)))
+	return math.Round(total / float64(len(values))), time.Since(time1)
 
 }
