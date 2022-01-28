@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"crypto/tls"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math"
 	"net/http"
 	"os"
@@ -30,7 +30,7 @@ func main() {
 	`,
 				Action: func(c *cli.Context) error {
 					authAccs()
-
+					go checkAccs()
 					snipe(c.String("u"), c.Float64("d"), "single", "")
 					return nil
 				},
@@ -54,6 +54,8 @@ func main() {
 				Aliases: []string{"bot", "b", "bs"},
 				Usage:   "Runs the discord bot sniper.",
 				Action: func(c *cli.Context) error {
+					authAccs()
+					go checkAccs()
 					apiGO.Bot()
 					return nil
 				},
@@ -69,7 +71,7 @@ func main() {
 						Usage: "Snipe names are are a combination of Numeric and Alphabetic.",
 						Action: func(c *cli.Context) error {
 							authAccs()
-
+							go checkAccs()
 							snipe("", c.Float64("d"), "auto", "3c")
 							return nil
 						},
@@ -86,7 +88,7 @@ func main() {
 						Usage: "Snipe only Alphabetic names.",
 						Action: func(c *cli.Context) error {
 							authAccs()
-
+							go checkAccs()
 							snipe("", c.Float64("d"), "auto", "3l")
 							return nil
 						},
@@ -103,7 +105,7 @@ func main() {
 						Usage: "Snipe only Numeric names.",
 						Action: func(c *cli.Context) error {
 							authAccs()
-
+							go checkAccs()
 							snipe("", c.Float64("d"), "auto", "3n")
 							return nil
 						},
@@ -121,7 +123,7 @@ func main() {
 						Usage: "Snipe names are are a combination of Numeric and Alphabetic.",
 						Action: func(c *cli.Context) error {
 							authAccs()
-
+							go checkAccs()
 							snipe("", c.Float64("d"), "auto", "list")
 							return nil
 						},
@@ -141,7 +143,7 @@ func main() {
 				Aliases: []string{"p"},
 				Usage:   "ping helps give you a rough estimate of your connection to the minecraft API.",
 				Action: func(c *cli.Context) error {
-					sendI(fmt.Sprintf("Estimated Delay: %v\n", math.Round(AutoOffset())))
+					sendI(fmt.Sprintf("Estimated (Mean) Delay: %v\n", MeanPing()))
 					return nil
 				},
 			},
@@ -197,7 +199,7 @@ func snipe(name string, delay float64, option string, charType string) {
 
 			for e, name := range names {
 				if useAuto {
-					delay = AutoOffset()
+					delay = float64(AutoOffset())
 				}
 
 				if !config["ManualBearer"].(bool) {
@@ -230,64 +232,6 @@ func snipe(name string, delay float64, option string, charType string) {
 }
 
 func authAccs() {
-	q, _ := ioutil.ReadFile("config.json")
-
-	config = apiGO.GetConfig(q)
-
-	grabDetails()
-
-	if !config["ManualBearer"].(bool) {
-		if BearersVer == nil {
-			sendE("No bearers have been found, please check your details.")
-			os.Exit(0)
-		} else {
-
-			checkifValid()
-
-			fmt.Println()
-
-			config["Bearers"] = Confirmed
-
-			writetoFile(config)
-
-			for _, acc := range Confirmed {
-				bearers.Bearers = append(bearers.Bearers, strings.Split(acc, "`")[0])
-				bearers.AccountType = append(bearers.AccountType, strings.Split(acc, "`")[2])
-			}
-
-			if bearers.Bearers == nil {
-				sendE("Failed to authorize your bearers, please rerun the sniper.")
-				os.Exit(0)
-			}
-		}
-	}
-}
-
-func grabArray(array []interface{}) ([]string, error) {
-	var list []string
-
-	if array != nil {
-		for _, names := range array {
-			list = append(list, names.(string))
-		}
-		if len(list) == 0 {
-			return nil, errors.New("empty")
-		}
-	} else {
-		return nil, errors.New("empty")
-	}
-
-	return list, nil
-}
-
-func writetoFile(str interface{}) {
-	v, _ := json.MarshalIndent(str, "", "  ")
-
-	ioutil.WriteFile("config.json", v, 0)
-}
-
-func grabDetails() {
-	var empty bool = false
 	file, _ := os.Open("accounts.txt")
 
 	scanner := bufio.NewScanner(file)
@@ -298,10 +242,33 @@ func grabDetails() {
 
 	if len(AccountsVer) == 0 {
 		sendE("Unable to continue, you have no accounts added.\n")
-		return
+		os.Exit(0)
 	}
 
-	if config["ManualBearer"].(bool) {
+	grabDetails()
+
+	if !acc.ManualBearer {
+		if acc.Bearers == nil {
+			sendE("No bearers have been found, please check your details.")
+			os.Exit(0)
+		} else {
+			checkifValid()
+
+			for _, acc := range acc.Bearers {
+				bearers.Bearers = append(bearers.Bearers, acc.Bearer)
+				bearers.AccountType = append(bearers.AccountType, acc.Type)
+			}
+
+			if bearers.Bearers == nil {
+				sendE("Failed to authorize your bearers, please rerun the sniper.")
+				os.Exit(0)
+			}
+		}
+	}
+}
+
+func grabDetails() {
+	if acc.ManualBearer {
 		for _, bearer := range AccountsVer {
 			if apiGO.CheckChange(bearer) {
 				bearers.Bearers = append(bearers.Bearers, bearer)
@@ -310,77 +277,73 @@ func grabDetails() {
 
 			time.Sleep(time.Second)
 		}
-	} else {
-		if config[`Bearers`] == nil {
-			bearerz, err := apiGO.Auth(AccountsVer)
-			if err != nil {
-				sendE(fmt.Sprintf("%v", err))
-				os.Exit(0)
-			}
+	}
 
-			if len(bearerz.Bearers) == 0 {
-				sendE("Unable to authenticate your account(s), please Reverify your login details.\n")
-				return
-			} else {
-				for i := range bearerz.Bearers {
-					BearersVer = append(BearersVer, bearerz.Bearers[i]+"`"+time.Now().Add(time.Duration(time.Second*86400)).Format(time.RFC850)+"`"+bearerz.AccountType[i]+"`"+AccountsVer[i])
-				}
-			}
+	if acc.Bearers == nil {
+		bearerz, err := apiGO.Auth(AccountsVer)
+		if err != nil {
+			sendE(err.Error())
+			os.Exit(0)
+		}
+
+		if len(bearerz.Bearers) == 0 {
+			sendE("Unable to authenticate your account(s), please Reverify your login details.\n")
+			return
 		} else {
-			if config[`Bearers`] == nil {
-				empty = true
-			} else {
-				BearersVer, _ = grabArray(config[`Bearers`].([]interface{}))
+			for i := range bearerz.Bearers {
+				acc.Bearers = append(acc.Bearers, Bearers{
+					Bearer:       bearerz.Bearers[i],
+					AuthInterval: int64(time.Hour * 24),
+					AuthedAt:     time.Now().Unix(),
+					Type:         bearerz.AccountType[i],
+					Email:        strings.Split(AccountsVer[i], ":")[0],
+					Password:     strings.Split(AccountsVer[i], ":")[1],
+				})
+			}
+			acc.SaveConfig()
+			acc.LoadState()
+		}
+	} else {
+		if len(acc.Bearers) < len(AccountsVer) {
+			var auth []string
+			check := make(map[string]bool)
+
+			for _, acc := range acc.Bearers {
+				check[acc.Email+":"+acc.Password] = true
 			}
 
-			if empty {
-				bearerz, err := apiGO.Auth(AccountsVer)
-				if err != nil {
-					fmt.Println(err)
-				}
-
-				if len(bearerz.Bearers) == 0 {
-					sendE("Unable to authenticate your account(s), please Reverify your login details.")
-				} else {
-					for i := range bearerz.Bearers {
-						BearersVer = append(BearersVer, bearerz.Bearers[i]+"`"+time.Now().Add(time.Duration(time.Second*86400)).Format(time.RFC850)+"`"+bearerz.AccountType[i]+"`"+AccountsVer[i])
-					}
-				}
-			} else {
-				if len(BearersVer) < len(AccountsVer) {
-					check := make(map[string]bool)
-					var acc []string
-
-					for _, i := range BearersVer {
-						check[strings.Split(i, "`")[3]] = true
-					}
-
-					for _, accs := range AccountsVer {
-						if !check[accs] {
-							acc = append(acc, accs)
-						}
-					}
-
-					bearerz, _ := apiGO.Auth(acc)
-
-					if len(bearerz.Bearers) != 0 {
-						for i := range bearerz.Bearers {
-							BearersVer = append(BearersVer, bearerz.Bearers[i]+"`"+time.Now().Add(time.Duration(time.Second*86400)).Format(time.RFC850)+"`"+bearerz.AccountType[i]+"`"+AccountsVer[i])
-						}
-					}
-				} else if len(AccountsVer) < len(BearersVer) {
-					var confirmedBearers []string
-					for _, acc := range AccountsVer {
-						for _, num := range BearersVer {
-							if acc == strings.Split(num, "`")[3] {
-								confirmedBearers = append(confirmedBearers, strings.Split(num, "`")[0]+"`"+time.Now().Add(time.Duration(time.Second*86400)).Format(time.RFC850)+"`"+strings.Split(num, "`")[2]+"`"+acc)
-							}
-						}
-					}
-
-					BearersVer = confirmedBearers
+			for _, accs := range AccountsVer {
+				if !check[accs] {
+					auth = append(auth, accs)
 				}
 			}
+
+			bearerz, _ := apiGO.Auth(auth)
+
+			if len(bearerz.Bearers) != 0 {
+				for i := range bearerz.Bearers {
+					acc.Bearers = append(acc.Bearers, Bearers{
+						Bearer:       bearerz.Bearers[i],
+						AuthInterval: int64(time.Hour * 24),
+						AuthedAt:     time.Now().Unix(),
+						Type:         bearerz.AccountType[i],
+						Email:        strings.Split(AccountsVer[i], ":")[0],
+						Password:     strings.Split(AccountsVer[i], ":")[1],
+					})
+					acc.SaveConfig()
+					acc.LoadState()
+				}
+			}
+		} else if len(AccountsVer) < len(acc.Bearers) {
+			for _, accs := range AccountsVer {
+				for _, num := range acc.Bearers {
+					if accs == num.Email+":"+num.Password {
+						acc.Bearers = append(acc.Bearers, num)
+					}
+				}
+			}
+			acc.SaveConfig()
+			acc.LoadState()
 		}
 	}
 }
@@ -406,27 +369,14 @@ func isGC(bearer string) string {
 
 func checkifValid() {
 	var reAuth []string
-	for _, accs := range BearersVer {
-		m := strings.Split(accs, "`")
+	for _, accs := range acc.Bearers {
 		f, _ := http.NewRequest("GET", "https://api.minecraftservices.com/minecraft/profile/name/boom/available", nil)
-		f.Header.Set("Authorization", "Bearer "+m[0])
+		f.Header.Set("Authorization", "Bearer "+accs.Bearer)
 		j, _ := http.DefaultClient.Do(f)
 
 		if j.StatusCode == 401 {
-			sendI(fmt.Sprintf("Account %v turned up invalid. Attempting to Reauth\n", strings.Split(m[3], ":")[0]))
-			reAuth = append(reAuth, m[3])
-		} else {
-			wdad, _ := time.Parse(time.RFC850, m[1])
-
-			if time.Now().After(wdad) {
-				reAuth = append(reAuth, m[3])
-			} else {
-				if apiGO.CheckChange(m[0]) {
-					Confirmed = append(Confirmed, m[0]+"`"+m[1]+"`"+m[2]+"`"+m[3])
-				} else {
-					sendI(fmt.Sprintf("Account %v cant name change\n", strings.Split(m[3], ":")[0]))
-				}
-			}
+			sendI(fmt.Sprintf("Account %v turned up invalid. Attempting to Reauth\n", accs.Email))
+			reAuth = append(reAuth, accs.Email+":"+accs.Password)
 		}
 	}
 
@@ -434,11 +384,18 @@ func checkifValid() {
 		sendI(fmt.Sprintf("Reauthing %v accounts..\n", len(reAuth)))
 		bearerz, _ := apiGO.Auth(reAuth)
 
-		for i, acc := range bearers.Bearers {
-			if apiGO.CheckChange(acc) {
-				Confirmed = append(Confirmed, acc+"`"+time.Now().Add(time.Duration(time.Second*86400)).Format(time.RFC850)+"`"+bearerz.AccountType[i]+"`"+AccountsVer[i])
+		for i, accs := range bearerz.Bearers {
+			if apiGO.CheckChange(accs) {
+				acc.Bearers = append(acc.Bearers, Bearers{
+					Bearer:       bearerz.Bearers[i],
+					AuthInterval: int64(time.Hour * 24),
+					AuthedAt:     time.Now().Unix(),
+					Type:         bearerz.AccountType[i],
+					Email:        strings.Split(reAuth[i], ":")[0],
+					Password:     strings.Split(reAuth[i], ":")[1],
+				})
 			} else {
-				sendI(fmt.Sprintf("Account %v cant name change\n", len(acc[0:5])))
+				sendI(fmt.Sprintf("Account %v cant name change\n", strings.Split(reAuth[i], ":")[0]))
 			}
 		}
 	}
@@ -451,7 +408,9 @@ func checkVer(name string, delay float64, dropTime int64) {
 	var recv []time.Time
 	var statusCode []string
 
-	sendI(fmt.Sprintf("Name: %v | Delay: %v\n", name, delay))
+	searches := droptimeSiteSearches(name)
+
+	sendI(fmt.Sprintf("Name: %v | Delay: %v | Searches: %v\n", name, delay, searches))
 
 	var wg sync.WaitGroup
 
@@ -503,11 +462,144 @@ func checkVer(name string, delay float64, dropTime int64) {
 			content += fmt.Sprintf("- [DISMAL] Sent @ %v | [%v] @ %v\n", formatTime(sendTime[e]), status, formatTime(recv[e]))
 			sendI(fmt.Sprintf("Sent @ %v | [%v] @ %v", formatTime(sendTime[e]), status, formatTime(recv[e])))
 		} else {
-			sendInfo(string(status), dropTime)
+			sendInfo(status, dropTime, searches)
 			sendS(fmt.Sprintf("Sent @ %v | [%v] @ %v ~ %v", formatTime(sendTime[e]), status, formatTime(recv[e]), strings.Split(emailGot, ":")[0]))
 			content += fmt.Sprintf("+ [DISMAL] Sent @ %v | [%v] @ %v ~ %v\n", formatTime(sendTime[e]), status, formatTime(recv[e]), strings.Split(emailGot, ":")[0])
 		}
 	}
 
 	logSnipe(content, name)
+}
+
+// code from Alien https://github.com/wwhtrbbtt/AlienSniper
+
+func ReadFile(path string) ([]byte, error) {
+	return ioutil.ReadFile(path)
+}
+
+func (s *Config) ToJson() []byte {
+	b, _ := json.MarshalIndent(s, "", "  ")
+	return b
+}
+
+func (config *Config) SaveConfig() {
+	WriteFile("config.json", string(config.ToJson()))
+}
+
+func (s *Config) LoadState() {
+	data, err := ReadFile("config.json")
+	if err != nil {
+		log.Println("No state file found, creating new one.")
+		s.LoadFromFile()
+		s.SaveConfig()
+		return
+	}
+
+	json.Unmarshal([]byte(data), s)
+	s.LoadFromFile()
+}
+
+func (c *Config) LoadFromFile() {
+	// Load a config file
+
+	jsonFile, err := os.Open("config.json")
+	// if we os.Open returns an error then handle it
+	if err != nil {
+		log.Fatalln("Failed to open config file: ", err)
+	}
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	json.Unmarshal(byteValue, &c)
+}
+
+func WriteFile(path string, content string) {
+	ioutil.WriteFile(path, []byte(content), 0644)
+}
+
+func checkAccs() {
+	for {
+		// check if the last auth was more than a minute ago
+		for _, accs := range acc.Bearers {
+			if time.Now().Unix() > accs.AuthedAt+accs.AuthInterval {
+				sendI(accs.Email + " is due for auth")
+
+				// authenticating account
+				bearers, _ := apiGO.Auth([]string{accs.Email + ":" + accs.Password})
+
+				if bearers.Bearers != nil {
+					accs.AuthedAt = time.Now().Unix()
+					accs.Bearer = bearers.Bearers[0]
+					accs.Type = bearers.AccountType[0]
+					acc.Bearers = append(acc.Bearers, accs)
+
+					acc.SaveConfig()
+					acc.LoadState()
+
+					break // break the loop to update the info.
+				}
+
+				// if the account isnt usable, remove it from the list
+				var ts Config
+				for _, i := range acc.Bearers {
+					if i.Email != accs.Email {
+						ts.Bearers = append(ts.Bearers, i)
+					}
+				}
+
+				acc.Bearers = ts.Bearers
+
+				acc.SaveConfig()
+				acc.LoadState()
+				break // break the loop to update the state.Accounts info.
+			}
+		}
+
+		time.Sleep(time.Second * 10)
+	}
+}
+
+func droptimeSiteSearches(username string) string {
+	resp, err := http.Get(fmt.Sprintf("https://droptime.site/api/v2/searches/%v", username))
+
+	if err != nil {
+		return "0"
+	}
+	defer resp.Body.Close()
+
+	respBytes, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		return "0"
+	}
+
+	if resp.StatusCode < 300 {
+		var res Searches
+		err = json.Unmarshal(respBytes, &res)
+		if err != nil {
+			return "0"
+		}
+
+		return res.Searches
+	}
+
+	return "0"
+}
+
+//
+
+func MeanPing() float64 {
+	var values []float64
+	for i := 1; i < 11; i++ {
+		value := AutoOffset()
+		sendI(fmt.Sprintf("%v`st Request(s) gave %v as a estimated delay", i, value))
+		values = append(values, value)
+	}
+
+	total := 0.0
+
+	for _, v := range values {
+		total += v
+	}
+
+	return math.Round(total / float64(len(values)))
+
 }
