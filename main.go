@@ -592,9 +592,9 @@ func droptimeSiteSearches(username string) string {
 func MeanPing() (float64, time.Duration) {
 	var values []float64
 	time1 := time.Now()
-	for i := 1; i < 11; i++ {
+	for i := 0; i < 10; i++ {
 		value := AutoOffset()
-		sendI(fmt.Sprintf("%v`st Request(s) gave %v as a estimated delay", i, value))
+		sendI(fmt.Sprintf("%v. Request(s) gave %v as a estimated delay", i, math.Round(value)))
 		values = append(values, value)
 	}
 
