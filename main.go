@@ -143,7 +143,7 @@ func main() {
 				Aliases: []string{"p"},
 				Usage:   "ping helps give you a rough estimate of your connection to the minecraft API.",
 				Action: func(c *cli.Context) error {
-					sendI(fmt.Sprintf("Estimated (Mean) Delay: %v\n", MeanPing()))
+					sendS(fmt.Sprintf("Estimated (Mean) Delay: %v\n", MeanPing()))
 					return nil
 				},
 			},
