@@ -648,7 +648,7 @@ func kqzzPing(accs string, aim_for float64, log bool, delay float64) interface{}
 
 	apiGO.PreSleep(dropTime)
 
-	payload := bearers.CreatePayloads(name)
+	payload := bearers.CreatePayloads("Test")
 
 	fmt.Println()
 
