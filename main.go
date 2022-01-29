@@ -149,7 +149,11 @@ func main() {
 
 						sendS(fmt.Sprintf("Estimated (Mean) Delay: %v ~ Took: %v\n", delay, time))
 					} else {
-						run()
+						if c.Bool("g") {
+							run("Giftcard")
+						} else if c.Bool("m") {
+							run("Microsoft")
+						}
 					}
 					return nil
 				},
@@ -157,6 +161,16 @@ func main() {
 					&cli.BoolFlag{
 						Name:  "k",
 						Usage: "use kqzz ping tester.",
+						Value: false,
+					},
+					&cli.BoolFlag{
+						Name:  "g",
+						Usage: "Use giftcards",
+						Value: false,
+					},
+					&cli.BoolFlag{
+						Name:  "m",
+						Usage: "Use Mojang/Microsoft",
 						Value: false,
 					},
 				},
@@ -622,12 +636,12 @@ func MeanPing() (float64, time.Duration) {
 	return mean(values), time.Since(time1)
 }
 
-func run() {
+func run(acctype string) {
 	for {
 		time.Sleep(1 * time.Second)
 		var delay float64 = AutoOffset()
 		sendI(fmt.Sprintf("Testing %v in 3 seconds", delay))
-		res := kqzzPing("Microsoft", 0.15, true, delay)
+		res := kqzzPing(acctype, 0.15, true, delay)
 		if res == true {
 			break
 		}
@@ -680,7 +694,7 @@ func kqzzPing(accs string, aim_for float64, log bool, delay float64) interface{}
 	wg.Wait()
 
 	for _, sends := range recv {
-		in, _ := strconv.Atoi(fmt.Sprintf("%v", sends.UnixMilli())[10:13])
+		in, _ := strconv.Atoi(fmt.Sprintf("%v", sends.Format(".000")[1:]))
 
 		sendI(fmt.Sprintf("Recv @: %v | %v", formatTime(sends), in))
 
