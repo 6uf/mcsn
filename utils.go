@@ -202,17 +202,15 @@ func sendInfo(status string, dropTime int64, searches string) {
 func AutoOffset() float64 {
 	var pingTimes int64
 	conn, _ := tls.Dial("tcp", "api.minecraftservices.com:443", nil)
+	defer conn.Close()
 	for i := 0; i < 3; i++ {
 		recv := make([]byte, 4096)
 		time1 := time.Now()
 		conn.Write([]byte("PUT /minecraft/profile/name/test HTTP/1.1\r\nHost: api.minecraftservices.com\r\nAuthorization: Bearer TestToken\r\n\r\n"))
 		conn.Read(recv)
-		pingTimes += time.Since(time1).Nanoseconds()
+		pingTimes += time.Since(time1).Milliseconds()
 	}
-	conn.Close()
-
-	pingTimes /= 3
-	return float64(pingTimes) / float64(1000000)
+	return (float64(pingTimes) / float64(10000)) * 5000
 }
 
 func jsonValue(f interface{}) []byte {
