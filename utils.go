@@ -525,14 +525,13 @@ func changeSkin(num int) {
 
 func snipe(name string, delay float64, option string, charType string) {
 	var useAuto bool = false
-
-	if name == "" {
-		sendE("You have entered a empty name | go run . snipe -u username -d 10 / mcsn.exe snipe -u username -d 10")
-		return
-	}
-
 	switch option {
 	case "single":
+		if name == "" {
+			sendE("You have entered a empty name | go run . snipe -u username -d 10 / mcsn.exe snipe -u username -d 10")
+			return
+		}
+
 		dropTime := apiGO.DropTime(name)
 		if dropTime < int64(10000) {
 			sendW("-!- Droptime [UNIX] : ")
