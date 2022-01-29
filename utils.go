@@ -203,7 +203,7 @@ func AutoOffset() float64 {
 	var pingTimes int64
 	conn, _ := tls.Dial("tcp", "api.minecraftservices.com:443", nil)
 	defer conn.Close()
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 10; i++ {
 		recv := make([]byte, 4096)
 		time1 := time.Now()
 		conn.Write([]byte("PUT /minecraft/profile/name/test HTTP/1.1\r\nHost: api.minecraftservices.com\r\nAuthorization: Bearer TestToken\r\n\r\n"))
