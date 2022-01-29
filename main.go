@@ -657,6 +657,7 @@ func kqzzPing(accs string, aim_for float64, log bool, delay float64) interface{}
 
 	var recv []time.Time
 	var wg sync.WaitGroup
+	var statuscode []string
 
 	dropTime := time.Now().Add(time.Second * 3).Unix()
 
@@ -685,6 +686,7 @@ func kqzzPing(accs string, aim_for float64, log bool, delay float64) interface{}
 				ea := make([]byte, 1000)
 				payload.Conns[e].Read(ea)
 				recv = append(recv, time.Now())
+				statuscode = append(statuscode, string(ea[9:12]))
 				wg.Done()
 			}(e)
 			time.Sleep(time.Duration(acc.SpreadPerReq) * time.Microsecond)
@@ -693,10 +695,10 @@ func kqzzPing(accs string, aim_for float64, log bool, delay float64) interface{}
 
 	wg.Wait()
 
-	for _, sends := range recv {
+	for i, sends := range recv {
 		in, _ := strconv.Atoi(fmt.Sprintf("%v", sends.Format(".000")[1:]))
 
-		sendI(fmt.Sprintf("Recv @: %v | %v", formatTime(sends), in))
+		sendI(fmt.Sprintf("Recv @: %v | [%v]", formatTime(sends), statuscode[i]))
 
 		if InBetween(in, 99, 105) {
 			sendS(fmt.Sprintf("%v is a good delay!", delay))
