@@ -210,7 +210,7 @@ func AutoOffset() float64 {
 		conn.Read(recv)
 		pingTimes += time.Since(time1).Milliseconds()
 	}
-	return (float64(pingTimes) / float64(5100)) * 10000
+	return (float64(pingTimes) / float64(6000)) * 10000
 }
 
 func jsonValue(f interface{}) []byte {
