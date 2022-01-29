@@ -632,51 +632,18 @@ func grabDetails() {
 
 			time.Sleep(time.Second)
 		}
-	}
-
-	if acc.Bearers == nil {
-		bearerz, err := apiGO.Auth(AccountsVer)
-		if err != nil {
-			sendE(err.Error())
-			os.Exit(0)
-		}
-
-		if len(bearerz.Bearers) == 0 {
-			sendE("Unable to authenticate your account(s), please Reverify your login details.\n")
-			return
-		} else {
-			for i := range bearerz.Bearers {
-				acc.Bearers = append(acc.Bearers, Bearers{
-					Bearer:       bearerz.Bearers[i],
-					AuthInterval: 86400,
-					AuthedAt:     time.Now().Unix(),
-					Type:         bearerz.AccountType[i],
-					Email:        strings.Split(AccountsVer[i], ":")[0],
-					Password:     strings.Split(AccountsVer[i], ":")[1],
-					NameChange:   apiGO.CheckChange(bearerz.Bearers[i]),
-				})
-			}
-			acc.SaveConfig()
-			acc.LoadState()
-		}
 	} else {
-		if len(acc.Bearers) < len(AccountsVer) {
-			var auth []string
-			check := make(map[string]bool)
-
-			for _, acc := range acc.Bearers {
-				check[acc.Email+":"+acc.Password] = true
+		if acc.Bearers == nil {
+			bearerz, err := apiGO.Auth(AccountsVer)
+			if err != nil {
+				sendE(err.Error())
+				os.Exit(0)
 			}
 
-			for _, accs := range AccountsVer {
-				if !check[accs] {
-					auth = append(auth, accs)
-				}
-			}
-
-			bearerz, _ := apiGO.Auth(auth)
-
-			if len(bearerz.Bearers) != 0 {
+			if len(bearerz.Bearers) == 0 {
+				sendE("Unable to authenticate your account(s), please Reverify your login details.\n")
+				return
+			} else {
 				for i := range bearerz.Bearers {
 					acc.Bearers = append(acc.Bearers, Bearers{
 						Bearer:       bearerz.Bearers[i],
@@ -687,20 +654,53 @@ func grabDetails() {
 						Password:     strings.Split(AccountsVer[i], ":")[1],
 						NameChange:   apiGO.CheckChange(bearerz.Bearers[i]),
 					})
-					acc.SaveConfig()
-					acc.LoadState()
 				}
+				acc.SaveConfig()
+				acc.LoadState()
 			}
-		} else if len(AccountsVer) < len(acc.Bearers) {
-			for _, accs := range AccountsVer {
-				for _, num := range acc.Bearers {
-					if accs == num.Email+":"+num.Password {
-						acc.Bearers = append(acc.Bearers, num)
+		} else {
+			if len(acc.Bearers) < len(AccountsVer) {
+				var auth []string
+				check := make(map[string]bool)
+
+				for _, acc := range acc.Bearers {
+					check[acc.Email+":"+acc.Password] = true
+				}
+
+				for _, accs := range AccountsVer {
+					if !check[accs] {
+						auth = append(auth, accs)
 					}
 				}
+
+				bearerz, _ := apiGO.Auth(auth)
+
+				if len(bearerz.Bearers) != 0 {
+					for i := range bearerz.Bearers {
+						acc.Bearers = append(acc.Bearers, Bearers{
+							Bearer:       bearerz.Bearers[i],
+							AuthInterval: 86400,
+							AuthedAt:     time.Now().Unix(),
+							Type:         bearerz.AccountType[i],
+							Email:        strings.Split(AccountsVer[i], ":")[0],
+							Password:     strings.Split(AccountsVer[i], ":")[1],
+							NameChange:   apiGO.CheckChange(bearerz.Bearers[i]),
+						})
+						acc.SaveConfig()
+						acc.LoadState()
+					}
+				}
+			} else if len(AccountsVer) < len(acc.Bearers) {
+				for _, accs := range AccountsVer {
+					for _, num := range acc.Bearers {
+						if accs == num.Email+":"+num.Password {
+							acc.Bearers = append(acc.Bearers, num)
+						}
+					}
+				}
+				acc.SaveConfig()
+				acc.LoadState()
 			}
-			acc.SaveConfig()
-			acc.LoadState()
 		}
 	}
 }
