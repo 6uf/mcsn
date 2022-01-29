@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -143,11 +144,21 @@ func main() {
 				Aliases: []string{"p"},
 				Usage:   "ping helps give you a rough estimate of your connection to the minecraft API.",
 				Action: func(c *cli.Context) error {
+					if !c.Bool("k") {
+						delay, time := MeanPing()
 
-					delay, time := MeanPing()
-
-					sendS(fmt.Sprintf("Estimated (Mean) Delay: %v ~ Took: %v\n", delay, time))
+						sendS(fmt.Sprintf("Estimated (Mean) Delay: %v ~ Took: %v\n", delay, time))
+					} else {
+						run()
+					}
 					return nil
+				},
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:  "k",
+						Usage: "use kqzz ping tester.",
+						Value: false,
+					},
 				},
 			},
 
@@ -589,6 +600,16 @@ func droptimeSiteSearches(username string) string {
 
 //
 
+func mean(values []float64) float64 {
+	total := 0.0
+
+	for _, v := range values {
+		total += float64(v)
+	}
+
+	return math.Round(total / float64(len(values)))
+}
+
 func MeanPing() (float64, time.Duration) {
 	var values []float64
 	time1 := time.Now()
@@ -598,12 +619,84 @@ func MeanPing() (float64, time.Duration) {
 		values = append(values, value)
 	}
 
-	total := 0.0
+	return mean(values), time.Since(time1)
+}
 
-	for _, v := range values {
-		total += v
+func run() {
+	for {
+		time.Sleep(1 * time.Second)
+		var delay float64 = AutoOffset()
+		sendI(fmt.Sprintf("Testing %v in 3 seconds", delay))
+		res := kqzzPing("Microsoft", 0.15, true, delay)
+		if res == true {
+			break
+		}
+	}
+}
+
+func kqzzPing(accs string, aim_for float64, log bool, delay float64) interface{} {
+	var leng float64
+
+	bearers := apiGO.MCbearers{}
+	bearers.Bearers = []string{"testbearer"}
+	bearers.AccountType = []string{accs}
+
+	var recv []time.Time
+	var wg sync.WaitGroup
+
+	dropTime := time.Now().Add(time.Second * 3).Unix()
+
+	apiGO.PreSleep(dropTime)
+
+	payload := bearers.CreatePayloads(name)
+
+	fmt.Println()
+
+	apiGO.Sleep(dropTime, delay)
+
+	fmt.Println()
+
+	for e, account := range payload.AccountType {
+		switch account {
+		case "Giftcard":
+			leng = float64(acc.GcReq)
+		case "Microsoft":
+			leng = float64(acc.MFAReq)
+		}
+
+		for i := 0; float64(i) < leng; i++ {
+			wg.Add(1)
+			fmt.Fprintln(payload.Conns[e], payload.Payload[e])
+			go func(e int) {
+				ea := make([]byte, 1000)
+				payload.Conns[e].Read(ea)
+				recv = append(recv, time.Now())
+				wg.Done()
+			}(e)
+			time.Sleep(time.Duration(acc.SpreadPerReq) * time.Microsecond)
+		}
 	}
 
-	return math.Round(total / float64(len(values))), time.Since(time1)
+	wg.Wait()
 
+	for _, sends := range recv {
+		in, _ := strconv.Atoi(fmt.Sprintf("%v", sends.UnixMilli())[10:13])
+
+		sendI(fmt.Sprintf("Recv @: %v | %v", formatTime(sends), in))
+
+		if InBetween(in, 99, 105) {
+			sendS(fmt.Sprintf("%v is a good delay!", delay))
+			return true
+		}
+	}
+
+	return false
+}
+
+func InBetween(i, min, max int) bool {
+	if (i >= min) && (i <= max) {
+		return true
+	} else {
+		return false
+	}
 }
