@@ -10,14 +10,18 @@ import (
 	"image/color"
 	"image/png"
 	"io/ioutil"
+	"log"
+	"math"
 	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
 	"regexp"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Liza-Developer/apiGO"
@@ -70,6 +74,7 @@ type Bearers struct {
 	AuthInterval int64  `json:"AuthInterval"`
 	AuthedAt     int64  `json:"AuthedAt"`
 	Type         string `json:"Type"`
+	NameChange   bool   `json:"NameChange"`
 }
 
 type Vps struct {
@@ -175,17 +180,17 @@ func sendW(content string) {
 }
 
 func sendInfo(status string, dropTime int64, searches string) {
-	bearerGot, emailGots, _, acc := check(status, name, fmt.Sprintf("%v", dropTime), searches)
+	bearerGot, emailGots, _, accs := check(status, name, fmt.Sprintf("%v", dropTime), searches)
 
 	bearers.Bearers = remove(bearers.Bearers, bearerGot)
-	bearers.AccountType = remove(bearers.AccountType, acc)
+	bearers.AccountType = remove(bearers.AccountType, accs)
 
 	emailGot = emailGots
 
 	switch {
-	case config[`ChangeskinOnSnipe`] == true:
+	case acc.ChangeskinOnSnipe:
 		sendInfo := apiGO.ServerInfo{
-			SkinUrl: config[`ChangeSkinLink`].(string),
+			SkinUrl: acc.ChangeSkinLink,
 		}
 
 		sendInfo.ChangeSkin(jsonValue(skinUrls{Url: sendInfo.SkinUrl, Varient: "slim"}), bearerGot)
@@ -195,17 +200,19 @@ func sendInfo(status string, dropTime int64, searches string) {
 // - Used to calculate delay, some of it is accurate some isnt! never rely on recommended delay.. simply base ur delay off it. -
 
 func AutoOffset() float64 {
-	var pingTimes float64
+	var pingTimes int64
 	conn, _ := tls.Dial("tcp", "api.minecraftservices.com:443", nil)
-	defer conn.Close()
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 3; i++ {
 		recv := make([]byte, 4096)
 		time1 := time.Now()
 		conn.Write([]byte("PUT /minecraft/profile/name/test HTTP/1.1\r\nHost: api.minecraftservices.com\r\nAuthorization: Bearer TestToken\r\n\r\n"))
 		conn.Read(recv)
-		pingTimes += float64(time.Since(time1).Milliseconds())
+		pingTimes += time.Since(time1).Nanoseconds()
 	}
-	return pingTimes / 10000 * 5000
+	conn.Close()
+
+	pingTimes /= 3
+	return float64(pingTimes) / float64(1000000)
 }
 
 func jsonValue(f interface{}) []byte {
@@ -254,7 +261,7 @@ func check(status, name, unixTime, searches string) (string, string, bool, strin
 				} else if info[`name`] == name {
 					bearerGot = bearer
 
-					if config["ManualBearer"].(bool) {
+					if acc.ManualBearer {
 						emailGot = email[0:30]
 					} else {
 						emailGot = email
@@ -269,7 +276,7 @@ func check(status, name, unixTime, searches string) (string, string, bool, strin
 						Config string `json:"config"`
 					}
 
-					body, err := json.Marshal(data{Name: name, Bearer: bearerGot, Unix: unixTime, Config: string(jsonValue(embeds{Content: "<@" + config["DiscordID"].(string) + ">", Embeds: []embed{{Description: fmt.Sprintf("Succesfully sniped %v with %v searches:skull:", name, searches), Color: 770000, Footer: footer{Text: "MCSN"}, Time: time.Now().Format(time.RFC3339)}}}))})
+					body, err := json.Marshal(data{Name: name, Bearer: bearerGot, Unix: unixTime, Config: string(jsonValue(embeds{Content: "<@" + acc.DiscordID + ">", Embeds: []embed{{Description: fmt.Sprintf("Succesfully sniped %v with %v searches:skull:", name, searches), Color: 770000, Footer: footer{Text: "MCSN"}, Time: time.Now().Format(time.RFC3339)}}}))})
 
 					if err == nil {
 						req, err := http.NewRequest("POST", "https://droptime.site/api/v2/webhook", bytes.NewBuffer(body))
@@ -367,8 +374,43 @@ func logSnipe(content string, name string) {
 }
 
 func skinart(name string) {
-	sendI("This uses the first bearer within your config.json, please change the order if this is a issue.")
-	sendW("Press enter to continue: ")
+	var accd string
+	var choose string
+	sendW("Use config bearer? [yes | no]: ")
+	fmt.Scan(&choose)
+
+	if strings.ContainsAny(strings.ToLower(choose), "yes ye y") {
+		acc.LoadState()
+
+		if len(acc.Bearers) == 0 {
+			sendE("Unable to continue, you have no bearers added.")
+		} else {
+			var email string
+			sendW("Email of the account you will use: ")
+			fmt.Scan(&email)
+
+			for _, details := range acc.Bearers {
+				if strings.EqualFold(details.Email, strings.ToLower(email)) {
+					if details.Bearer != "" {
+						bearers.Bearers = append(bearers.Bearers, details.Bearer)
+						break
+					} else {
+						sendE("Your bearer is empty.")
+						break
+					}
+				}
+			}
+		}
+	} else {
+		sendW("Enter your account details to continue [email:password]: ")
+		fmt.Scan(&accd)
+		bearers, _ = apiGO.Auth([]string{accd})
+	}
+
+	if bearers.Bearers == nil {
+		sendE("Unable to continue, no bearers have been found.")
+		return
+	}
 
 	img, err := readImage("images/image.png")
 	if err != nil {
@@ -405,10 +447,6 @@ func skinart(name string) {
 		})
 
 		writeImage(imgs, fmt.Sprintf("cropped/logs/base_%v.png", i))
-	}
-
-	if len(bearers.Bearers) == 0 {
-		authAccs()
 	}
 
 	for i := 0; i < len(images); {
@@ -483,4 +521,527 @@ func changeSkin(num int) {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
 	<-stop
+
+	fmt.Println()
+}
+
+func snipe(name string, delay float64, option string, charType string) {
+	var useAuto bool = false
+
+	if name == "" {
+		sendE("You have entered a empty name | go run . snipe -u username -d 10 / mcsn.exe snipe -u username -d 10")
+		return
+	}
+
+	switch option {
+	case "single":
+		dropTime := apiGO.DropTime(name)
+		if dropTime < int64(10000) {
+			sendW("-!- Droptime [UNIX] : ")
+			fmt.Scan(&dropTime)
+			fmt.Println()
+		}
+
+		checkVer(name, delay, dropTime)
+
+	case "auto":
+		if delay == 0 {
+			useAuto = true
+		}
+
+		for {
+
+			names, drops := threeLetters(charType)
+
+			for e, name := range names {
+				if useAuto {
+					delay = float64(AutoOffset())
+				}
+
+				if !acc.ManualBearer {
+					if len(bearers.Bearers) == 0 {
+						sendE("No more usable account(s)")
+						os.Exit(0)
+					}
+				}
+
+				checkVer(name, delay, drops[e])
+
+				fmt.Println()
+			}
+
+			if charType == "list" {
+				break
+			}
+		}
+	}
+
+	fmt.Println()
+
+	sendW("Press CTRL+C to Continue : ")
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+	<-stop
+}
+
+func authAccs() {
+	file, _ := os.Open("accounts.txt")
+
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		AccountsVer = append(AccountsVer, scanner.Text())
+	}
+
+	if len(AccountsVer) == 0 {
+		sendE("Unable to continue, you have no accounts added.\n")
+		os.Exit(0)
+	}
+
+	grabDetails()
+
+	if !acc.ManualBearer {
+		if acc.Bearers == nil {
+			sendE("No bearers have been found, please check your details.")
+			os.Exit(0)
+		} else {
+			checkifValid()
+
+			for _, acc := range acc.Bearers {
+				if acc.NameChange {
+					bearers.Bearers = append(bearers.Bearers, acc.Bearer)
+					bearers.AccountType = append(bearers.AccountType, acc.Type)
+				}
+			}
+
+			if bearers.Bearers == nil {
+				sendE("Failed to authorize your bearers, please rerun the sniper.")
+				os.Exit(0)
+			}
+		}
+	}
+}
+
+func grabDetails() {
+	if acc.ManualBearer {
+		for _, bearer := range AccountsVer {
+			if apiGO.CheckChange(bearer) {
+				bearers.Bearers = append(bearers.Bearers, bearer)
+				bearers.AccountType = append(bearers.AccountType, isGC(bearer))
+			}
+
+			time.Sleep(time.Second)
+		}
+	}
+
+	if acc.Bearers == nil {
+		bearerz, err := apiGO.Auth(AccountsVer)
+		if err != nil {
+			sendE(err.Error())
+			os.Exit(0)
+		}
+
+		if len(bearerz.Bearers) == 0 {
+			sendE("Unable to authenticate your account(s), please Reverify your login details.\n")
+			return
+		} else {
+			for i := range bearerz.Bearers {
+				acc.Bearers = append(acc.Bearers, Bearers{
+					Bearer:       bearerz.Bearers[i],
+					AuthInterval: 86400,
+					AuthedAt:     time.Now().Unix(),
+					Type:         bearerz.AccountType[i],
+					Email:        strings.Split(AccountsVer[i], ":")[0],
+					Password:     strings.Split(AccountsVer[i], ":")[1],
+					NameChange:   apiGO.CheckChange(bearerz.Bearers[i]),
+				})
+			}
+			acc.SaveConfig()
+			acc.LoadState()
+		}
+	} else {
+		if len(acc.Bearers) < len(AccountsVer) {
+			var auth []string
+			check := make(map[string]bool)
+
+			for _, acc := range acc.Bearers {
+				check[acc.Email+":"+acc.Password] = true
+			}
+
+			for _, accs := range AccountsVer {
+				if !check[accs] {
+					auth = append(auth, accs)
+				}
+			}
+
+			bearerz, _ := apiGO.Auth(auth)
+
+			if len(bearerz.Bearers) != 0 {
+				for i := range bearerz.Bearers {
+					acc.Bearers = append(acc.Bearers, Bearers{
+						Bearer:       bearerz.Bearers[i],
+						AuthInterval: 86400,
+						AuthedAt:     time.Now().Unix(),
+						Type:         bearerz.AccountType[i],
+						Email:        strings.Split(AccountsVer[i], ":")[0],
+						Password:     strings.Split(AccountsVer[i], ":")[1],
+						NameChange:   apiGO.CheckChange(bearerz.Bearers[i]),
+					})
+					acc.SaveConfig()
+					acc.LoadState()
+				}
+			}
+		} else if len(AccountsVer) < len(acc.Bearers) {
+			for _, accs := range AccountsVer {
+				for _, num := range acc.Bearers {
+					if accs == num.Email+":"+num.Password {
+						acc.Bearers = append(acc.Bearers, num)
+					}
+				}
+			}
+			acc.SaveConfig()
+			acc.LoadState()
+		}
+	}
+}
+
+func isGC(bearer string) string {
+	var accountT string
+	conn, _ := tls.Dial("tcp", "api.minecraftservices.com"+":443", nil)
+
+	fmt.Fprintln(conn, "GET /minecraft/profile/namechange HTTP/1.1\r\nHost: api.minecraftservices.com\r\nUser-Agent: Dismal/1.0\r\nAuthorization: Bearer "+bearer+"\r\n\r\n")
+
+	e := make([]byte, 12)
+	conn.Read(e)
+
+	switch string(e[9:12]) {
+	case `404`:
+		accountT = "Giftcard"
+	default:
+		accountT = "Microsoft"
+	}
+
+	return accountT
+}
+
+func checkifValid() {
+	var reAuth []string
+	for _, accs := range acc.Bearers {
+		f, _ := http.NewRequest("GET", "https://api.minecraftservices.com/minecraft/profile/name/boom/available", nil)
+		f.Header.Set("Authorization", "Bearer "+accs.Bearer)
+		j, _ := http.DefaultClient.Do(f)
+
+		if j.StatusCode == 401 {
+			sendI(fmt.Sprintf("Account %v turned up invalid. Attempting to Reauth\n", accs.Email))
+			reAuth = append(reAuth, accs.Email+":"+accs.Password)
+		}
+	}
+
+	if len(reAuth) != 0 {
+		sendI(fmt.Sprintf("Reauthing %v accounts..\n", len(reAuth)))
+		bearerz, _ := apiGO.Auth(reAuth)
+
+		for i, accs := range bearerz.Bearers {
+			acc.Bearers = append(acc.Bearers, Bearers{
+				Bearer:       bearerz.Bearers[i],
+				AuthInterval: int64(time.Hour * 24),
+				AuthedAt:     time.Now().Unix(),
+				Type:         bearerz.AccountType[i],
+				Email:        strings.Split(reAuth[i], ":")[0],
+				Password:     strings.Split(reAuth[i], ":")[1],
+				NameChange:   apiGO.CheckChange(accs),
+			})
+		}
+	}
+
+	acc.SaveConfig()
+	acc.LoadState()
+}
+
+func checkVer(name string, delay float64, dropTime int64) {
+	var content string
+	var sendTime []time.Time
+	var leng float64
+	var recv []time.Time
+	var statusCode []string
+
+	searches := droptimeSiteSearches(name)
+
+	sendI(fmt.Sprintf("Name: %v | Delay: %v | Searches: %v\n", name, delay, searches))
+
+	var wg sync.WaitGroup
+
+	apiGO.PreSleep(dropTime)
+
+	payload := bearers.CreatePayloads(name)
+
+	fmt.Println()
+
+	apiGO.Sleep(dropTime, delay)
+
+	fmt.Println()
+
+	for e, account := range payload.AccountType {
+		switch account {
+		case "Giftcard":
+			leng = float64(acc.GcReq)
+		case "Microsoft":
+			leng = float64(acc.MFAReq)
+		}
+
+		for i := 0; float64(i) < leng; i++ {
+			wg.Add(1)
+			fmt.Fprintln(payload.Conns[e], payload.Payload[e])
+			sendTime = append(sendTime, time.Now())
+			go func(e int) {
+				ea := make([]byte, 1000)
+				payload.Conns[e].Read(ea)
+				recv = append(recv, time.Now())
+				statusCode = append(statusCode, string(ea[9:12]))
+				wg.Done()
+			}(e)
+			time.Sleep(time.Duration(acc.SpreadPerReq) * time.Microsecond)
+		}
+	}
+
+	wg.Wait()
+
+	sort.Slice(sendTime, func(i, j int) bool {
+		return sendTime[i].Before(sendTime[j])
+	})
+
+	sort.Slice(recv, func(i, j int) bool {
+		return recv[i].Before(recv[j])
+	})
+
+	for e, status := range statusCode {
+		if status != "200" {
+			content += fmt.Sprintf("- [DISMAL] Sent @ %v | [%v] @ %v\n", formatTime(sendTime[e]), status, formatTime(recv[e]))
+			sendI(fmt.Sprintf("Sent @ %v | [%v] @ %v", formatTime(sendTime[e]), status, formatTime(recv[e])))
+		} else {
+			sendInfo(status, dropTime, searches)
+			sendS(fmt.Sprintf("Sent @ %v | [%v] @ %v ~ %v", formatTime(sendTime[e]), status, formatTime(recv[e]), strings.Split(emailGot, ":")[0]))
+			content += fmt.Sprintf("+ [DISMAL] Sent @ %v | [%v] @ %v ~ %v\n", formatTime(sendTime[e]), status, formatTime(recv[e]), strings.Split(emailGot, ":")[0])
+		}
+	}
+
+	logSnipe(content, name)
+}
+
+// code from Alien https://github.com/wwhtrbbtt/AlienSniper
+
+func ReadFile(path string) ([]byte, error) {
+	return ioutil.ReadFile(path)
+}
+
+func (s *Config) ToJson() []byte {
+	b, _ := json.MarshalIndent(s, "", "  ")
+	return b
+}
+
+func (config *Config) SaveConfig() {
+	WriteFile("config.json", string(config.ToJson()))
+}
+
+func (s *Config) LoadState() {
+	data, err := ReadFile("config.json")
+	if err != nil {
+		log.Println("No state file found, creating new one.")
+		s.LoadFromFile()
+		s.SaveConfig()
+		return
+	}
+
+	json.Unmarshal([]byte(data), s)
+	s.LoadFromFile()
+}
+
+func (c *Config) LoadFromFile() {
+	// Load a config file
+
+	jsonFile, err := os.Open("config.json")
+	// if we os.Open returns an error then handle it
+	if err != nil {
+		log.Fatalln("Failed to open config file: ", err)
+	}
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	json.Unmarshal(byteValue, &c)
+}
+
+func WriteFile(path string, content string) {
+	ioutil.WriteFile(path, []byte(content), 0644)
+}
+
+func checkAccs() {
+	for {
+		// check if the last auth was more than a minute ago
+		for _, accs := range acc.Bearers {
+			if time.Now().Unix() > accs.AuthedAt+accs.AuthInterval {
+				sendI(accs.Email + " is due for auth")
+
+				// authenticating account
+				bearers, _ := apiGO.Auth([]string{accs.Email + ":" + accs.Password})
+
+				if bearers.Bearers != nil {
+					accs.AuthedAt = time.Now().Unix()
+					accs.Bearer = bearers.Bearers[0]
+					accs.Type = bearers.AccountType[0]
+					acc.Bearers = append(acc.Bearers, accs)
+
+					acc.SaveConfig()
+					acc.LoadState()
+
+					break // break the loop to update the info.
+				}
+
+				// if the account isnt usable, remove it from the list
+				var ts Config
+				for _, i := range acc.Bearers {
+					if i.Email != accs.Email {
+						ts.Bearers = append(ts.Bearers, i)
+					}
+				}
+
+				acc.Bearers = ts.Bearers
+
+				acc.SaveConfig()
+				acc.LoadState()
+				break // break the loop to update the state.Accounts info.
+			}
+		}
+
+		time.Sleep(time.Second * 10)
+	}
+}
+
+func droptimeSiteSearches(username string) string {
+	resp, err := http.Get(fmt.Sprintf("https://droptime.site/api/v2/searches/%v", username))
+
+	if err != nil {
+		return "0"
+	}
+	defer resp.Body.Close()
+
+	respBytes, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		return "0"
+	}
+
+	if resp.StatusCode < 300 {
+		var res Searches
+		err = json.Unmarshal(respBytes, &res)
+		if err != nil {
+			return "0"
+		}
+
+		return res.Searches
+	}
+
+	return "0"
+}
+
+//
+
+func mean(values []float64) float64 {
+	total := 0.0
+
+	for _, v := range values {
+		total += float64(v)
+	}
+
+	return math.Round(total / float64(len(values)))
+}
+
+func MeanPing() (float64, time.Duration) {
+	var values []float64
+	time1 := time.Now()
+	for i := 0; i < 10; i++ {
+		value := AutoOffset()
+		sendI(fmt.Sprintf("%v. Request(s) gave %v as a estimated delay", i, math.Round(value)))
+		values = append(values, value)
+	}
+
+	return mean(values), time.Since(time1)
+}
+
+func run(acctype string) {
+	for {
+		time.Sleep(1 * time.Second)
+		var delay float64 = AutoOffset()
+		sendI(fmt.Sprintf("Testing %v in 3 seconds", delay))
+		res := kqzzPing(acctype, 0.15, true, delay)
+		if res == true {
+			break
+		}
+	}
+}
+
+func kqzzPing(accs string, aim_for float64, log bool, delay float64) interface{} {
+	var leng float64
+
+	bearers := apiGO.MCbearers{}
+	bearers.Bearers = []string{"testbearer"}
+	bearers.AccountType = []string{accs}
+
+	var recv []time.Time
+	var wg sync.WaitGroup
+	var statuscode []string
+
+	dropTime := time.Now().Add(time.Second * 3).Unix()
+
+	apiGO.PreSleep(dropTime)
+
+	payload := bearers.CreatePayloads("Test")
+
+	fmt.Println()
+
+	apiGO.Sleep(dropTime, delay)
+
+	fmt.Println()
+
+	for e, account := range payload.AccountType {
+		switch account {
+		case "Giftcard":
+			leng = float64(acc.GcReq)
+		case "Microsoft":
+			leng = float64(acc.MFAReq)
+		}
+
+		for i := 0; float64(i) < leng; i++ {
+			wg.Add(1)
+			fmt.Fprintln(payload.Conns[e], payload.Payload[e])
+			go func(e int) {
+				ea := make([]byte, 1000)
+				payload.Conns[e].Read(ea)
+				recv = append(recv, time.Now())
+				statuscode = append(statuscode, string(ea[9:12]))
+				wg.Done()
+			}(e)
+			time.Sleep(time.Duration(acc.SpreadPerReq) * time.Microsecond)
+		}
+	}
+
+	wg.Wait()
+
+	for i, sends := range recv {
+		in, _ := strconv.Atoi(fmt.Sprintf("%v", sends.Format(".000")[1:]))
+
+		sendI(fmt.Sprintf("Recv @: %v | [%v]", formatTime(sends), statuscode[i]))
+
+		if InBetween(in, 99, 105) {
+			sendS(fmt.Sprintf("%v is a good delay!", delay))
+			return true
+		}
+	}
+
+	return false
+}
+
+func InBetween(i, min, max int) bool {
+	if (i >= min) && (i <= max) {
+		return true
+	} else {
+		return false
+	}
 }
