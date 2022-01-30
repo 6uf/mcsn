@@ -3,7 +3,7 @@ module main
 go 1.17
 
 require (
-	github.com/Liza-Developer/apiGO v0.0.0-20220126223639-fb61f27b5ac7
+	github.com/Liza-Developer/apiGO v0.0.0-20220130200455-618817c08f9b
 	github.com/disintegration/imaging v1.6.2
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/logrusorgru/aurora/v3 v3.0.0
@@ -19,8 +19,8 @@ require (
 	github.com/pkg/sftp v1.13.4 // indirect
 	github.com/russross/blackfriday/v2 v2.0.1 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
-	golang.org/x/crypto v0.0.0-20220126173729-e04a8579fee6 // indirect
+	golang.org/x/crypto v0.0.0-20220128200615-198e4374d7ed // indirect
 	golang.org/x/image v0.0.0-20191009234506-e7c1f5e7dbb8 // indirect
-	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
+	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
+	golang.org/x/sys v0.0.0-20220128215802-99c3d69c2c27 // indirect
 )

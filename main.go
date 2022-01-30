@@ -129,35 +129,11 @@ func main() {
 				Aliases: []string{"p"},
 				Usage:   "ping helps give you a rough estimate of your connection to the minecraft API.",
 				Action: func(c *cli.Context) error {
-					if !c.Bool("k") {
-						delay, time := MeanPing()
 
-						sendS(fmt.Sprintf("Estimated (Mean) Delay: %v ~ Took: %v\n", delay, time))
-					} else {
-						if c.Bool("g") {
-							run("Giftcard")
-						} else if c.Bool("m") {
-							run("Microsoft")
-						}
-					}
+					delay, time := MeanPing()
+					sendS(fmt.Sprintf("Estimated (Mean) Delay: %v ~ Took: %v\n", delay, time))
+
 					return nil
-				},
-				Flags: []cli.Flag{
-					&cli.BoolFlag{
-						Name:  "k",
-						Usage: "use kqzz ping tester.",
-						Value: false,
-					},
-					&cli.BoolFlag{
-						Name:  "g",
-						Usage: "Use giftcards",
-						Value: false,
-					},
-					&cli.BoolFlag{
-						Name:  "m",
-						Usage: "Use Mojang/Microsoft",
-						Value: false,
-					},
 				},
 			},
 

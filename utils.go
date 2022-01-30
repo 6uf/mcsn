@@ -104,7 +104,6 @@ var (
 	VpsesVer    []string
 	bearers     apiGO.MCbearers
 	AccountsVer []string
-	name        string
 	config      map[string]interface{}
 	emailGot    string
 
@@ -179,16 +178,17 @@ func sendW(content string) {
 	fmt.Print(aurora.Sprintf(aurora.White("[%v] "+content), aurora.Green("INPUT")))
 }
 
-func sendInfo(status string, dropTime int64, searches string) {
-	bearerGot, emailGots, _, accs := check(status, name, fmt.Sprintf("%v", dropTime), searches)
-
-	bearers.Bearers = remove(bearers.Bearers, bearerGot)
-	bearers.AccountType = remove(bearers.AccountType, accs)
+func sendInfo(name, status, searches string, dropTime int64) {
+	bearerGot, emailGots, _ := check(status, name, fmt.Sprintf("%v", dropTime), searches)
+	for i, data := range bearers.Details {
+		if data.Bearer != bearerGot {
+			bearers.Details[i] = data
+		}
+	}
 
 	emailGot = emailGots
 
-	switch {
-	case acc.ChangeskinOnSnipe:
+	if acc.ChangeskinOnSnipe {
 		sendInfo := apiGO.ServerInfo{
 			SkinUrl: acc.ChangeSkinLink,
 		}
@@ -227,20 +227,19 @@ func remove(l []string, item string) []string {
 	return l
 }
 
-func check(status, name, unixTime, searches string) (string, string, bool, string) {
+func check(status, name, unixTime, searches string) (string, string, bool) {
 	var bearerGot string
 	var emailGot string
 	var send bool
-	var accountType string
 
 	if status == `200` {
-		for i, bearer := range bearers.Bearers {
+		for _, bearer := range bearers.Details {
 			for _, email := range AccountsVer {
 				httpReq, err := http.NewRequest("GET", "https://api.minecraftservices.com/minecraft/profile", nil)
 				if err != nil {
 					continue
 				}
-				httpReq.Header.Set("Authorization", "Bearer "+bearer)
+				httpReq.Header.Set("Authorization", "Bearer "+bearer.Bearer)
 
 				uwu, err := http.DefaultClient.Do(httpReq)
 				if err != nil {
@@ -257,15 +256,13 @@ func check(status, name, unixTime, searches string) (string, string, bool, strin
 
 				if info[`name`] == nil {
 				} else if info[`name`] == name {
-					bearerGot = bearer
+					bearerGot = bearer.Bearer
 
 					if acc.ManualBearer {
 						emailGot = email[0:30]
 					} else {
 						emailGot = email
 					}
-
-					accountType = bearers.AccountType[i]
 
 					type data struct {
 						Name   string `json:"name"`
@@ -298,7 +295,7 @@ func check(status, name, unixTime, searches string) (string, string, bool, strin
 		}
 	}
 
-	return bearerGot, emailGot, send, accountType
+	return bearerGot, emailGot, send
 }
 
 func threeLetters(option string) ([]string, []int64) {
@@ -388,9 +385,13 @@ func skinart(name string) {
 			fmt.Scan(&email)
 
 			for _, details := range acc.Bearers {
-				if strings.EqualFold(details.Email, strings.ToLower(email)) {
+				if strings.EqualFold(strings.ToLower(details.Email), strings.ToLower(email)) {
 					if details.Bearer != "" {
-						bearers.Bearers = append(bearers.Bearers, details.Bearer)
+						bearers.Details = append(bearers.Details, apiGO.Info{
+							Bearer:      details.Bearer,
+							AccountType: details.Type,
+							Email:       details.Email,
+						})
 						break
 					} else {
 						sendE("Your bearer is empty.")
@@ -402,10 +403,10 @@ func skinart(name string) {
 	} else {
 		sendW("Enter your account details to continue [email:password]: ")
 		fmt.Scan(&accd)
-		bearers, _ = apiGO.Auth([]string{accd})
+		bearers = apiGO.Auth([]string{accd})
 	}
 
-	if bearers.Bearers == nil {
+	if bearers.Details == nil {
 		sendE("Unable to continue, no bearers have been found.")
 		return
 	}
@@ -504,7 +505,7 @@ func DecodePixelsFromImage(img image.Image, offsetX, offsetY int) []*Pixel {
 
 func changeSkin(num int) {
 	client := resty.New()
-	skin, _ := client.R().SetAuthToken(bearers.Bearers[0]).SetFormData(map[string]string{
+	skin, _ := client.R().SetAuthToken(bearers.Details[0].Bearer).SetFormData(map[string]string{
 		"variant": "slim",
 	}).SetFile(fmt.Sprintf("cropped/logs/base_%v.png", num), fmt.Sprintf("cropped/logs/base_%v.png", num)).Post("https://api.minecraftservices.com/minecraft/profile/skins")
 
@@ -556,7 +557,7 @@ func snipe(name string, delay float64, option string, charType string) {
 				}
 
 				if !acc.ManualBearer {
-					if len(bearers.Bearers) == 0 {
+					if len(bearers.Details) == 0 {
 						sendE("No more usable account(s)")
 						os.Exit(0)
 					}
@@ -606,12 +607,15 @@ func authAccs() {
 
 			for _, acc := range acc.Bearers {
 				if acc.NameChange {
-					bearers.Bearers = append(bearers.Bearers, acc.Bearer)
-					bearers.AccountType = append(bearers.AccountType, acc.Type)
+					bearers.Details = append(bearers.Details, apiGO.Info{
+						Bearer:      acc.Bearer,
+						AccountType: acc.Type,
+						Email:       acc.Email,
+					})
 				}
 			}
 
-			if bearers.Bearers == nil {
+			if bearers.Details == nil {
 				sendE("Failed to authorize your bearers, please rerun the sniper.")
 				os.Exit(0)
 			}
@@ -623,33 +627,30 @@ func grabDetails() {
 	if acc.ManualBearer {
 		for _, bearer := range AccountsVer {
 			if apiGO.CheckChange(bearer) {
-				bearers.Bearers = append(bearers.Bearers, bearer)
-				bearers.AccountType = append(bearers.AccountType, isGC(bearer))
+				bearers.Details = append(bearers.Details, apiGO.Info{
+					Bearer:      bearer,
+					AccountType: isGC(bearer),
+				})
 			}
 
 			time.Sleep(time.Second)
 		}
 	} else {
 		if acc.Bearers == nil {
-			bearerz, err := apiGO.Auth(AccountsVer)
-			if err != nil {
-				sendE(err.Error())
-				os.Exit(0)
-			}
-
-			if len(bearerz.Bearers) == 0 {
+			bearerz := apiGO.Auth(AccountsVer)
+			if len(bearerz.Details) == 0 {
 				sendE("Unable to authenticate your account(s), please Reverify your login details.\n")
 				return
 			} else {
-				for i := range bearerz.Bearers {
+				for _, accs := range bearerz.Details {
 					acc.Bearers = append(acc.Bearers, Bearers{
-						Bearer:       bearerz.Bearers[i],
+						Bearer:       accs.Bearer,
 						AuthInterval: 86400,
 						AuthedAt:     time.Now().Unix(),
-						Type:         bearerz.AccountType[i],
-						Email:        strings.Split(AccountsVer[i], ":")[0],
-						Password:     strings.Split(AccountsVer[i], ":")[1],
-						NameChange:   apiGO.CheckChange(bearerz.Bearers[i]),
+						Type:         accs.AccountType,
+						Email:        accs.Email,
+						Password:     accs.Password,
+						NameChange:   apiGO.CheckChange(accs.Bearer),
 					})
 				}
 				acc.SaveConfig()
@@ -670,22 +671,23 @@ func grabDetails() {
 					}
 				}
 
-				bearerz, _ := apiGO.Auth(auth)
+				bearerz := apiGO.Auth(auth)
 
-				if len(bearerz.Bearers) != 0 {
-					for i := range bearerz.Bearers {
+				if len(bearerz.Details) != 0 {
+					for _, accs := range bearerz.Details {
 						acc.Bearers = append(acc.Bearers, Bearers{
-							Bearer:       bearerz.Bearers[i],
+							Bearer:       accs.Bearer,
 							AuthInterval: 86400,
 							AuthedAt:     time.Now().Unix(),
-							Type:         bearerz.AccountType[i],
-							Email:        strings.Split(AccountsVer[i], ":")[0],
-							Password:     strings.Split(AccountsVer[i], ":")[1],
-							NameChange:   apiGO.CheckChange(bearerz.Bearers[i]),
+							Type:         accs.AccountType,
+							Email:        accs.Email,
+							Password:     accs.Password,
+							NameChange:   apiGO.CheckChange(accs.Bearer),
 						})
-						acc.SaveConfig()
-						acc.LoadState()
 					}
+
+					acc.SaveConfig()
+					acc.LoadState()
 				}
 			} else if len(AccountsVer) < len(acc.Bearers) {
 				for _, accs := range AccountsVer {
@@ -729,29 +731,33 @@ func checkifValid() {
 		j, _ := http.DefaultClient.Do(f)
 
 		if j.StatusCode == 401 {
-			sendI(fmt.Sprintf("Account %v turned up invalid. Attempting to Reauth\n", accs.Email))
+			sendI(fmt.Sprintf("Account %v turned up invalid. Attempting to Reauth", accs.Email))
 			reAuth = append(reAuth, accs.Email+":"+accs.Password)
 		}
 	}
 
 	if len(reAuth) != 0 {
-		sendI(fmt.Sprintf("Reauthing %v accounts..\n", len(reAuth)))
-		bearerz, _ := apiGO.Auth(reAuth)
+		sendI(fmt.Sprintf("Reauthing %v accounts..", len(reAuth)))
+		bearerz := apiGO.Auth(reAuth)
 
-		for i, accs := range bearerz.Bearers {
-			acc.Bearers = append(acc.Bearers, Bearers{
-				Bearer:       bearerz.Bearers[i],
-				AuthInterval: int64(time.Hour * 24),
-				AuthedAt:     time.Now().Unix(),
-				Type:         bearerz.AccountType[i],
-				Email:        strings.Split(reAuth[i], ":")[0],
-				Password:     strings.Split(reAuth[i], ":")[1],
-				NameChange:   apiGO.CheckChange(accs),
-			})
+		if len(bearerz.Details) != 0 {
+			for point, data := range acc.Bearers {
+				for _, accs := range bearerz.Details {
+					if data.Email == accs.Email {
+						data.Bearer = accs.Bearer
+						data.NameChange = apiGO.CheckChange(accs.Bearer)
+						data.Type = accs.AccountType
+						data.Password = accs.Password
+						data.Email = accs.Email
+						data.AuthedAt = time.Now().Unix()
+						acc.Bearers[point] = data
+						acc.SaveConfig()
+					}
+				}
+			}
 		}
 	}
 
-	acc.SaveConfig()
 	acc.LoadState()
 }
 
@@ -778,8 +784,8 @@ func checkVer(name string, delay float64, dropTime int64) {
 
 	fmt.Println()
 
-	for e, account := range payload.AccountType {
-		switch account {
+	for e, account := range bearers.Details {
+		switch account.AccountType {
 		case "Giftcard":
 			leng = float64(acc.GcReq)
 		case "Microsoft":
@@ -816,7 +822,7 @@ func checkVer(name string, delay float64, dropTime int64) {
 			content += fmt.Sprintf("- [DISMAL] Sent @ %v | [%v] @ %v\n", formatTime(sendTime[e]), status, formatTime(recv[e]))
 			sendI(fmt.Sprintf("Sent @ %v | [%v] @ %v", formatTime(sendTime[e]), status, formatTime(recv[e])))
 		} else {
-			sendInfo(status, dropTime, searches)
+			sendInfo(name, status, searches, dropTime)
 			sendS(fmt.Sprintf("Sent @ %v | [%v] @ %v ~ %v", formatTime(sendTime[e]), status, formatTime(recv[e]), strings.Split(emailGot, ":")[0]))
 			content += fmt.Sprintf("+ [DISMAL] Sent @ %v | [%v] @ %v ~ %v\n", formatTime(sendTime[e]), status, formatTime(recv[e]), strings.Split(emailGot, ":")[0])
 		}
@@ -877,17 +883,25 @@ func checkAccs() {
 				sendI(accs.Email + " is due for auth")
 
 				// authenticating account
-				bearers, _ := apiGO.Auth([]string{accs.Email + ":" + accs.Password})
+				bearers := apiGO.Auth([]string{accs.Email + ":" + accs.Password})
 
-				if bearers.Bearers != nil {
-					accs.AuthedAt = time.Now().Unix()
-					accs.Bearer = bearers.Bearers[0]
-					accs.Type = bearers.AccountType[0]
-					acc.Bearers = append(acc.Bearers, accs)
+				if bearers.Details != nil {
+					for point, data := range acc.Bearers {
+						for _, accs := range bearers.Details {
+							if data.Email == accs.Email {
+								data.Bearer = accs.Bearer
+								data.NameChange = apiGO.CheckChange(accs.Bearer)
+								data.Type = accs.AccountType
+								data.Password = accs.Password
+								data.Email = accs.Email
+								data.AuthedAt = time.Now().Unix()
+								acc.Bearers[point] = data
+							}
+						}
+					}
 
 					acc.SaveConfig()
 					acc.LoadState()
-
 					break // break the loop to update the info.
 				}
 
@@ -960,85 +974,4 @@ func MeanPing() (float64, time.Duration) {
 	}
 
 	return mean(values), time.Since(time1)
-}
-
-func run(acctype string) {
-	for {
-		time.Sleep(1 * time.Second)
-		var delay float64 = AutoOffset()
-		sendI(fmt.Sprintf("Testing %v in 3 seconds", delay))
-		res := kqzzPing(acctype, 0.15, true, delay)
-		if res == true {
-			break
-		}
-	}
-}
-
-func kqzzPing(accs string, aim_for float64, log bool, delay float64) interface{} {
-	var leng float64
-
-	bearers := apiGO.MCbearers{}
-	bearers.Bearers = []string{"testbearer"}
-	bearers.AccountType = []string{accs}
-
-	var recv []time.Time
-	var wg sync.WaitGroup
-	var statuscode []string
-
-	dropTime := time.Now().Add(time.Second * 3).Unix()
-
-	apiGO.PreSleep(dropTime)
-
-	payload := bearers.CreatePayloads("Test")
-
-	fmt.Println()
-
-	apiGO.Sleep(dropTime, delay)
-
-	fmt.Println()
-
-	for e, account := range payload.AccountType {
-		switch account {
-		case "Giftcard":
-			leng = float64(acc.GcReq)
-		case "Microsoft":
-			leng = float64(acc.MFAReq)
-		}
-
-		for i := 0; float64(i) < leng; i++ {
-			wg.Add(1)
-			fmt.Fprintln(payload.Conns[e], payload.Payload[e])
-			go func(e int) {
-				ea := make([]byte, 1000)
-				payload.Conns[e].Read(ea)
-				recv = append(recv, time.Now())
-				statuscode = append(statuscode, string(ea[9:12]))
-				wg.Done()
-			}(e)
-			time.Sleep(time.Duration(acc.SpreadPerReq) * time.Microsecond)
-		}
-	}
-
-	wg.Wait()
-
-	for i, sends := range recv {
-		in, _ := strconv.Atoi(fmt.Sprintf("%v", sends.Format(".000")[1:]))
-
-		sendI(fmt.Sprintf("Recv @: %v | [%v]", formatTime(sends), statuscode[i]))
-
-		if InBetween(in, 99, 105) {
-			sendS(fmt.Sprintf("%v is a good delay!", delay))
-			return true
-		}
-	}
-
-	return false
-}
-
-func InBetween(i, min, max int) bool {
-	if (i >= min) && (i <= max) {
-		return true
-	} else {
-		return false
-	}
 }
