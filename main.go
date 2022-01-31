@@ -16,6 +16,7 @@ func main() {
 				Usage: `Snipes names onto an account.`,
 				Action: func(c *cli.Context) error {
 					authAccs()
+					fmt.Println()
 					go checkAccs()
 					snipe(c.String("u"), c.Float64("d"), "single", "")
 					return nil
@@ -41,6 +42,7 @@ func main() {
 				Usage:   "Runs the discord bot sniper.",
 				Action: func(c *cli.Context) error {
 					authAccs()
+					fmt.Println()
 					go checkAccs()
 					apiGO.Bot()
 					return nil
@@ -57,6 +59,7 @@ func main() {
 						Usage: "Snipe names are are a combination of Numeric and Alphabetic.",
 						Action: func(c *cli.Context) error {
 							authAccs()
+							fmt.Println()
 							go checkAccs()
 							snipe("", c.Float64("d"), "auto", "3c")
 							return nil
@@ -74,6 +77,7 @@ func main() {
 						Usage: "Snipe only Alphabetic names.",
 						Action: func(c *cli.Context) error {
 							authAccs()
+							fmt.Println()
 							go checkAccs()
 							snipe("", c.Float64("d"), "auto", "3l")
 							return nil
@@ -91,6 +95,7 @@ func main() {
 						Usage: "Snipe only Numeric names.",
 						Action: func(c *cli.Context) error {
 							authAccs()
+							fmt.Println()
 							go checkAccs()
 							snipe("", c.Float64("d"), "auto", "3n")
 							return nil
@@ -109,6 +114,7 @@ func main() {
 						Usage: "Snipe names are are a combination of Numeric and Alphabetic.",
 						Action: func(c *cli.Context) error {
 							authAccs()
+							fmt.Println()
 							go checkAccs()
 							snipe("", c.Float64("d"), "auto", "list")
 							return nil
@@ -157,7 +163,7 @@ func main() {
 		HideHelp: false,
 		Name:     "MCSN",
 		Usage:    "A name sniper dedicated to premium free services",
-		Version:  "4.10",
+		Version:  "4.25",
 	}
 
 	app.Run(os.Args)

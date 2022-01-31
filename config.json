@@ -1,12 +1,12 @@
 {
     "Bearers": [],
-    "ChangeSkinLink": "https://textures.minecraft.net/texture/393e1dc4b234665792c7775d2466f109421d0145ed7d3d63d89d5d4e0dbf5228",
+    "ChangeSkinLink": "https://textures.minecraft.net/texture/516accb84322ca168a8cd06b4d8cc28e08b31cb0555eee01b64f9175cefe7b75",
     "ChangeskinOnSnipe": true,
     "DiscordBotToken": "",
     "DiscordID": "314194500983455744",
     "GcReq": 2,
     "MFAReq": 2,
     "ManualBearer": false,
-    "SpreadPerReq": 100,
-    "Vps": []
+    "SpreadPerReq": 40,
+    "Vps": null
 }

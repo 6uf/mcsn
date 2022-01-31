@@ -10,7 +10,6 @@ import (
 	"image/color"
 	"image/png"
 	"io/ioutil"
-	"log"
 	"math"
 	"net/http"
 	"os"
@@ -18,7 +17,6 @@ import (
 	"os/signal"
 	"regexp"
 	"runtime"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -96,6 +94,27 @@ type Config struct {
 	Vps               []Vps     `json:"Vps"`
 }
 
+type Data struct {
+	Name   string `json:"name"`
+	Bearer string `json:"bearer"`
+	Unix   string `json:"unix"`
+	Config string `json:"config"`
+}
+
+type SentRequests struct {
+	Requests []Details
+}
+
+type Details struct {
+	Bearer     string
+	SentAt     string
+	RecvAt     string
+	StatusCode string
+	UnixRecv   int64
+	Success    bool
+	Email      string
+}
+
 var acc Config
 
 var (
@@ -114,8 +133,6 @@ var (
 )
 
 func init() {
-
-	acc.LoadState()
 
 	if runtime.GOOS == "windows" {
 		cmd := exec.Command("cmd", "/c", "cls")
@@ -155,7 +172,22 @@ func init() {
 	fmt.Print(aurora.Sprintf(aurora.White(`
 Ver: %v / %v
 
-`), aurora.Bold(aurora.BrightBlack("4.10")), aurora.Bold(aurora.BrightBlack("Made By Liza"))))
+`), aurora.Bold(aurora.BrightBlack("4.25")), aurora.Bold(aurora.BrightBlack("Made By Liza"))))
+
+	acc.LoadState()
+
+	if acc.DiscordID == "" {
+		var ID string
+		sendW("Enter a Discord ID: ")
+		fmt.Scan(&ID)
+
+		acc.DiscordID = ID
+
+		acc.SaveConfig()
+		acc.LoadState()
+
+		fmt.Println()
+	}
 }
 
 func formatTime(t time.Time) string {
@@ -178,27 +210,6 @@ func sendW(content string) {
 	fmt.Print(aurora.Sprintf(aurora.White("[%v] "+content), aurora.Green("INPUT")))
 }
 
-func sendInfo(name, status, searches string, dropTime int64) {
-	bearerGot, emailGots, _ := check(status, name, fmt.Sprintf("%v", dropTime), searches)
-	for i, data := range bearers.Details {
-		if data.Bearer != bearerGot {
-			bearers.Details[i] = data
-		}
-	}
-
-	emailGot = emailGots
-
-	if acc.ChangeskinOnSnipe {
-		sendInfo := apiGO.ServerInfo{
-			SkinUrl: acc.ChangeSkinLink,
-		}
-
-		sendInfo.ChangeSkin(jsonValue(skinUrls{Url: sendInfo.SkinUrl, Varient: "slim"}), bearerGot)
-	}
-}
-
-// - Used to calculate delay, some of it is accurate some isnt! never rely on recommended delay.. simply base ur delay off it. -
-
 func AutoOffset() float64 {
 	var pingTimes int64
 	conn, _ := tls.Dial("tcp", "api.minecraftservices.com:443", nil)
@@ -210,6 +221,7 @@ func AutoOffset() float64 {
 		conn.Read(recv)
 		pingTimes += time.Since(time1).Milliseconds()
 	}
+
 	return (float64(pingTimes) / float64(6000)) * 10000
 }
 
@@ -218,84 +230,30 @@ func jsonValue(f interface{}) []byte {
 	return g
 }
 
-func remove(l []string, item string) []string {
-	for i, other := range l {
-		if other == item {
-			l = append(l[:i], l[i+1:]...)
+func (account Details) check(name, searches string) bool {
+	var send bool = false
+
+	body, err := json.Marshal(Data{Name: name, Bearer: account.Bearer, Unix: fmt.Sprintf("%v", account.UnixRecv), Config: string(jsonValue(embeds{Content: "<@" + acc.DiscordID + ">", Embeds: []embed{{Description: fmt.Sprintf("Succesfully sniped %v with %v searches :bow_and_arrow:", name, searches), Color: 770000, Footer: footer{Text: "MCSN"}, Time: time.Now().Format(time.RFC3339)}}}))})
+
+	if err == nil {
+		req, err := http.NewRequest("POST", "https://droptime.site/api/v2/webhook", bytes.NewBuffer(body))
+		if err != nil {
+			fmt.Println(err)
 		}
-	}
-	return l
-}
 
-func check(status, name, unixTime, searches string) (string, string, bool) {
-	var bearerGot string
-	var emailGot string
-	var send bool
+		req.Header.Set("Content-Type", "application/json")
 
-	if status == `200` {
-		for _, bearer := range bearers.Details {
-			for _, email := range AccountsVer {
-				httpReq, err := http.NewRequest("GET", "https://api.minecraftservices.com/minecraft/profile", nil)
-				if err != nil {
-					continue
-				}
-				httpReq.Header.Set("Authorization", "Bearer "+bearer.Bearer)
-
-				uwu, err := http.DefaultClient.Do(httpReq)
-				if err != nil {
-					continue
-				}
-
-				bodyByte, err := ioutil.ReadAll(uwu.Body)
-				if err != nil {
-					continue
-				}
-
-				var info map[string]interface{}
-				json.Unmarshal(bodyByte, &info)
-
-				if info[`name`] == nil {
-				} else if info[`name`] == name {
-					bearerGot = bearer.Bearer
-
-					if acc.ManualBearer {
-						emailGot = email[0:30]
-					} else {
-						emailGot = email
-					}
-
-					type data struct {
-						Name   string `json:"name"`
-						Bearer string `json:"bearer"`
-						Unix   string `json:"unix"`
-						Config string `json:"config"`
-					}
-
-					body, err := json.Marshal(data{Name: name, Bearer: bearerGot, Unix: unixTime, Config: string(jsonValue(embeds{Content: "<@" + acc.DiscordID + ">", Embeds: []embed{{Description: fmt.Sprintf("Succesfully sniped %v with %v searches:skull:", name, searches), Color: 770000, Footer: footer{Text: "MCSN"}, Time: time.Now().Format(time.RFC3339)}}}))})
-
-					if err == nil {
-						req, err := http.NewRequest("POST", "https://droptime.site/api/v2/webhook", bytes.NewBuffer(body))
-						if err != nil {
-							fmt.Println(err)
-						}
-
-						req.Header.Set("Content-Type", "application/json")
-
-						resp, err := http.DefaultClient.Do(req)
-						if err == nil {
-							if resp.StatusCode == 200 {
-								send = true
-							} else {
-								send = false
-							}
-						}
-					}
-				}
+		resp, _ := http.DefaultClient.Do(req)
+		if err == nil {
+			if resp.StatusCode == 200 {
+				send = true
+			} else {
+				send = false
 			}
 		}
 	}
 
-	return bearerGot, emailGot, send
+	return send
 }
 
 func threeLetters(option string) ([]string, []int64) {
@@ -763,10 +721,8 @@ func checkifValid() {
 
 func checkVer(name string, delay float64, dropTime int64) {
 	var content string
-	var sendTime []time.Time
 	var leng float64
-	var recv []time.Time
-	var statusCode []string
+	var data SentRequests
 
 	searches := droptimeSiteSearches(name)
 
@@ -794,37 +750,62 @@ func checkVer(name string, delay float64, dropTime int64) {
 
 		for i := 0; float64(i) < leng; i++ {
 			wg.Add(1)
-			fmt.Fprintln(payload.Conns[e], payload.Payload[e])
-			sendTime = append(sendTime, time.Now())
-			go func(e int) {
+			go func(e int, account apiGO.Info) {
+				fmt.Fprintln(payload.Conns[e], payload.Payload[e])
+				sendTime := time.Now()
 				ea := make([]byte, 1000)
 				payload.Conns[e].Read(ea)
-				recv = append(recv, time.Now())
-				statusCode = append(statusCode, string(ea[9:12]))
+				recvTime := time.Now()
+
+				data.Requests = append(data.Requests, Details{
+					Bearer:     account.Bearer,
+					SentAt:     formatTime(sendTime),
+					RecvAt:     formatTime(recvTime),
+					StatusCode: string(ea[9:12]),
+					Success:    strings.Contains(string(ea[9:12]), "200"),
+					UnixRecv:   recvTime.Unix(),
+					Email:      account.Email,
+				})
+
 				wg.Done()
-			}(e)
+			}(e, account)
 			time.Sleep(time.Duration(acc.SpreadPerReq) * time.Microsecond)
 		}
 	}
 
 	wg.Wait()
 
-	sort.Slice(sendTime, func(i, j int) bool {
-		return sendTime[i].Before(sendTime[j])
-	})
+	for _, request := range data.Requests {
+		if request.Success {
+			content += fmt.Sprintf("+ Sent @ %v | [%v] @ %v ~ %v\n", request.SentAt, request.StatusCode, request.RecvAt, request.Email)
+			sendS(fmt.Sprintf("Sent @ %v | [%v] @ %v ~ %v\n", request.SentAt, request.StatusCode, request.RecvAt, request.Email))
 
-	sort.Slice(recv, func(i, j int) bool {
-		return recv[i].Before(recv[j])
-	})
+			if acc.ChangeskinOnSnipe {
+				sendInfo := apiGO.ServerInfo{
+					SkinUrl: acc.ChangeSkinLink,
+				}
 
-	for e, status := range statusCode {
-		if status != "200" {
-			content += fmt.Sprintf("- [DISMAL] Sent @ %v | [%v] @ %v\n", formatTime(sendTime[e]), status, formatTime(recv[e]))
-			sendI(fmt.Sprintf("Sent @ %v | [%v] @ %v", formatTime(sendTime[e]), status, formatTime(recv[e])))
+				resp, _ := sendInfo.ChangeSkin(jsonValue(skinUrls{Url: sendInfo.SkinUrl, Varient: "slim"}), request.Bearer)
+				if resp.StatusCode == 200 {
+					sendS("Succesfully Changed your Skin!")
+				} else {
+					sendE("Couldnt Change your Skin..")
+				}
+			}
+
+			if request.check(name, searches) {
+				sendS("Succesfully sent the webhook!")
+			} else {
+				sendE("Couldnt send the webhook..")
+			}
+
+			fmt.Println()
+
+			sendI("If you enjoy using MCSN feel free to join the discord! https://discord.gg/a8EQ97ZfgK")
+			break
 		} else {
-			sendInfo(name, status, searches, dropTime)
-			sendS(fmt.Sprintf("Sent @ %v | [%v] @ %v ~ %v", formatTime(sendTime[e]), status, formatTime(recv[e]), strings.Split(emailGot, ":")[0]))
-			content += fmt.Sprintf("+ [DISMAL] Sent @ %v | [%v] @ %v ~ %v\n", formatTime(sendTime[e]), status, formatTime(recv[e]), strings.Split(emailGot, ":")[0])
+			content += fmt.Sprintf("- Sent @ %v | [%v] @ %v ~ %v\n", request.SentAt, request.StatusCode, request.RecvAt, request.Email)
+			sendI(fmt.Sprintf("Sent @ %v | [%v] @ %v ~ %v", request.SentAt, request.StatusCode, request.RecvAt, request.Email))
 		}
 	}
 
@@ -849,8 +830,13 @@ func (config *Config) SaveConfig() {
 func (s *Config) LoadState() {
 	data, err := ReadFile("config.json")
 	if err != nil {
-		log.Println("No state file found, creating new one.")
+		sendI("No config file found, loading one.")
 		s.LoadFromFile()
+		s.GcReq = 2
+		s.MFAReq = 2
+		s.SpreadPerReq = 40
+		s.ChangeskinOnSnipe = true
+		s.ChangeSkinLink = "https://textures.minecraft.net/texture/516accb84322ca168a8cd06b4d8cc28e08b31cb0555eee01b64f9175cefe7b75"
 		s.SaveConfig()
 		return
 	}
@@ -865,7 +851,7 @@ func (c *Config) LoadFromFile() {
 	jsonFile, err := os.Open("config.json")
 	// if we os.Open returns an error then handle it
 	if err != nil {
-		log.Fatalln("Failed to open config file: ", err)
+		jsonFile, _ = os.Create("config.json")
 	}
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 	json.Unmarshal(byteValue, &c)
@@ -877,10 +863,12 @@ func WriteFile(path string, content string) {
 
 func checkAccs() {
 	for {
+		time.Sleep(time.Second * 10)
+
 		// check if the last auth was more than a minute ago
 		for _, accs := range acc.Bearers {
 			if time.Now().Unix() > accs.AuthedAt+accs.AuthInterval {
-				sendI(accs.Email + " is due for auth")
+				sendI(accs.Email + " is due for reauth")
 
 				// authenticating account
 				bearers := apiGO.Auth([]string{accs.Email + ":" + accs.Password})
@@ -917,11 +905,9 @@ func checkAccs() {
 
 				acc.SaveConfig()
 				acc.LoadState()
-				break // break the loop to update the state.Accounts info.
+				break // break the loop to update the info.
 			}
 		}
-
-		time.Sleep(time.Second * 10)
 	}
 }
 
