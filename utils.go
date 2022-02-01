@@ -230,6 +230,11 @@ func (account Details) check(name, searches string) {
 
 	for i, accs := range acc.Bearers {
 		if account.Email == accs.Email {
+
+			if acc.Bearers[i].Type == "Giftcard" {
+				acc.Bearers[i].Type = "Microsoft"
+			}
+
 			acc.Bearers[i].NameChange = false
 			acc.SaveConfig()
 			acc.LoadState()
