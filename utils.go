@@ -17,6 +17,7 @@ import (
 	"os/signal"
 	"regexp"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -78,8 +79,8 @@ type SentRequests struct {
 
 type Details struct {
 	Bearer     string
-	SentAt     string
-	RecvAt     string
+	SentAt     time.Time
+	RecvAt     time.Time
 	StatusCode string
 	UnixRecv   int64
 	Success    bool
@@ -755,8 +756,8 @@ func checkVer(name string, delay float64, dropTime int64) {
 
 				data.Requests = append(data.Requests, Details{
 					Bearer:     account.Bearer,
-					SentAt:     formatTime(sendTime),
-					RecvAt:     formatTime(recvTime),
+					SentAt:     sendTime,
+					RecvAt:     recvTime,
 					StatusCode: string(ea[9:12]),
 					Success:    strings.Contains(string(ea[9:12]), "200"),
 					UnixRecv:   recvTime.Unix(),
@@ -771,10 +772,14 @@ func checkVer(name string, delay float64, dropTime int64) {
 
 	wg.Wait()
 
+	sort.Slice(data.Requests, func(i, j int) bool {
+		return data.Requests[i].SentAt.Before(data.Requests[j].SentAt)
+	})
+
 	for _, request := range data.Requests {
 		if request.Success {
-			content += fmt.Sprintf("+ Sent @ %v | [%v] @ %v ~ %v\n", request.SentAt, request.StatusCode, request.RecvAt, request.Email)
-			sendS(fmt.Sprintf("Sent @ %v | [%v] @ %v ~ %v\n", request.SentAt, request.StatusCode, request.RecvAt, request.Email))
+			content += fmt.Sprintf("+ Sent @ %v | [%v] @ %v ~ %v\n", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email)
+			sendS(fmt.Sprintf("Sent @ %v | [%v] @ %v ~ %v\n", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email))
 
 			if acc.ChangeskinOnSnipe {
 				sendInfo := apiGO.ServerInfo{
@@ -796,8 +801,8 @@ func checkVer(name string, delay float64, dropTime int64) {
 			sendI("If you enjoy using MCSN feel free to join the discord! https://discord.gg/a8EQ97ZfgK")
 			break
 		} else {
-			content += fmt.Sprintf("- Sent @ %v | [%v] @ %v ~ %v\n", request.SentAt, request.StatusCode, request.RecvAt, request.Email)
-			sendI(fmt.Sprintf("Sent @ %v | [%v] @ %v ~ %v", request.SentAt, request.StatusCode, request.RecvAt, request.Email))
+			content += fmt.Sprintf("- Sent @ %v | [%v] @ %v ~ %v\n", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email)
+			sendI(fmt.Sprintf("Sent @ %v | [%v] @ %v ~ %v\n", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email))
 		}
 	}
 
