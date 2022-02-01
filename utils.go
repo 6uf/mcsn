@@ -65,35 +65,6 @@ type Pixel struct {
 	Color color.Color
 }
 
-type Bearers struct {
-	Bearer       string `json:"Bearer"`
-	Email        string `json:"Email"`
-	Password     string `json:"Password"`
-	AuthInterval int64  `json:"AuthInterval"`
-	AuthedAt     int64  `json:"AuthedAt"`
-	Type         string `json:"Type"`
-	NameChange   bool   `json:"NameChange"`
-}
-
-type Vps struct {
-	IP       string `json:"ip"`
-	Port     string `json:"port"`
-	Password string `json:"password"`
-}
-
-type Config struct {
-	Bearers           []Bearers `json:"Bearers"`
-	ChangeSkinLink    string    `json:"ChangeSkinLink"`
-	ChangeskinOnSnipe bool      `json:"ChangeskinOnSnipe"`
-	DiscordBotToken   string    `json:"DiscordBotToken"`
-	DiscordID         string    `json:"DiscordID"`
-	GcReq             int       `json:"GcReq"`
-	MFAReq            int       `json:"MFAReq"`
-	ManualBearer      bool      `json:"ManualBearer"`
-	SpreadPerReq      int       `json:"SpreadPerReq"`
-	Vps               []Vps     `json:"Vps"`
-}
-
 type Data struct {
 	Name   string `json:"name"`
 	Bearer string `json:"bearer"`
@@ -115,6 +86,8 @@ type Details struct {
 	Email      string
 }
 
+type Config apiGO.Config
+
 var acc Config
 
 var (
@@ -124,7 +97,6 @@ var (
 	bearers     apiGO.MCbearers
 	AccountsVer []string
 	config      map[string]interface{}
-	emailGot    string
 
 	images    []image.Image
 	thirdRow  [][]int = [][]int{{64, 16, 72, 24}, {56, 16, 64, 24}, {48, 16, 56, 24}, {40, 16, 48, 24}, {32, 16, 40, 24}, {24, 16, 32, 24}, {16, 16, 24, 24}, {8, 16, 16, 24}, {0, 16, 8, 24}}
@@ -230,30 +202,49 @@ func jsonValue(f interface{}) []byte {
 	return g
 }
 
-func (account Details) check(name, searches string) bool {
-	var send bool = false
+type checkDetails struct {
+	Error string `json:"error"`
+	Sent  string `json:"sent"`
+}
 
+func (account Details) check(name, searches string) {
+	var details checkDetails
 	body, err := json.Marshal(Data{Name: name, Bearer: account.Bearer, Unix: fmt.Sprintf("%v", account.UnixRecv), Config: string(jsonValue(embeds{Content: "<@" + acc.DiscordID + ">", Embeds: []embed{{Description: fmt.Sprintf("Succesfully sniped %v with %v searches :bow_and_arrow:", name, searches), Color: 770000, Footer: footer{Text: "MCSN"}, Time: time.Now().Format(time.RFC3339)}}}))})
-
 	if err == nil {
-		req, err := http.NewRequest("POST", "https://droptime.site/api/v2/webhook", bytes.NewBuffer(body))
-		if err != nil {
-			fmt.Println(err)
-		}
-
+		req, _ := http.NewRequest("POST", "http://droptime.site/api/v2/webhook", bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
-
 		resp, _ := http.DefaultClient.Do(req)
-		if err == nil {
-			if resp.StatusCode == 200 {
-				send = true
+		body, _ := ioutil.ReadAll(resp.Body)
+		json.Unmarshal(body, &details)
+
+		if details.Error != "" {
+			sendE(details.Error)
+		} else {
+			if details.Sent != "" {
+				sendS(details.Sent)
 			} else {
-				send = false
+				sendE(fmt.Sprintf("Couldnt send the request: %v", resp.StatusCode))
 			}
 		}
 	}
 
-	return send
+	for i, accs := range acc.Bearers {
+		if account.Email == accs.Email {
+			acc.Bearers[i].NameChange = false
+			acc.SaveConfig()
+			acc.LoadState()
+
+			var meow []apiGO.Info
+			for _, acc := range bearers.Details {
+				if acc.Email != accs.Email {
+					meow = append(meow, acc)
+				}
+			}
+
+			bearers.Details = meow
+			break
+		}
+	}
 }
 
 func threeLetters(option string) ([]string, []int64) {
@@ -493,7 +484,7 @@ func snipe(name string, delay float64, option string, charType string) {
 
 		dropTime := apiGO.DropTime(name)
 		if dropTime < int64(10000) {
-			sendW("-!- Droptime [UNIX] : ")
+			sendW("Droptime [UNIX] : ")
 			fmt.Scan(&dropTime)
 			fmt.Println()
 		}
@@ -601,7 +592,7 @@ func grabDetails() {
 				return
 			} else {
 				for _, accs := range bearerz.Details {
-					acc.Bearers = append(acc.Bearers, Bearers{
+					acc.Bearers = append(acc.Bearers, apiGO.Bearers{
 						Bearer:       accs.Bearer,
 						AuthInterval: 86400,
 						AuthedAt:     time.Now().Unix(),
@@ -633,7 +624,7 @@ func grabDetails() {
 
 				if len(bearerz.Details) != 0 {
 					for _, accs := range bearerz.Details {
-						acc.Bearers = append(acc.Bearers, Bearers{
+						acc.Bearers = append(acc.Bearers, apiGO.Bearers{
 							Bearer:       accs.Bearer,
 							AuthInterval: 86400,
 							AuthedAt:     time.Now().Unix(),
@@ -793,11 +784,7 @@ func checkVer(name string, delay float64, dropTime int64) {
 				}
 			}
 
-			if request.check(name, searches) {
-				sendS("Succesfully sent the webhook!")
-			} else {
-				sendE("Couldnt send the webhook..")
-			}
+			request.check(name, searches)
 
 			fmt.Println()
 
@@ -814,21 +801,17 @@ func checkVer(name string, delay float64, dropTime int64) {
 
 // code from Alien https://github.com/wwhtrbbtt/AlienSniper
 
-func ReadFile(path string) ([]byte, error) {
-	return ioutil.ReadFile(path)
-}
-
 func (s *Config) ToJson() []byte {
 	b, _ := json.MarshalIndent(s, "", "  ")
 	return b
 }
 
 func (config *Config) SaveConfig() {
-	WriteFile("config.json", string(config.ToJson()))
+	apiGO.WriteFile("config.json", string(config.ToJson()))
 }
 
 func (s *Config) LoadState() {
-	data, err := ReadFile("config.json")
+	data, err := apiGO.ReadFile("config.json")
 	if err != nil {
 		sendI("No config file found, loading one.")
 		s.LoadFromFile()
@@ -855,10 +838,6 @@ func (c *Config) LoadFromFile() {
 	}
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 	json.Unmarshal(byteValue, &c)
-}
-
-func WriteFile(path string, content string) {
-	ioutil.WriteFile(path, []byte(content), 0644)
 }
 
 func checkAccs() {
@@ -912,7 +891,7 @@ func checkAccs() {
 }
 
 func droptimeSiteSearches(username string) string {
-	resp, err := http.Get(fmt.Sprintf("https://droptime.site/api/v2/searches/%v", username))
+	resp, err := http.Get(fmt.Sprintf("http://droptime.site/api/v2/searches/%v", username))
 
 	if err != nil {
 		return "0"
@@ -953,7 +932,7 @@ func mean(values []float64) float64 {
 func MeanPing() (float64, time.Duration) {
 	var values []float64
 	time1 := time.Now()
-	for i := 0; i < 10; i++ {
+	for i := 1; i < 11; i++ {
 		value := AutoOffset()
 		sendI(fmt.Sprintf("%v. Request(s) gave %v as a estimated delay", i, math.Round(value)))
 		values = append(values, value)
