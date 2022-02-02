@@ -229,28 +229,28 @@ func (account Details) check(name, searches string) {
 		}
 	}
 
-	for i, accs := range acc.Bearers {
-		if account.Email == accs.Email {
-
-			if acc.Bearers[i].Type == "Giftcard" {
-				acc.Bearers[i].Type = "Microsoft"
-			}
-
-			acc.Bearers[i].NameChange = false
-			acc.SaveConfig()
-			acc.LoadState()
-
-			var meow []apiGO.Info
-			for _, acc := range bearers.Details {
-				if acc.Email != accs.Email {
-					meow = append(meow, acc)
-				}
-			}
-
-			bearers.Details = meow
-			break
+	var new []apiGO.Bearers
+	for _, accs := range acc.Bearers {
+		if account.Email != accs.Email {
+			new = append(new, accs)
 		}
 	}
+
+	acc.Bearers = new
+
+	var meow []apiGO.Info
+	for _, accs := range acc.Bearers {
+		for _, acc := range bearers.Details {
+			if acc.Email != accs.Email {
+				meow = append(meow, acc)
+			}
+		}
+	}
+
+	bearers.Details = meow
+
+	acc.SaveConfig()
+	acc.LoadState()
 }
 
 func threeLetters(option string) ([]string, []int64) {
@@ -779,7 +779,7 @@ func checkVer(name string, delay float64, dropTime int64) {
 	for _, request := range data.Requests {
 		if request.Success {
 			content += fmt.Sprintf("+ Sent @ %v | [%v] @ %v ~ %v\n", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email)
-			sendS(fmt.Sprintf("Sent @ %v | [%v] @ %v ~ %v\n", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email))
+			sendS(fmt.Sprintf("Sent @ %v | [%v] @ %v ~ %v", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email))
 
 			if acc.ChangeskinOnSnipe {
 				sendInfo := apiGO.ServerInfo{
@@ -802,7 +802,7 @@ func checkVer(name string, delay float64, dropTime int64) {
 			break
 		} else {
 			content += fmt.Sprintf("- Sent @ %v | [%v] @ %v ~ %v\n", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email)
-			sendI(fmt.Sprintf("Sent @ %v | [%v] @ %v ~ %v\n", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email))
+			sendI(fmt.Sprintf("Sent @ %v | [%v] @ %v ~ %v", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email))
 		}
 	}
 
