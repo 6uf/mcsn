@@ -3,7 +3,7 @@ module main
 go 1.17
 
 require (
-	github.com/Liza-Developer/apiGO v0.0.0-20220203015222-cd61adecf3e7
+	github.com/Liza-Developer/apiGO v0.0.0-20220203072825-55cac67b1d3e
 	github.com/disintegration/imaging v1.6.2
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/logrusorgru/aurora/v3 v3.0.0
