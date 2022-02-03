@@ -42,8 +42,9 @@ func main() {
 				Usage:   "Runs the discord bot sniper.",
 				Action: func(c *cli.Context) error {
 					authAccs()
-					fmt.Println()
+					apiGO.StartDigital()
 					go checkAccs()
+					go apiGO.TaskThread()
 					apiGO.Bot()
 					return nil
 				},

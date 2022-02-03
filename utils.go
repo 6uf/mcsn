@@ -11,6 +11,7 @@ import (
 	"image/png"
 	"io/ioutil"
 	"math"
+	"math/rand"
 	"net/http"
 	"os"
 	"os/exec"
@@ -33,10 +34,6 @@ import (
 type embeds struct {
 	Content interface{} `json:"content"`
 	Embeds  []embed     `json:"embeds"`
-}
-
-type Searches struct {
-	Searches string `json:"searches"`
 }
 
 type embed struct {
@@ -69,8 +66,13 @@ type Pixel struct {
 type Data struct {
 	Name   string `json:"name"`
 	Bearer string `json:"bearer"`
-	Unix   string `json:"unix"`
+	Unix   int64  `json:"unix"`
 	Config string `json:"config"`
+}
+
+type checkDetails struct {
+	Error string `json:"error"`
+	Sent  string `json:"sent"`
 }
 
 type SentRequests struct {
@@ -87,18 +89,16 @@ type Details struct {
 	Email      string
 }
 
-type Config apiGO.Config
-
-var acc Config
-
 var (
 	BearersVer  []string
 	Confirmed   []string
 	VpsesVer    []string
 	bearers     apiGO.MCbearers
 	AccountsVer []string
-	config      map[string]interface{}
+	list        []string = []string{"Liza ~ Nice Ass", "Noobyte ~ MMMMMMMMMM", "Noobyte ~ Touhou Epik", "Peet ~ Cool Coder Man", "Sniper Comm ~ Shit", "Life ~ 2012", "Kqzz ~ Money Generator", "Liza ~ Taddy Was The King?", "Everest ~ Shit Coder"}
 
+	acc       apiGO.Config
+	err       error
 	images    []image.Image
 	thirdRow  [][]int = [][]int{{64, 16, 72, 24}, {56, 16, 64, 24}, {48, 16, 56, 24}, {40, 16, 48, 24}, {32, 16, 40, 24}, {24, 16, 32, 24}, {16, 16, 24, 24}, {8, 16, 16, 24}, {0, 16, 8, 24}}
 	secondRow [][]int = [][]int{{64, 8, 72, 16}, {56, 8, 64, 16}, {48, 8, 56, 16}, {40, 8, 48, 16}, {32, 8, 40, 16}, {24, 8, 32, 16}, {16, 8, 24, 16}, {8, 8, 16, 16}, {0, 8, 8, 16}}
@@ -106,7 +106,6 @@ var (
 )
 
 func init() {
-
 	if runtime.GOOS == "windows" {
 		cmd := exec.Command("cmd", "/c", "cls")
 		cmd.Stdout = os.Stdout
@@ -117,10 +116,8 @@ func init() {
 		cmd.Run()
 	}
 
-	webhookvar, _ := ioutil.ReadFile("config.json")
-	json.Unmarshal(webhookvar, &config)
-
-	_, err := os.Stat("logs")
+	acc.LoadState()
+	_, err = os.Stat("logs")
 
 	if os.IsNotExist(err) {
 		err = os.Mkdir("logs", 0755)
@@ -129,8 +126,17 @@ func init() {
 		}
 	}
 
-	_, err = os.Stat("cropped")
+	_, err = os.Open("accounts.txt")
+	if os.IsNotExist(err) {
+		os.Create("accounts.txt")
+	}
 
+	_, err = os.Open("names.txt")
+	if os.IsNotExist(err) {
+		os.Create("names.txt")
+	}
+
+	_, err = os.Stat("cropped")
 	if os.IsNotExist(err) {
 		os.MkdirAll("cropped/logs", 0755)
 	}
@@ -143,11 +149,11 @@ func init() {
  `))
 
 	fmt.Print(aurora.Sprintf(aurora.White(`
-Ver: %v / %v
+   Ver: %v / %v
+  MOTD: %v
+Acc(s): %v
 
-`), aurora.Bold(aurora.BrightBlack("4.25")), aurora.Bold(aurora.BrightBlack("Made By Liza"))))
-
-	acc.LoadState()
+`), aurora.Bold(aurora.BrightBlack("4.25")), aurora.Bold(aurora.BrightBlack("Made By Liza")), aurora.Bold(aurora.BrightBlack(MOTD())), aurora.Bold(aurora.BrightBlack(len(acc.Bearers)))))
 
 	if acc.DiscordID == "" {
 		var ID string
@@ -203,54 +209,25 @@ func jsonValue(f interface{}) []byte {
 	return g
 }
 
-type checkDetails struct {
-	Error string `json:"error"`
-	Sent  string `json:"sent"`
-}
-
 func (account Details) check(name, searches string) {
 	var details checkDetails
-	body, err := json.Marshal(Data{Name: name, Bearer: account.Bearer, Unix: fmt.Sprintf("%v", account.UnixRecv), Config: string(jsonValue(embeds{Content: "<@" + acc.DiscordID + ">", Embeds: []embed{{Description: fmt.Sprintf("Succesfully sniped %v with %v searches :bow_and_arrow:", name, searches), Color: 770000, Footer: footer{Text: "MCSN"}, Time: time.Now().Format(time.RFC3339)}}}))})
-	if err == nil {
-		req, _ := http.NewRequest("POST", "http://droptime.site/api/v2/webhook", bytes.NewBuffer(body))
-		req.Header.Set("Content-Type", "application/json")
-		resp, _ := http.DefaultClient.Do(req)
-		body, _ := ioutil.ReadAll(resp.Body)
-		json.Unmarshal(body, &details)
+	body, _ := json.Marshal(Data{Name: name, Bearer: account.Bearer, Unix: account.UnixRecv, Config: string(jsonValue(embeds{Content: "<@" + acc.DiscordID + ">", Embeds: []embed{{Description: fmt.Sprintf("Succesfully sniped %v with %v searches :bow_and_arrow:", name, searches), Color: 770000, Footer: footer{Text: "MCSN"}, Time: time.Now().Format(time.RFC3339)}}}))})
 
-		if details.Error != "" {
-			sendE(details.Error)
-		} else {
-			if details.Sent != "" {
-				sendS(details.Sent)
-			} else {
-				sendE(fmt.Sprintf("Couldnt send the request: %v", resp.StatusCode))
-			}
-		}
+	req, _ := http.NewRequest("POST", "http://droptime.site/api/v2/webhook", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	resp, _ := http.DefaultClient.Do(req)
+	body, _ = ioutil.ReadAll(resp.Body)
+	json.Unmarshal(body, &details)
+
+	if details.Error != "" {
+		sendE(details.Error)
+	} else if details.Sent != "" {
+		sendS(details.Sent)
+	} else {
+		sendE(fmt.Sprintf("Couldnt send the request: %v", resp.StatusCode))
 	}
 
-	var new []apiGO.Bearers
-	for _, accs := range acc.Bearers {
-		if account.Email != accs.Email {
-			new = append(new, accs)
-		}
-	}
-
-	acc.Bearers = new
-
-	var meow []apiGO.Info
-	for _, accs := range acc.Bearers {
-		for _, acc := range bearers.Details {
-			if acc.Email != accs.Email {
-				meow = append(meow, acc)
-			}
-		}
-	}
-
-	bearers.Details = meow
-
-	acc.SaveConfig()
-	acc.LoadState()
+	removeDetails(account)
 }
 
 func threeLetters(option string) ([]string, []int64) {
@@ -721,7 +698,7 @@ func checkVer(name string, delay float64, dropTime int64) {
 	var leng float64
 	var data SentRequests
 
-	searches := droptimeSiteSearches(name)
+	searches, _ := apiGO.Search(name)
 
 	sendI(fmt.Sprintf("Name: %v | Delay: %v | Searches: %v\n", name, delay, searches))
 
@@ -811,45 +788,6 @@ func checkVer(name string, delay float64, dropTime int64) {
 
 // code from Alien https://github.com/wwhtrbbtt/AlienSniper
 
-func (s *Config) ToJson() []byte {
-	b, _ := json.MarshalIndent(s, "", "  ")
-	return b
-}
-
-func (config *Config) SaveConfig() {
-	apiGO.WriteFile("config.json", string(config.ToJson()))
-}
-
-func (s *Config) LoadState() {
-	data, err := apiGO.ReadFile("config.json")
-	if err != nil {
-		sendI("No config file found, loading one.")
-		s.LoadFromFile()
-		s.GcReq = 2
-		s.MFAReq = 2
-		s.SpreadPerReq = 40
-		s.ChangeskinOnSnipe = true
-		s.ChangeSkinLink = "https://textures.minecraft.net/texture/516accb84322ca168a8cd06b4d8cc28e08b31cb0555eee01b64f9175cefe7b75"
-		s.SaveConfig()
-		return
-	}
-
-	json.Unmarshal([]byte(data), s)
-	s.LoadFromFile()
-}
-
-func (c *Config) LoadFromFile() {
-	// Load a config file
-
-	jsonFile, err := os.Open("config.json")
-	// if we os.Open returns an error then handle it
-	if err != nil {
-		jsonFile, _ = os.Create("config.json")
-	}
-	byteValue, _ := ioutil.ReadAll(jsonFile)
-	json.Unmarshal(byteValue, &c)
-}
-
 func checkAccs() {
 	for {
 		time.Sleep(time.Second * 10)
@@ -883,7 +821,7 @@ func checkAccs() {
 				}
 
 				// if the account isnt usable, remove it from the list
-				var ts Config
+				var ts apiGO.Config
 				for _, i := range acc.Bearers {
 					if i.Email != accs.Email {
 						ts.Bearers = append(ts.Bearers, i)
@@ -898,33 +836,6 @@ func checkAccs() {
 			}
 		}
 	}
-}
-
-func droptimeSiteSearches(username string) string {
-	resp, err := http.Get(fmt.Sprintf("http://droptime.site/api/v2/searches/%v", username))
-
-	if err != nil {
-		return "0"
-	}
-	defer resp.Body.Close()
-
-	respBytes, err := ioutil.ReadAll(resp.Body)
-
-	if err != nil {
-		return "0"
-	}
-
-	if resp.StatusCode < 300 {
-		var res Searches
-		err = json.Unmarshal(respBytes, &res)
-		if err != nil {
-			return "0"
-		}
-
-		return res.Searches
-	}
-
-	return "0"
 }
 
 //
@@ -949,4 +860,62 @@ func MeanPing() (float64, time.Duration) {
 	}
 
 	return mean(values), time.Since(time1)
+}
+
+func removeDetails(account Details) {
+	var new []apiGO.Bearers
+	for _, accs := range acc.Bearers {
+		if account.Email != accs.Email {
+			new = append(new, accs)
+		}
+	}
+
+	acc.Bearers = new
+
+	var meow []apiGO.Info
+	for _, accs := range acc.Bearers {
+		for _, acc := range bearers.Details {
+			if acc.Email != accs.Email {
+				meow = append(meow, acc)
+			}
+		}
+	}
+
+	bearers.Details = meow
+
+	var accz []string
+	file, _ := os.Open("accounts.txt")
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		if strings.Split(scanner.Text(), ":")[0] != account.Email {
+			accz = append(accz, scanner.Text())
+		}
+	}
+
+	rewrite("accounts.txt", strings.Join(accz, "\n"))
+
+	acc.Logs = append(acc.Logs, apiGO.Logs{
+		Email:   account.Email,
+		Send:    account.SentAt,
+		Recv:    account.RecvAt,
+		Success: account.Success,
+	})
+
+	acc.SaveConfig()
+	acc.LoadState()
+}
+
+func rewrite(path, accounts string) {
+	os.Create(path)
+
+	file, _ := os.OpenFile(path, os.O_RDWR, 0644)
+	defer file.Close()
+
+	file.WriteAt([]byte(accounts), 0)
+}
+
+func MOTD() string {
+	rand.Seed(time.Now().UnixNano())
+	return list[rand.Intn(len(list))]
 }
