@@ -153,7 +153,7 @@ func init() {
   MOTD: %v
 Acc(s): %v
 
-`), aurora.Bold(aurora.BrightBlack("4.25")), aurora.Bold(aurora.BrightBlack("Made By Liza")), aurora.Bold(aurora.BrightBlack(MOTD())), aurora.Bold(aurora.BrightBlack(len(acc.Bearers)))))
+`), aurora.Bold(aurora.BrightBlack("4.30")), aurora.Bold(aurora.BrightBlack("Made By Liza")), aurora.Bold(aurora.BrightBlack(MOTD())), aurora.Bold(aurora.BrightBlack(len(acc.Bearers)))))
 
 	if acc.DiscordID == "" {
 		var ID string

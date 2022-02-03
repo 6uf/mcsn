@@ -164,7 +164,7 @@ func main() {
 		HideHelp: false,
 		Name:     "MCSN",
 		Usage:    "A name sniper dedicated to premium free services",
-		Version:  "4.25",
+		Version:  "4.30",
 	}
 
 	app.Run(os.Args)
