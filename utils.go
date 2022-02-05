@@ -90,12 +90,8 @@ type Details struct {
 }
 
 var (
-	BearersVer  []string
-	Confirmed   []string
-	VpsesVer    []string
-	bearers     apiGO.MCbearers
-	AccountsVer []string
-	list        []string = []string{"Liza ~ Nice Ass", "Noobyte ~ MMMMMMMMMM", "Noobyte ~ Touhou Epik", "Peet ~ Cool Coder Man", "Sniper Comm ~ Shit", "Life ~ 2012", "Kqzz ~ Money Generator", "Liza ~ Taddy Was The King?", "Everest ~ Shit Coder"}
+	bearers apiGO.MCbearers
+	list    []string = []string{"Liza ~ Nice Ass", "Noobyte ~ MMMMMMMMMM", "Noobyte ~ Touhou Epik", "Peet ~ Cool Coder Man", "Sniper Comm ~ Shit", "Life ~ 2012", "Kqzz ~ Money Generator", "Liza ~ Taddy Was The King?", "Everest ~ Shit Coder"}
 
 	acc       apiGO.Config
 	err       error
@@ -117,13 +113,11 @@ func init() {
 	}
 
 	acc.LoadState()
+
 	_, err = os.Stat("logs")
 
 	if os.IsNotExist(err) {
-		err = os.Mkdir("logs", 0755)
-		if err != nil {
-			fmt.Println("[MCSN] Failed to create Folder.")
-		}
+		os.Mkdir("logs", 0755)
 	}
 
 	_, err = os.Open("accounts.txt")
@@ -149,11 +143,10 @@ func init() {
  `))
 
 	fmt.Print(aurora.Sprintf(aurora.White(`
-   Ver: %v / %v
-  MOTD: %v
-Acc(s): %v
+ Ver: %v
+MOTD: %v
 
-`), aurora.Bold(aurora.BrightBlack("4.30")), aurora.Bold(aurora.BrightBlack("Made By Liza")), aurora.Bold(aurora.BrightBlack(MOTD())), aurora.Bold(aurora.BrightBlack(len(acc.Bearers)))))
+`), aurora.White(aurora.Sprintf("%v / %v", aurora.Bold(aurora.BrightBlack("4.45")), aurora.Bold(aurora.BrightBlack("Made By Liza")))), aurora.Bold(aurora.BrightBlack(MOTD()))))
 
 	if acc.DiscordID == "" {
 		var ID string
@@ -300,89 +293,115 @@ func logSnipe(content string, name string) {
 	logFile.WriteString(content)
 }
 
-func skinart(name string) {
+func skinart(name, imageFile string) {
 	var accd string
 	var choose string
-	sendW("Use config bearer? [yes | no]: ")
-	fmt.Scan(&choose)
+	var bearerNum int = 0
 
-	if strings.ContainsAny(strings.ToLower(choose), "yes ye y") {
-		acc.LoadState()
+	if !acc.ManualBearer {
+		sendW("Use config bearer? [yes | no]: ")
+		fmt.Scan(&choose)
 
-		if len(acc.Bearers) == 0 {
-			sendE("Unable to continue, you have no bearers added.")
-		} else {
-			var email string
-			sendW("Email of the account you will use: ")
-			fmt.Scan(&email)
+		if strings.ContainsAny(strings.ToLower(choose), "yes ye y") {
+			acc.LoadState()
 
-			for _, details := range acc.Bearers {
-				if strings.EqualFold(strings.ToLower(details.Email), strings.ToLower(email)) {
-					if details.Bearer != "" {
-						bearers.Details = append(bearers.Details, apiGO.Info{
-							Bearer:      details.Bearer,
-							AccountType: details.Type,
-							Email:       details.Email,
-						})
-						break
-					} else {
-						sendE("Your bearer is empty.")
-						break
+			if len(acc.Bearers) == 0 {
+				sendE("Unable to continue, you have no bearers added.")
+			} else {
+				var email string
+				sendW("Email of the account you will use: ")
+				fmt.Scan(&email)
+
+				fmt.Println()
+
+				for _, details := range acc.Bearers {
+					if strings.EqualFold(strings.ToLower(details.Email), strings.ToLower(email)) {
+						if details.Bearer != "" {
+							bearers.Details = append(bearers.Details, apiGO.Info{
+								Bearer:      details.Bearer,
+								AccountType: details.Type,
+								Email:       details.Email,
+							})
+							break
+						} else {
+							sendE("Your bearer is empty.")
+							break
+						}
 					}
 				}
 			}
+		} else {
+			sendW("Enter your account details to continue [email:password]: ")
+			fmt.Scan(&accd)
+			fmt.Println()
+			bearers = apiGO.Auth([]string{accd})
+			fmt.Println()
 		}
 	} else {
-		sendW("Enter your account details to continue [email:password]: ")
-		fmt.Scan(&accd)
-		bearers = apiGO.Auth([]string{accd})
+		sendW("This will use the first bearer within your accounts.txt | Press enter to verify: ")
+		fmt.Scanf("h")
+
+		authAccs()
 	}
 
-	if bearers.Details == nil {
-		sendE("Unable to continue, no bearers have been found.")
-		return
-	}
+	sendW("Would you like to use any previously generated skins [yes:no]: ")
+	fmt.Scan(&choose)
 
-	img, err := readImage("images/image.png")
-	if err != nil {
-		sendE(err.Error())
-	}
+	if strings.ContainsAny(strings.ToLower(choose), "yes ye y") {
+		var folder string
+		sendW("Name of the folder [case sensitive]: ")
+		fmt.Scan(&folder)
 
-	base, err := readImage("images/base.png")
-	if err != nil {
-		sendE(err.Error())
-	}
+		fmt.Println()
 
-	if img.Bounds().Size() != image.Pt(72, 24) {
-		img = resize.Resize(72, 24, img, resize.Lanczos3)
+		for i := 0; i < 27; {
+			changeSkin(bearerNum, fmt.Sprintf("cropped/logs/%v/base_%v.png", folder, i))
+			i++
+		}
+	} else {
+		fmt.Println()
 
-		writeImage(img, "images/image.png")
-	}
+		os.MkdirAll("cropped/logs/"+name, 0755)
 
-	for _, array := range thirdRow {
-		images = append(images, cropImage(img, image.Rect(array[0], array[1], array[2], array[3])))
-	}
+		img, err := readImage("images/" + imageFile)
+		if err != nil {
+			sendE(err.Error())
+		}
 
-	for _, array := range secondRow {
-		images = append(images, cropImage(img, image.Rect(array[0], array[1], array[2], array[3])))
-	}
+		base, err := readImage("images/base.png")
+		if err != nil {
+			sendE(err.Error())
+		}
 
-	for _, array := range firstRow {
-		images = append(images, cropImage(img, image.Rect(array[0], array[1], array[2], array[3])))
-	}
+		if img.Bounds().Size() != image.Pt(72, 24) {
+			img = resize.Resize(72, 24, img, resize.Lanczos3)
 
-	for i, images := range images {
-		imgs := imaging.Paste(base, images, image.Point{
-			X: 8,
-			Y: 8,
-		})
+			writeImage(img, "images/"+imageFile)
+		}
 
-		writeImage(imgs, fmt.Sprintf("cropped/logs/base_%v.png", i))
-	}
+		for _, array := range thirdRow {
+			images = append(images, cropImage(img, image.Rect(array[0], array[1], array[2], array[3])))
+		}
 
-	for i := 0; i < len(images); {
-		changeSkin(i)
-		i++
+		for _, array := range secondRow {
+			images = append(images, cropImage(img, image.Rect(array[0], array[1], array[2], array[3])))
+		}
+
+		for _, array := range firstRow {
+			images = append(images, cropImage(img, image.Rect(array[0], array[1], array[2], array[3])))
+		}
+
+		for i, images := range images {
+			writeImage(imaging.Paste(base, images, image.Point{
+				X: 8,
+				Y: 8,
+			}), fmt.Sprintf("cropped/logs/%v/base_%v.png", name, i))
+		}
+
+		for i := 0; i < 27; {
+			changeSkin(bearerNum, fmt.Sprintf("cropped/logs/%v/base_%v.png", name, i))
+			i++
+		}
 	}
 }
 
@@ -435,11 +454,11 @@ func DecodePixelsFromImage(img image.Image, offsetX, offsetY int) []*Pixel {
 	return pixels
 }
 
-func changeSkin(num int) {
+func changeSkin(bearerNum int, path string) {
 	client := resty.New()
-	skin, _ := client.R().SetAuthToken(bearers.Details[0].Bearer).SetFormData(map[string]string{
+	skin, _ := client.R().SetAuthToken(bearers.Details[bearerNum].Bearer).SetFormData(map[string]string{
 		"variant": "slim",
-	}).SetFile(fmt.Sprintf("cropped/logs/base_%v.png", num), fmt.Sprintf("cropped/logs/base_%v.png", num)).Post("https://api.minecraftservices.com/minecraft/profile/skins")
+	}).SetFile(path, path).Post("https://api.minecraftservices.com/minecraft/profile/skins")
 
 	if skin.StatusCode() == 200 {
 		sendI("Skin Changed")
@@ -457,7 +476,6 @@ func changeSkin(num int) {
 }
 
 func snipe(name string, delay float64, option string, charType string) {
-	var useAuto bool = false
 	switch option {
 	case "single":
 		if name == "" {
@@ -475,16 +493,28 @@ func snipe(name string, delay float64, option string, charType string) {
 		checkVer(name, delay, dropTime)
 
 	case "auto":
-		if delay == 0 {
-			useAuto = true
-		}
-
 		for {
 
-			names, drops := threeLetters(charType)
+			var names []string
+			var drops []int64
+
+			if charType == "list" {
+				file, _ := os.Open("names.txt")
+
+				scanner := bufio.NewScanner(file)
+
+				for scanner.Scan() {
+					drops = append(drops, apiGO.DropTime(scanner.Text()))
+					names = append(names, scanner.Text())
+
+					time.Sleep(1 * time.Second)
+				}
+			} else {
+				names, drops = threeLetters(charType)
+			}
 
 			for e, name := range names {
-				if useAuto {
+				if delay == 0 {
 					delay = float64(AutoOffset())
 				}
 
@@ -504,6 +534,75 @@ func snipe(name string, delay float64, option string, charType string) {
 				break
 			}
 		}
+	case "turbo":
+		for {
+			var leng float64
+			var data SentRequests
+			var wg sync.WaitGroup
+
+			payload := bearers.CreatePayloads(name)
+
+			for e, account := range bearers.Details {
+				switch account.AccountType {
+				case "Giftcard":
+					leng = float64(acc.GcReq)
+				case "Microsoft":
+					leng = float64(acc.MFAReq)
+				}
+
+				for i := 0; float64(i) < leng; i++ {
+					wg.Add(1)
+					go func(e int, account apiGO.Info) {
+						fmt.Fprintln(payload.Conns[e], payload.Payload[e])
+						sendTime := time.Now()
+						ea := make([]byte, 1000)
+						payload.Conns[e].Read(ea)
+						recvTime := time.Now()
+
+						data.Requests = append(data.Requests, Details{
+							Bearer:     account.Bearer,
+							SentAt:     sendTime,
+							RecvAt:     recvTime,
+							StatusCode: string(ea[9:12]),
+							Success:    strings.Contains(string(ea[9:12]), "200"),
+							UnixRecv:   recvTime.Unix(),
+							Email:      account.Email,
+						})
+
+						wg.Done()
+					}(e, account)
+					time.Sleep(time.Duration(acc.SpreadPerReq) * time.Microsecond)
+				}
+			}
+
+			wg.Wait()
+
+			for _, status := range data.Requests {
+				if status.Success {
+					status.check(name, "Turbo")
+
+					if acc.ChangeskinOnSnipe {
+						sendInfo := apiGO.ServerInfo{
+							SkinUrl: acc.ChangeSkinLink,
+						}
+
+						sendInfo.ChangeSkin(jsonValue(skinUrls{Url: sendInfo.SkinUrl, Varient: "slim"}), status.Bearer)
+					}
+
+					sendS("Succesfully Claimed " + name + " " + status.StatusCode)
+
+					break
+				} else {
+					sendI(fmt.Sprintf("Failed to claim %v | %v", name, status.StatusCode))
+				}
+			}
+
+			sendI("Sending 2 requests in a minute.")
+
+			time.Sleep(time.Minute)
+
+			fmt.Println()
+		}
 	}
 
 	fmt.Println()
@@ -515,6 +614,7 @@ func snipe(name string, delay float64, option string, charType string) {
 }
 
 func authAccs() {
+	var AccountsVer []string
 	file, _ := os.Open("accounts.txt")
 
 	scanner := bufio.NewScanner(file)
@@ -528,7 +628,7 @@ func authAccs() {
 		os.Exit(0)
 	}
 
-	grabDetails()
+	grabDetails(AccountsVer)
 
 	if !acc.ManualBearer {
 		if acc.Bearers == nil {
@@ -555,7 +655,7 @@ func authAccs() {
 	}
 }
 
-func grabDetails() {
+func grabDetails(AccountsVer []string) {
 	if acc.ManualBearer {
 		for _, bearer := range AccountsVer {
 			if apiGO.CheckChange(bearer) {

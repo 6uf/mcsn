@@ -25,13 +25,10 @@ func main() {
 					&cli.StringFlag{
 						Name:  "u",
 						Usage: "username to snipe",
-						Value: "",
 					},
 					&cli.Float64Flag{
-						Name:        "d",
-						DefaultText: "1",
-						Usage:       "Snipes a few ms earlier so you can counter ping lag.",
-						Value:       0,
+						Name:  "d",
+						Usage: "Snipes a few ms earlier so you can counter ping lag.",
 					},
 				},
 			},
@@ -52,8 +49,8 @@ func main() {
 
 			{
 				Name:    "auto",
-				Aliases: []string{"as", "autosniper", "a"},
-				Usage:   "Auto sniper automatically snipes 3C, 3L, or 3N for you. -3c -3l -3n are the commands.",
+				Aliases: []string{"as", "a"},
+				Usage:   "Auto sniper attempts to snipe upcoming 3 character usernames.",
 				Subcommands: []*cli.Command{
 					{
 						Name:  "3c",
@@ -69,7 +66,6 @@ func main() {
 							&cli.Float64Flag{
 								Name:  "d",
 								Usage: "Snipes a few ms earlier so you can counter ping lag.",
-								Value: 0,
 							},
 						},
 					},
@@ -87,7 +83,6 @@ func main() {
 							&cli.Float64Flag{
 								Name:  "d",
 								Usage: "Snipes a few ms earlier so you can counter ping lag.",
-								Value: 0,
 							},
 						},
 					},
@@ -105,7 +100,6 @@ func main() {
 							&cli.Float64Flag{
 								Name:  "d",
 								Usage: "Snipes a few ms earlier so you can counter ping lag.",
-								Value: 0,
 							},
 						},
 					},
@@ -124,7 +118,6 @@ func main() {
 							&cli.Float64Flag{
 								Name:  "d",
 								Usage: "Snipes a few ms earlier so you can counter ping lag.",
-								Value: 0,
 							},
 						},
 					},
@@ -145,17 +138,40 @@ func main() {
 			},
 
 			{
-				Name:  "namemc",
-				Usage: `NameMC Skin Art`,
+				Name:    "turbo",
+				Aliases: []string{"t"},
+				Usage:   "Turbo a name just in case it drops!",
 				Action: func(c *cli.Context) error {
-					skinart(c.String("n"))
+					authAccs()
+					fmt.Println()
+					go checkAccs()
+					snipe(c.String("u"), 0, "turbo", "")
+					return nil
+				},
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "u",
+						Usage: "username to snipe",
+					},
+				},
+			},
+
+			{
+				Name:    "namemc",
+				Aliases: []string{"n", "nmc", "skinart"},
+				Usage:   `NameMC Skin Art`,
+				Action: func(c *cli.Context) error {
+					skinart(c.String("n"), c.String("i"))
 					return nil
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:  "n",
 						Usage: "Name of your Art",
-						Value: "",
+					},
+					&cli.StringFlag{
+						Name:  "i",
+						Usage: "Name of your image.",
 					},
 				},
 			},
@@ -164,7 +180,7 @@ func main() {
 		HideHelp: false,
 		Name:     "MCSN",
 		Usage:    "A name sniper dedicated to premium free services",
-		Version:  "4.30",
+		Version:  "4.45",
 	}
 
 	app.Run(os.Args)
