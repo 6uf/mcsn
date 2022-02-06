@@ -145,7 +145,7 @@ func main() {
 					authAccs()
 					fmt.Println()
 					go checkAccs()
-					proxy(c.String("u"), c.Float64("d"))
+					proxy(c.String("u"), c.Float64("d"), apiGO.DropTime(c.String("u")))
 
 					return nil
 				},
@@ -158,6 +158,131 @@ func main() {
 					&cli.Float64Flag{
 						Name:  "d",
 						Usage: "Snipes a few ms earlier so you can counter ping lag.",
+					},
+				},
+
+				Subcommands: []*cli.Command{
+					{
+						Name:  "3c",
+						Usage: "Snipe names are are a combination of Numeric and Alphabetic.",
+						Action: func(c *cli.Context) error {
+							authAccs()
+							fmt.Println()
+							go checkAccs()
+
+							var names []string
+							var drops []int64
+							delay := c.Float64("d")
+							names, drops = threeLetters("3c")
+
+							for e, name := range names {
+								if delay == 0 {
+									delay = float64(AutoOffset())
+								}
+
+								if !acc.ManualBearer {
+									if len(bearers.Details) == 0 {
+										sendE("No more usable account(s)")
+										os.Exit(0)
+									}
+								}
+
+								proxy(name, c.Float64("d"), drops[e])
+
+								checkVer(name, delay, drops[e])
+
+								fmt.Println()
+							}
+							return nil
+						},
+						Flags: []cli.Flag{
+							&cli.Float64Flag{
+								Name:  "d",
+								Usage: "Snipes a few ms earlier so you can counter ping lag.",
+							},
+						},
+					},
+					{
+						Name:  "3l",
+						Usage: "Snipe only Alphabetic names.",
+						Action: func(c *cli.Context) error {
+							authAccs()
+							fmt.Println()
+							go checkAccs()
+
+							var names []string
+							var drops []int64
+							delay := c.Float64("d")
+							names, drops = threeLetters("3l")
+
+							for e, name := range names {
+								if delay == 0 {
+									delay = float64(AutoOffset())
+								}
+
+								if !acc.ManualBearer {
+									if len(bearers.Details) == 0 {
+										sendE("No more usable account(s)")
+										os.Exit(0)
+									}
+								}
+
+								proxy(name, c.Float64("d"), drops[e])
+
+								checkVer(name, delay, drops[e])
+
+								fmt.Println()
+							}
+
+							return nil
+						},
+						Flags: []cli.Flag{
+							&cli.Float64Flag{
+								Name:  "d",
+								Usage: "Snipes a few ms earlier so you can counter ping lag.",
+							},
+						},
+					},
+					{
+						Name:  "3n",
+						Usage: "Snipe only Numeric names.",
+						Action: func(c *cli.Context) error {
+							authAccs()
+							fmt.Println()
+							go checkAccs()
+
+							var names []string
+							var drops []int64
+							delay := c.Float64("d")
+							names, drops = threeLetters("3n")
+
+							for e, name := range names {
+								if delay == 0 {
+									delay = float64(AutoOffset())
+								}
+
+								if !acc.ManualBearer {
+									if len(bearers.Details) == 0 {
+										sendE("No more usable account(s)")
+										os.Exit(0)
+									}
+								}
+
+								proxy(name, c.Float64("d"), drops[e])
+
+								checkVer(name, delay, drops[e])
+
+								fmt.Println()
+							}
+
+							return nil
+						},
+						Flags: []cli.Flag{
+							&cli.Float64Flag{
+								Name:  "d",
+								Usage: "Snipes a few ms earlier so you can counter ping lag.",
+							},
+						},
 					},
 				},
 			},
@@ -205,7 +330,7 @@ func main() {
 		HideHelp: false,
 		Name:     "MCSN",
 		Usage:    "A name sniper dedicated to premium free services",
-		Version:  "4.45",
+		Version:  "4.50",
 	}
 
 	app.Run(os.Args)
