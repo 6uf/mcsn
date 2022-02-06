@@ -13,6 +13,7 @@ import (
 	"math"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -123,6 +124,11 @@ func init() {
 	_, err = os.Open("accounts.txt")
 	if os.IsNotExist(err) {
 		os.Create("accounts.txt")
+	}
+
+	_, err = os.Open("proxys.txt")
+	if os.IsNotExist(err) {
+		os.Create("proxys.txt")
 	}
 
 	_, err = os.Open("names.txt")
@@ -736,25 +742,6 @@ func grabDetails(AccountsVer []string) {
 	}
 }
 
-func isGC(bearer string) string {
-	var accountT string
-	conn, _ := tls.Dial("tcp", "api.minecraftservices.com"+":443", nil)
-
-	fmt.Fprintln(conn, "GET /minecraft/profile/namechange HTTP/1.1\r\nHost: api.minecraftservices.com\r\nUser-Agent: Dismal/1.0\r\nAuthorization: Bearer "+bearer+"\r\n\r\n")
-
-	e := make([]byte, 12)
-	conn.Read(e)
-
-	switch string(e[9:12]) {
-	case `404`:
-		accountT = "Giftcard"
-	default:
-		accountT = "Microsoft"
-	}
-
-	return accountT
-}
-
 func checkifValid() {
 	var reAuth []string
 	for _, accs := range acc.Bearers {
@@ -793,6 +780,25 @@ func checkifValid() {
 	acc.LoadState()
 }
 
+func isGC(bearer string) string {
+	var accountT string
+	conn, _ := tls.Dial("tcp", "api.minecraftservices.com"+":443", nil)
+
+	fmt.Fprintln(conn, "GET /minecraft/profile/namechange HTTP/1.1\r\nHost: api.minecraftservices.com\r\nUser-Agent: Dismal/1.0\r\nAuthorization: Bearer "+bearer+"\r\n\r\n")
+
+	e := make([]byte, 12)
+	conn.Read(e)
+
+	switch string(e[9:12]) {
+	case `404`:
+		accountT = "Giftcard"
+	default:
+		accountT = "Microsoft"
+	}
+
+	return accountT
+}
+
 func checkVer(name string, delay float64, dropTime int64) {
 	var content string
 	var leng float64
@@ -827,7 +833,7 @@ func checkVer(name string, delay float64, dropTime int64) {
 			go func(e int, account apiGO.Info) {
 				fmt.Fprintln(payload.Conns[e], payload.Payload[e])
 				sendTime := time.Now()
-				ea := make([]byte, 1000)
+				ea := make([]byte, 4096)
 				payload.Conns[e].Read(ea)
 				recvTime := time.Now()
 
@@ -1018,4 +1024,155 @@ func rewrite(path, accounts string) {
 func MOTD() string {
 	rand.Seed(time.Now().UnixNano())
 	return list[rand.Intn(len(list))]
+}
+
+// Proxy code
+
+var used = make(map[*url.URL]bool)
+var conns []*http.Request
+
+func proxy(name string, delay float64) {
+	var leng float64
+	var wg sync.WaitGroup
+	var data SentRequests
+	var content string
+
+	dropTime := apiGO.DropTime(name)
+
+	searches, _ := apiGO.Search(name)
+
+	sendI(fmt.Sprintf("Name: %v | Delay: %v | Searches: %v\n", name, delay, searches))
+
+	apiGO.PreSleep(dropTime)
+
+	fmt.Println()
+
+	proxy := genProxys()
+	setup(proxy)
+	genHttp(name)
+
+	apiGO.Sleep(dropTime, delay)
+
+	fmt.Println()
+
+	for e, account := range bearers.Details {
+		switch account.AccountType {
+		case "Giftcard":
+			leng = float64(acc.GcReq)
+		case "Microsoft":
+			leng = float64(acc.MFAReq)
+		}
+
+		for i := 0; float64(i) < leng; i++ {
+			wg.Add(1)
+			go func(account apiGO.Info) {
+				sendTime := time.Now()
+				res, err := generateClient(randomInt(proxy)).Do(conns[e])
+				if err == nil {
+					recvTime := time.Now()
+					data.Requests = append(data.Requests, Details{
+						Bearer:     account.Bearer,
+						SentAt:     sendTime,
+						RecvAt:     recvTime,
+						StatusCode: fmt.Sprintf("%v", res.StatusCode),
+						Success:    strings.Contains(fmt.Sprintf("%v", res.StatusCode), "200"),
+						UnixRecv:   recvTime.Unix(),
+						Email:      account.Email,
+					})
+				}
+				wg.Done()
+			}(account)
+			time.Sleep(time.Duration(acc.SpreadPerReq) * time.Microsecond)
+		}
+	}
+
+	wg.Wait()
+
+	sort.Slice(data.Requests, func(i, j int) bool {
+		return data.Requests[i].SentAt.Before(data.Requests[j].SentAt)
+	})
+
+	for _, request := range data.Requests {
+		if request.Success {
+			content += fmt.Sprintf("+ Sent @ %v | [%v] @ %v ~ %v\n", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email)
+			sendS(fmt.Sprintf("Sent @ %v | [%v] @ %v ~ %v", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email))
+
+			if acc.ChangeskinOnSnipe {
+				sendInfo := apiGO.ServerInfo{
+					SkinUrl: acc.ChangeSkinLink,
+				}
+
+				resp, _ := sendInfo.ChangeSkin(jsonValue(skinUrls{Url: sendInfo.SkinUrl, Varient: "slim"}), request.Bearer)
+				if resp.StatusCode == 200 {
+					sendS("Succesfully Changed your Skin!")
+				} else {
+					sendE("Couldnt Change your Skin..")
+				}
+			}
+
+			request.check(name, searches)
+
+			fmt.Println()
+
+			sendI("If you enjoy using MCSN feel free to join the discord! https://discord.gg/a8EQ97ZfgK")
+			break
+		} else {
+			content += fmt.Sprintf("- Sent @ %v | [%v] @ %v ~ %v\n", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email)
+			sendI(fmt.Sprintf("Sent @ %v | [%v] @ %v ~ %v", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email))
+		}
+	}
+
+	logSnipe(content, name)
+
+}
+
+func genProxys() []*url.URL {
+	var proxys []*url.URL
+
+	f, _ := os.Open("proxys.txt")
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		url, _ := url.Parse("http://" + scanner.Text())
+		proxys = append(proxys, url)
+	}
+
+	return proxys
+}
+
+func randomInt(proxys []*url.URL) *url.URL {
+	for _, proxy := range proxys {
+		if used[proxy] == false {
+			used[proxy] = true
+			return proxy
+		}
+	}
+
+	return nil
+}
+
+func generateClient(url *url.URL) *http.Client {
+	return &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyURL(url),
+		},
+	}
+}
+
+func setup(proxy []*url.URL) {
+	for _, proxy := range proxy {
+		used[proxy] = false
+	}
+}
+
+func genHttp(name string) {
+	for _, account := range bearers.Details {
+		conns = append(conns, httpReq(name, account.Bearer))
+	}
+}
+
+func httpReq(name, bearer string) *http.Request {
+	req, _ := http.NewRequest("PUT", "https://api.minecraftservices.com/minecraft/profile/name/"+name, nil)
+	req.Header.Add("Authorization", "Bearer "+bearer)
+	return req
 }

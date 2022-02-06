@@ -138,6 +138,31 @@ func main() {
 			},
 
 			{
+				Name:    "proxy",
+				Aliases: []string{"p"},
+				Usage:   "Proxy snipes names for you",
+				Action: func(c *cli.Context) error {
+					authAccs()
+					fmt.Println()
+					go checkAccs()
+					proxy(c.String("u"), c.Float64("d"))
+
+					return nil
+				},
+
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "u",
+						Usage: "username to snipe",
+					},
+					&cli.Float64Flag{
+						Name:  "d",
+						Usage: "Snipes a few ms earlier so you can counter ping lag.",
+					},
+				},
+			},
+
+			{
 				Name:    "turbo",
 				Aliases: []string{"t"},
 				Usage:   "Turbo a name just in case it drops!",
