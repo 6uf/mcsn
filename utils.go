@@ -180,7 +180,7 @@ func init() {
    MOTD: %v
 Proxies: %v
 
-`), aurora.White(aurora.Sprintf("%v / %v", aurora.Bold(aurora.BrightBlack("4.50")), aurora.Bold(aurora.BrightBlack("Made By Liza")))), aurora.Bold(aurora.BrightBlack(MOTD())), aurora.Bold(aurora.BrightBlack(len(proxys)))))
+`), aurora.White(aurora.Sprintf("%v / %v", aurora.Bold(aurora.BrightBlack("4.50b1")), aurora.Bold(aurora.BrightBlack("Made By Liza")))), aurora.Bold(aurora.BrightBlack(MOTD())), aurora.Bold(aurora.BrightBlack(len(proxys)))))
 
 	if acc.DiscordID == "" {
 		var ID string
@@ -1071,8 +1071,8 @@ func proxy(name string, delay float64, dropTime int64) {
 
 	sendI(fmt.Sprintf("Name: %v | Delay: %v | Searches: %v | Proxys: %v\n", name, delay, searches, len(proxys)))
 
-	for time.Now().Before(time.Unix(dropTime, 0).Add(-time.Second * 60)) {
-		sendT(fmt.Sprintf("Generating Proxy Connections In: %v      \r", time.Until(time.Unix(dropTime, 0).Add(-time.Second*60)).Round(time.Second).Seconds()))
+	for time.Now().Before(time.Unix(dropTime, 0).Add(-time.Second * 35)) {
+		sendT(fmt.Sprintf("Generating Proxy Connections In: %v      \r", time.Until(time.Unix(dropTime, 0).Add(-time.Second*35)).Round(time.Second).Seconds()))
 		time.Sleep(time.Second * 1)
 	}
 
@@ -1085,7 +1085,7 @@ func proxy(name string, delay float64, dropTime int64) {
 	fmt.Println()
 
 	for e, account := range bearers.Details {
-		if e == len(proxys) {
+		if e == len(clients) {
 			break
 		} else {
 			if account.AccountType == "Giftcard" {

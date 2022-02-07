@@ -189,7 +189,7 @@ func main() {
 
 								proxy(name, c.Float64("d"), drops[e])
 
-								checkVer(name, delay, drops[e])
+								setup(proxys)
 
 								fmt.Println()
 							}
@@ -229,7 +229,7 @@ func main() {
 
 								proxy(name, c.Float64("d"), drops[e])
 
-								checkVer(name, delay, drops[e])
+								setup(proxys)
 
 								fmt.Println()
 							}
@@ -270,7 +270,7 @@ func main() {
 
 								proxy(name, c.Float64("d"), drops[e])
 
-								checkVer(name, delay, drops[e])
+								setup(proxys)
 
 								fmt.Println()
 							}
@@ -330,7 +330,7 @@ func main() {
 		HideHelp: false,
 		Name:     "MCSN",
 		Usage:    "A name sniper dedicated to premium free services",
-		Version:  "4.50",
+		Version:  "4.50b1",
 	}
 
 	app.Run(os.Args)

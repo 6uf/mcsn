@@ -23,6 +23,11 @@ With that out of the way lets continue;
 - `go run . auto 3n -d delay` attempts to snipe upcoming 3n names, "123".
 - `go run . auto list -d delay` snipes names from your names.txt file.
 
+- `go run . proxy -u username -d delay` Snipes names using proxies.
+- `go run . proxy 3c -d delay` this attempts to snipe all upcoming 3c using proxies.
+- `go run . proxy 3l -d delay` this attempts to snipe all upcoming 3l using proxies.
+- `go run . proxy 3n -d delay` this attempts to snipe all upcoming 3n using proxies.
+
 # Fun Commands and Extra Info
 
 These commands are mainly added for preference or user experience.
@@ -34,6 +39,7 @@ These commands are mainly added for preference or user experience.
 Other info, you do NOT need to add a -d value to the auto snipe commands.
 
 - `go run . auto 3c` this functions normally like the other auto commands, but instead uses the build in delay calculator to grab your delay for snipes.
+- `go run . proxy 3c` this functions like the normal auto 3c functions, instead it uses thedelay it gets from the autooffset function as stated above aswell ^^
 
 # Trouble?
 
