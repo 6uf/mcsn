@@ -197,6 +197,11 @@ Proxies: %v
 	}
 }
 
+func jsonValue(f interface{}) []byte {
+	g, _ := json.Marshal(f)
+	return g
+}
+
 func formatTime(t time.Time) string {
 	return t.Format("05.00000")
 }
@@ -234,11 +239,6 @@ func AutoOffset() float64 {
 	}
 
 	return (float64(pingTimes) / float64(6000)) * 10000
-}
-
-func jsonValue(f interface{}) []byte {
-	g, _ := json.Marshal(f)
-	return g
 }
 
 func (account Details) check(name, searches, accType string) {
@@ -815,7 +815,6 @@ func checkifValid() {
 }
 
 func isGC(bearer string) string {
-	var accountT string
 	conn, _ := tls.Dial("tcp", "api.minecraftservices.com"+":443", nil)
 
 	fmt.Fprintln(conn, "GET /minecraft/profile/namechange HTTP/1.1\r\nHost: api.minecraftservices.com\r\nUser-Agent: Dismal/1.0\r\nAuthorization: Bearer "+bearer+"\r\n\r\n")
@@ -825,12 +824,10 @@ func isGC(bearer string) string {
 
 	switch string(e[9:12]) {
 	case `404`:
-		accountT = "Giftcard"
+		return "Giftcard"
 	default:
-		accountT = "Microsoft"
+		return "Microsoft"
 	}
-
-	return accountT
 }
 
 func checkVer(name string, delay float64, dropTime int64) {
@@ -980,26 +977,16 @@ func checkAccs() {
 
 //
 
-func mean(values []float64) float64 {
-	total := 0.0
-
-	for _, v := range values {
-		total += float64(v)
-	}
-
-	return math.Round(total / float64(len(values)))
-}
-
 func MeanPing() (float64, time.Duration) {
-	var values []float64
+	var values float64
 	time1 := time.Now()
 	for i := 1; i < 11; i++ {
 		value := AutoOffset()
-		sendI(fmt.Sprintf("%v. Request(s) gave %v as a estimated delay", i, math.Round(value)))
-		values = append(values, value)
+		sendI(fmt.Sprintf("%v. Request Took %v", i, math.Round(value)))
+		values += value
 	}
 
-	return mean(values), time.Since(time1)
+	return values, time.Since(time1)
 }
 
 func removeDetails(account Details) {
