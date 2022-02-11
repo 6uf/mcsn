@@ -977,16 +977,26 @@ func checkAccs() {
 
 //
 
-func MeanPing() (float64, time.Duration) {
-	var values float64
-	time1 := time.Now()
-	for i := 0; i < 10; i++ {
-		value := AutoOffset()
-		sendI(fmt.Sprintf("Request Took: %v", math.Round(value)))
-		values += value
+func mean(values []float64) float64 {
+	total := 0.0
+
+	for _, v := range values {
+		total += float64(v)
 	}
 
-	return values, time.Since(time1)
+	return math.Round(total / float64(len(values)))
+}
+
+func MeanPing() (float64, time.Duration) {
+	var values []float64
+	time1 := time.Now()
+	for i := 1; i < 11; i++ {
+		value := AutoOffset()
+		sendI(fmt.Sprintf("Request Took: %v", math.Round(value)))
+		values = append(values, value)
+	}
+
+	return mean(values), time.Since(time1)
 }
 
 func removeDetails(account Details) {
