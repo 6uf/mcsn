@@ -192,7 +192,7 @@ func init() {
    MOTD: %v
 Proxies: %v
 
-`), aurora.White(aurora.Sprintf("%v / %v", aurora.Bold(aurora.BrightBlack("4.50b1")), aurora.Bold(aurora.BrightBlack("Made By Liza")))), aurora.Bold(aurora.BrightBlack(MOTD())), aurora.Bold(aurora.BrightBlack(len(proxys)))))
+`), aurora.White(aurora.Sprintf("%v / %v", aurora.Bold(aurora.BrightBlack("4.60")), aurora.Bold(aurora.BrightBlack("Made By Liza")))), aurora.Bold(aurora.BrightBlack(MOTD())), aurora.Bold(aurora.BrightBlack(len(proxys)))))
 
 	if acc.DiscordID == "" {
 		var ID string

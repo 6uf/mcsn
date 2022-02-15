@@ -330,7 +330,7 @@ func main() {
 		HideHelp: false,
 		Name:     "MCSN",
 		Usage:    "A name sniper dedicated to premium free services",
-		Version:  "4.50b1",
+		Version:  "4.60",
 	}
 
 	app.Run(os.Args)
