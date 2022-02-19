@@ -2,23 +2,97 @@ package main
 
 import (
 	"fmt"
+	"mcsn/src"
 	"os"
+	"os/exec"
+	"runtime"
 
 	"github.com/Liza-Developer/apiGO"
+	"github.com/logrusorgru/aurora"
 	"github.com/urfave/cli/v2"
 )
+
+func init() {
+	if runtime.GOOS == "windows" {
+		cmd := exec.Command("cmd", "/c", "cls")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	} else {
+		cmd := exec.Command("clear")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	}
+
+	src.Acc.LoadState()
+
+	_, err := os.Stat("logs")
+
+	if os.IsNotExist(err) {
+		os.Mkdir("logs", 0755)
+	}
+
+	_, err = os.Open("accounts.txt")
+	if os.IsNotExist(err) {
+		os.Create("accounts.txt")
+	}
+
+	_, err = os.Open("proxys.txt")
+	if os.IsNotExist(err) {
+		os.Create("proxys.txt")
+	}
+
+	_, err = os.Open("names.txt")
+	if os.IsNotExist(err) {
+		os.Create("names.txt")
+	}
+
+	_, err = os.Stat("cropped")
+	if os.IsNotExist(err) {
+		os.MkdirAll("cropped/logs", 0755)
+	}
+
+	src.Pro = src.GenProxys()
+	src.Setup(src.Pro)
+
+	fmt.Print(aurora.White(`
+    __  _____________  __
+   /  |/  / ___/ __/ |/ /
+  / /|_/ / /___\ \/    / 
+ /_/  /_/\___/___/_/|_/
+ `))
+
+	fmt.Print(aurora.Sprintf(aurora.White(`
+    Ver: %v
+   MOTD: %v
+Proxies: %v
+
+`), aurora.White(aurora.Sprintf("%v / %v", aurora.Bold(aurora.BrightBlack("4.60")), aurora.Bold(aurora.BrightBlack("Made By Liza")))), aurora.Bold(aurora.BrightBlack(src.MOTD())), aurora.Bold(aurora.BrightBlack(len(src.Pro)))))
+
+	if src.Acc.DiscordID == "" {
+		var ID string
+		src.SendW("Enter a Discord ID: ")
+		fmt.Scan(&ID)
+
+		src.Acc.DiscordID = ID
+
+		src.Acc.SaveConfig()
+		src.Acc.LoadState()
+
+		fmt.Println()
+	}
+}
 
 func main() {
 	app := &cli.App{
 		Commands: []*cli.Command{
 			{
 				Name:  "snipe",
-				Usage: `Snipes names onto an account.`,
+				Usage: `Snipes names onto an src.Account.`,
 				Action: func(c *cli.Context) error {
-					authAccs()
+					src.AuthAccs()
 					fmt.Println()
-					go checkAccs()
-					snipe(c.String("u"), c.Float64("d"), "single", "")
+					go src.CheckAccs()
+					src.Snipe(c.String("u"), c.Float64("d"), "single", "")
 					return nil
 				},
 				Flags: []cli.Flag{
@@ -34,20 +108,6 @@ func main() {
 			},
 
 			{
-				Name:    "botsniper",
-				Aliases: []string{"bot", "b", "bs"},
-				Usage:   "Runs the discord bot sniper.",
-				Action: func(c *cli.Context) error {
-					authAccs()
-					apiGO.StartDigital()
-					go checkAccs()
-					go apiGO.TaskThread()
-					apiGO.Bot()
-					return nil
-				},
-			},
-
-			{
 				Name:    "auto",
 				Aliases: []string{"as", "a"},
 				Usage:   "Auto sniper attempts to snipe upcoming 3 character usernames.",
@@ -56,10 +116,10 @@ func main() {
 						Name:  "3c",
 						Usage: "Snipe names are are a combination of Numeric and Alphabetic.",
 						Action: func(c *cli.Context) error {
-							authAccs()
+							src.AuthAccs()
 							fmt.Println()
-							go checkAccs()
-							snipe("", c.Float64("d"), "auto", "3c")
+							go src.CheckAccs()
+							src.Snipe("", c.Float64("d"), "auto", "3c")
 							return nil
 						},
 						Flags: []cli.Flag{
@@ -73,10 +133,10 @@ func main() {
 						Name:  "3l",
 						Usage: "Snipe only Alphabetic names.",
 						Action: func(c *cli.Context) error {
-							authAccs()
+							src.AuthAccs()
 							fmt.Println()
-							go checkAccs()
-							snipe("", c.Float64("d"), "auto", "3l")
+							go src.CheckAccs()
+							src.Snipe("", c.Float64("d"), "auto", "3l")
 							return nil
 						},
 						Flags: []cli.Flag{
@@ -90,10 +150,10 @@ func main() {
 						Name:  "3n",
 						Usage: "Snipe only Numeric names.",
 						Action: func(c *cli.Context) error {
-							authAccs()
+							src.AuthAccs()
 							fmt.Println()
-							go checkAccs()
-							snipe("", c.Float64("d"), "auto", "3n")
+							go src.CheckAccs()
+							src.Snipe("", c.Float64("d"), "auto", "3n")
 							return nil
 						},
 						Flags: []cli.Flag{
@@ -108,10 +168,10 @@ func main() {
 						Name:  "list",
 						Usage: "Snipe names are are a combination of Numeric and Alphabetic.",
 						Action: func(c *cli.Context) error {
-							authAccs()
+							src.AuthAccs()
 							fmt.Println()
-							go checkAccs()
-							snipe("", c.Float64("d"), "auto", "list")
+							go src.CheckAccs()
+							src.Snipe("", c.Float64("d"), "auto", "list")
 							return nil
 						},
 						Flags: []cli.Flag{
@@ -130,8 +190,8 @@ func main() {
 				Usage:   "ping helps give you a rough estimate of your connection to the minecraft API.",
 				Action: func(c *cli.Context) error {
 
-					delay, time := MeanPing()
-					sendS(fmt.Sprintf("Estimated (Mean) Delay: %v ~ Took: %v\n", delay, time))
+					delay, time := src.MeanPing()
+					fmt.Printf("Estimated (Mean) Delay: %v ~ Took: %v\n", delay, time)
 
 					return nil
 				},
@@ -142,10 +202,10 @@ func main() {
 				Aliases: []string{"p"},
 				Usage:   "Proxy snipes names for you",
 				Action: func(c *cli.Context) error {
-					authAccs()
+					src.AuthAccs()
 					fmt.Println()
-					go checkAccs()
-					proxy(c.String("u"), c.Float64("d"), apiGO.DropTime(c.String("u")))
+					go src.CheckAccs()
+					src.Proxy(c.String("u"), c.Float64("d"), apiGO.DropTime(c.String("u")))
 
 					return nil
 				},
@@ -166,30 +226,30 @@ func main() {
 						Name:  "3c",
 						Usage: "Snipe names are are a combination of Numeric and Alphabetic.",
 						Action: func(c *cli.Context) error {
-							authAccs()
+							src.AuthAccs()
 							fmt.Println()
-							go checkAccs()
+							go src.CheckAccs()
 
 							var names []string
 							var drops []int64
 							delay := c.Float64("d")
-							names, drops = threeLetters("3c")
+							names, drops = src.ThreeLetters("3c")
 
 							for e, name := range names {
 								if delay == 0 {
-									delay = float64(AutoOffset())
+									delay = float64(src.AutoOffset())
 								}
 
-								if !acc.ManualBearer {
-									if len(bearers.Details) == 0 {
-										sendE("No more usable account(s)")
+								if !src.Acc.ManualBearer {
+									if len(src.Bearers.Details) == 0 {
+										src.SendE("No more usable Account(s)")
 										os.Exit(0)
 									}
 								}
 
-								proxy(name, c.Float64("d"), drops[e])
+								src.Proxy(name, c.Float64("d"), drops[e])
 
-								setup(proxys)
+								src.Setup(src.Pro)
 
 								fmt.Println()
 							}
@@ -206,30 +266,30 @@ func main() {
 						Name:  "3l",
 						Usage: "Snipe only Alphabetic names.",
 						Action: func(c *cli.Context) error {
-							authAccs()
+							src.AuthAccs()
 							fmt.Println()
-							go checkAccs()
+							go src.CheckAccs()
 
 							var names []string
 							var drops []int64
 							delay := c.Float64("d")
-							names, drops = threeLetters("3l")
+							names, drops = src.ThreeLetters("3l")
 
 							for e, name := range names {
 								if delay == 0 {
-									delay = float64(AutoOffset())
+									delay = float64(src.AutoOffset())
 								}
 
-								if !acc.ManualBearer {
-									if len(bearers.Details) == 0 {
-										sendE("No more usable account(s)")
+								if !src.Acc.ManualBearer {
+									if len(src.Bearers.Details) == 0 {
+										src.SendE("No more usable Account(s)")
 										os.Exit(0)
 									}
 								}
 
-								proxy(name, c.Float64("d"), drops[e])
+								src.Proxy(name, c.Float64("d"), drops[e])
 
-								setup(proxys)
+								src.Setup(src.Pro)
 
 								fmt.Println()
 							}
@@ -247,30 +307,30 @@ func main() {
 						Name:  "3n",
 						Usage: "Snipe only Numeric names.",
 						Action: func(c *cli.Context) error {
-							authAccs()
+							src.AuthAccs()
 							fmt.Println()
-							go checkAccs()
+							go src.CheckAccs()
 
 							var names []string
 							var drops []int64
 							delay := c.Float64("d")
-							names, drops = threeLetters("3n")
+							names, drops = src.ThreeLetters("3n")
 
 							for e, name := range names {
 								if delay == 0 {
-									delay = float64(AutoOffset())
+									delay = float64(src.AutoOffset())
 								}
 
-								if !acc.ManualBearer {
-									if len(bearers.Details) == 0 {
-										sendE("No more usable account(s)")
+								if !src.Acc.ManualBearer {
+									if len(src.Bearers.Details) == 0 {
+										src.SendE("No more usable Account(s)")
 										os.Exit(0)
 									}
 								}
 
-								proxy(name, c.Float64("d"), drops[e])
+								src.Proxy(name, c.Float64("d"), drops[e])
 
-								setup(proxys)
+								src.Setup(src.Pro)
 
 								fmt.Println()
 							}
@@ -292,10 +352,10 @@ func main() {
 				Aliases: []string{"t"},
 				Usage:   "Turbo a name just in case it drops!",
 				Action: func(c *cli.Context) error {
-					authAccs()
+					src.AuthAccs()
 					fmt.Println()
-					go checkAccs()
-					snipe(c.String("u"), 0, "turbo", "")
+					go src.CheckAccs()
+					src.Snipe(c.String("u"), 0, "turbo", "")
 					return nil
 				},
 				Flags: []cli.Flag{
@@ -311,7 +371,7 @@ func main() {
 				Aliases: []string{"n", "nmc", "skinart"},
 				Usage:   `NameMC Skin Art`,
 				Action: func(c *cli.Context) error {
-					skinart(c.String("n"), c.String("i"))
+					src.Skinart(c.String("n"), c.String("i"))
 					return nil
 				},
 				Flags: []cli.Flag{
