@@ -192,7 +192,7 @@ func checkVer(name string, delay float64, dropTime int64) {
 					Bearer:     Account.Bearer,
 					SentAt:     SendTime,
 					RecvAt:     recvTime,
-					StatusCode: string(ea),
+					StatusCode: string(ea[9:12]),
 					Success:    string(ea[9:12]) == "200",
 					UnixRecv:   recvTime.Unix(),
 					Email:      Account.Email,
