@@ -158,7 +158,7 @@ func checkVer(name string, delay float64, dropTime int64) {
 
 	searches, _ := apiGO.Search(name)
 
-	fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("%v: %v - %v: %v - %v: %v\n")), aurora.Red("Name"), name, aurora.Red("Delay"), delay, aurora.Red("Searches"), searches))
+	fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Name: %v - Delay: %v - Searches: %v\n")), aurora.Red(name), aurora.Red(delay), aurora.Red(searches)))
 
 	var wg sync.WaitGroup
 
@@ -172,9 +172,9 @@ func checkVer(name string, delay float64, dropTime int64) {
 
 	fmt.Println()
 
-	apiGO.Sleep(dropTime, delay)
+	fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("\nSleeping until droptime: %v\n")), aurora.Red(time.Unix(dropTime, 0))))
 
-	fmt.Println()
+	time.Sleep(time.Until(time.Unix(dropTime, 0).Add(time.Millisecond * time.Duration(0-delay)).Add(time.Duration(-float64(time.Since(time.Now()).Nanoseconds())/1000000.0) * time.Millisecond)))
 
 	for e, Account := range Bearers.Details {
 		for i := 0; float64(i) < float64(Account.Requests); i++ {
@@ -207,6 +207,7 @@ func checkVer(name string, delay float64, dropTime int64) {
 	}
 
 	wg.Wait()
+	fmt.Println()
 
 	sort.Slice(data.Requests, func(i, j int) bool {
 		return data.Requests[i].SentAt.Before(data.Requests[j].SentAt)
@@ -215,7 +216,9 @@ func checkVer(name string, delay float64, dropTime int64) {
 	for _, request := range data.Requests {
 		if request.Success {
 			content += fmt.Sprintf("+ Sent @ %v | [%v] @ %v ~ %v\n", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email)
-			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Sent @ %v >> [%v] @ %v ~ %v\n")), aurora.Red(formatTime(request.SentAt)), aurora.Green(request.StatusCode), aurora.Red(formatTime(request.RecvAt)), aurora.Red(request.Email)))
+			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Sent @ %v >> [%v] @ %v ~ %v\n")), aurora.Green(formatTime(request.SentAt)), aurora.Green(request.StatusCode), aurora.Green(formatTime(request.RecvAt)), aurora.Green(request.Email)))
+
+			fmt.Println()
 
 			if Acc.ChangeskinOnSnipe {
 				SendInfo := apiGO.ServerInfo{
@@ -224,7 +227,7 @@ func checkVer(name string, delay float64, dropTime int64) {
 
 				resp, _ := SendInfo.ChangeSkin(jsonValue(skinUrls{Url: SendInfo.SkinUrl, Varient: "slim"}), request.Bearer)
 				if resp.StatusCode == 200 {
-					fmt.Print(aurora.Faint(aurora.White("Succesfully Changed your Skin!\n")))
+					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Succesfully Changed your Skin!\n")), aurora.Green(resp.StatusCode)))
 				} else {
 					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Couldnt Change your Skin..\n")), aurora.Red("ERROR")))
 				}

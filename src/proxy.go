@@ -28,8 +28,7 @@ func Proxy(name string, delay float64, dropTime int64) {
 	var content string
 
 	searches, _ := apiGO.Search(name)
-
-	fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("%v: %v - %v: %v - %v: %v - %v: %v\n")), aurora.Red("Name"), name, aurora.Red("Delay"), delay, aurora.Red("Searches"), searches, aurora.Red("Proxys"), len(Pro)))
+	fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Name: %v - Delay: %v - Searches: %v - Proxys: %v\n")), aurora.Red(name), aurora.Red(delay), aurora.Red(searches), aurora.Red(len(Pro))))
 
 	for time.Now().Before(time.Unix(dropTime, 0).Add(-time.Second * 15)) {
 		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Generating Proxy Connections In: %v      \r")), aurora.Red(time.Until(time.Unix(dropTime, 0).Add(-time.Second*15)).Round(time.Second).Seconds())))
@@ -117,7 +116,9 @@ func Proxy(name string, delay float64, dropTime int64) {
 	for _, request := range data.Requests {
 		if request.Success {
 			content += fmt.Sprintf("+ Sent @ %v >> [%v] @ %v ~ %v\n", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email)
-			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Sent @ %v >> [%v] @ %v ~ %v\n")), aurora.Red(formatTime(request.SentAt)), aurora.Green(request.StatusCode), aurora.Red(formatTime(request.RecvAt)), aurora.Red(request.Email)))
+			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Sent @ %v >> [%v] @ %v ~ %v\n")), aurora.Green(formatTime(request.SentAt)), aurora.Green(request.StatusCode), aurora.Green(formatTime(request.RecvAt)), aurora.Green(request.Email)))
+
+			fmt.Println()
 
 			if Acc.ChangeskinOnSnipe {
 				SendInfo := apiGO.ServerInfo{
@@ -126,7 +127,7 @@ func Proxy(name string, delay float64, dropTime int64) {
 
 				resp, _ := SendInfo.ChangeSkin(jsonValue(skinUrls{Url: SendInfo.SkinUrl, Varient: "slim"}), request.Bearer)
 				if resp.StatusCode == 200 {
-					fmt.Print(aurora.Faint(aurora.White("Succesfully Changed your Skin!\n")))
+					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Succesfully Changed your Skin!\n")), aurora.Green(resp.StatusCode)))
 				} else {
 					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Couldnt Change your Skin..\n")), aurora.Red("ERROR")))
 				}

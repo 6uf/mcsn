@@ -78,15 +78,20 @@ func grabDetails(AccountsVer []string) {
 				return
 			} else {
 				for _, Accs := range bearerz.Details {
-					Acc.Bearers = append(Acc.Bearers, apiGO.Bearers{
-						Bearer:       Accs.Bearer,
-						AuthInterval: 86400,
-						AuthedAt:     time.Now().Unix(),
-						Type:         Accs.AccountType,
-						Email:        Accs.Email,
-						Password:     Accs.Password,
-						NameChange:   apiGO.CheckChange(Accs.Bearer),
-					})
+					if Accs.Error != "" {
+						fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Account %v came up Invalid: %v\n")), aurora.Red("ERROR"), aurora.Red(Accs.Email), aurora.Red(Accs.Error)))
+					} else {
+						fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Succesfully Authed %v\n")), aurora.Green(Accs.Email)))
+						Acc.Bearers = append(Acc.Bearers, apiGO.Bearers{
+							Bearer:       Accs.Bearer,
+							AuthInterval: 86400,
+							AuthedAt:     time.Now().Unix(),
+							Type:         Accs.AccountType,
+							Email:        Accs.Email,
+							Password:     Accs.Password,
+							NameChange:   apiGO.CheckChange(Accs.Bearer),
+						})
+					}
 				}
 				Acc.SaveConfig()
 				Acc.LoadState()
@@ -110,15 +115,20 @@ func grabDetails(AccountsVer []string) {
 
 				if len(bearerz.Details) != 0 {
 					for _, Accs := range bearerz.Details {
-						Acc.Bearers = append(Acc.Bearers, apiGO.Bearers{
-							Bearer:       Accs.Bearer,
-							AuthInterval: 86400,
-							AuthedAt:     time.Now().Unix(),
-							Type:         Accs.AccountType,
-							Email:        Accs.Email,
-							Password:     Accs.Password,
-							NameChange:   apiGO.CheckChange(Accs.Bearer),
-						})
+						if Accs.Error != "" {
+							fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Account %v came up Invalid: %v\n")), aurora.Red("ERROR"), aurora.Red(Accs.Email), aurora.Red(Accs.Error)))
+						} else {
+							fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Succesfully Authed %v\n")), aurora.Green(Accs.Email)))
+							Acc.Bearers = append(Acc.Bearers, apiGO.Bearers{
+								Bearer:       Accs.Bearer,
+								AuthInterval: 86400,
+								AuthedAt:     time.Now().Unix(),
+								Type:         Accs.AccountType,
+								Email:        Accs.Email,
+								Password:     Accs.Password,
+								NameChange:   apiGO.CheckChange(Accs.Bearer),
+							})
+						}
 					}
 
 					Acc.SaveConfig()
@@ -159,15 +169,20 @@ func checkifValid() {
 		if len(bearerz.Details) != 0 {
 			for point, data := range Acc.Bearers {
 				for _, Accs := range bearerz.Details {
-					if data.Email == Accs.Email {
-						data.Bearer = Accs.Bearer
-						data.NameChange = apiGO.CheckChange(Accs.Bearer)
-						data.Type = Accs.AccountType
-						data.Password = Accs.Password
-						data.Email = Accs.Email
-						data.AuthedAt = time.Now().Unix()
-						Acc.Bearers[point] = data
-						Acc.SaveConfig()
+					if Accs.Error != "" {
+						fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Account %v came up Invalid: %v\n")), aurora.Red("ERROR"), aurora.Red(Accs.Email), aurora.Red(Accs.Error)))
+					} else {
+						fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Succesfully Reuthed %v\n")), aurora.Green(Accs.Email)))
+						if data.Email == Accs.Email {
+							data.Bearer = Accs.Bearer
+							data.NameChange = apiGO.CheckChange(Accs.Bearer)
+							data.Type = Accs.AccountType
+							data.Password = Accs.Password
+							data.Email = Accs.Email
+							data.AuthedAt = time.Now().Unix()
+							Acc.Bearers[point] = data
+							Acc.SaveConfig()
+						}
 					}
 				}
 			}
