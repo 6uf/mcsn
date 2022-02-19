@@ -12,19 +12,20 @@ import (
 	"time"
 
 	"github.com/Liza-Developer/apiGO"
+	"github.com/logrusorgru/aurora"
 )
 
 func Snipe(name string, delay float64, option string, charType string) {
 	switch option {
 	case "single":
 		if name == "" {
-			SendE("You have entered a empty name | go run . snipe -u username -d 10 / mcsn.exe snipe -u username -d 10")
+			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] You have entered a empty name | go run . snipe -u username -d 10 / mcsn.exe snipe -u username -d 10\n")), aurora.Red("ERROR")))
 			return
 		}
 
 		dropTime := apiGO.DropTime(name)
 		if dropTime < int64(10000) {
-			SendW("Droptime [UNIX] : ")
+			fmt.Print(aurora.Faint(aurora.White("Droptime [UNIX]: ")))
 			fmt.Scan(&dropTime)
 			fmt.Println()
 		}
@@ -59,7 +60,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 
 				if !Acc.ManualBearer {
 					if len(Bearers.Details) == 0 {
-						SendE("No more usable Account(s)")
+						fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] No more usable Account(s)\n")), aurora.Red("ERROR")))
 						os.Exit(0)
 					}
 				}
@@ -129,15 +130,13 @@ func Snipe(name string, delay float64, option string, charType string) {
 						SendInfo.ChangeSkin(jsonValue(skinUrls{Url: SendInfo.SkinUrl, Varient: "slim"}), status.Bearer)
 					}
 
-					SendS("Succesfully Claimed " + name + " " + status.StatusCode)
+					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] %v Claimed %v\n")), aurora.Green(status.StatusCode), aurora.Green("Succesfully"), aurora.Red(name)))
 
 					break
 				} else {
-					SendI(fmt.Sprintf("Failed to claim %v | %v", name, status.StatusCode))
+					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] %v to claim %v\n")), aurora.Green(status.StatusCode), aurora.Red("Failed"), aurora.Red(name)))
 				}
 			}
-
-			SendI("SendIng requests in a minute.")
 
 			time.Sleep(time.Minute)
 
@@ -147,7 +146,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 
 	fmt.Println()
 
-	SendW("Press CTRL+C to Continue : ")
+	fmt.Print((aurora.Faint(aurora.White("CTRL+C To Continue: "))))
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
 	<-stop
@@ -159,12 +158,12 @@ func checkVer(name string, delay float64, dropTime int64) {
 
 	searches, _ := apiGO.Search(name)
 
-	SendI(fmt.Sprintf("Name: %v | Delay: %v | Searches: %v\n", name, delay, searches))
+	fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("%v: %v - %v: %v - %v: %v\n")), aurora.Red("Name"), name, aurora.Red("Delay"), delay, aurora.Red("Searches"), searches))
 
 	var wg sync.WaitGroup
 
 	for time.Now().Before(time.Unix(dropTime, 0).Add(-time.Second * 5)) {
-		SendT(fmt.Sprintf("Generating Payloads/TLS Connection In: %v      \r", time.Until(time.Unix(dropTime, 0).Add(-time.Second*5)).Round(time.Second).Seconds()))
+		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Generating Payloads/TLS Connection In: %v      \r")), aurora.Red(time.Until(time.Unix(dropTime, 0).Add(-time.Second*5)).Round(time.Second).Seconds())))
 		time.Sleep(time.Second * 1)
 	}
 
@@ -216,7 +215,7 @@ func checkVer(name string, delay float64, dropTime int64) {
 	for _, request := range data.Requests {
 		if request.Success {
 			content += fmt.Sprintf("+ Sent @ %v | [%v] @ %v ~ %v\n", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email)
-			SendS(fmt.Sprintf("Sent @ %v | [%v] @ %v ~ %v", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email))
+			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Sent @ %v >> [%v] @ %v ~ %v\n")), aurora.Red(formatTime(request.SentAt)), aurora.Green(request.StatusCode), aurora.Red(formatTime(request.RecvAt)), aurora.Red(request.Email)))
 
 			if Acc.ChangeskinOnSnipe {
 				SendInfo := apiGO.ServerInfo{
@@ -225,9 +224,9 @@ func checkVer(name string, delay float64, dropTime int64) {
 
 				resp, _ := SendInfo.ChangeSkin(jsonValue(skinUrls{Url: SendInfo.SkinUrl, Varient: "slim"}), request.Bearer)
 				if resp.StatusCode == 200 {
-					SendS("Succesfully Changed your Skin!")
+					fmt.Print(aurora.Faint(aurora.White("Succesfully Changed your Skin!\n")))
 				} else {
-					SendE("Couldnt Change your Skin..")
+					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Couldnt Change your Skin..\n")), aurora.Red("ERROR")))
 				}
 			}
 
@@ -235,14 +234,14 @@ func checkVer(name string, delay float64, dropTime int64) {
 
 			fmt.Println()
 
-			SendI("If you enjoy using MCSN feel free to join the discord! https://discord.gg/a8EQ97ZfgK")
+			fmt.Print((aurora.Faint(aurora.White("If you enjoy using MCSN feel free to join the discord! https://discord.gg/a8EQ97ZfgK\n"))))
 			break
 		} else {
 			content += fmt.Sprintf("- Sent @ %v >> [%v] @ %v ~ %v\n", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email)
 			if request.Cloudfront {
-				SendE(fmt.Sprintf("[%v] Sent @ %v >> [%v] @ %v ~ %v", "CLOUDFRONT", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email))
+				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Sent @ %v >> [%v] @ %v ~ %v\n")), aurora.Red("CLOUDFRONT"), aurora.Red(formatTime(request.SentAt)), aurora.Red(request.StatusCode), aurora.Red(formatTime(request.RecvAt)), aurora.Red(request.Email)))
 			} else {
-				SendI(fmt.Sprintf("Sent @ %v >> [%v] @ %v ~ %v", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email))
+				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Sent @ %v >> [%v] @ %v ~ %v\n")), aurora.Red(formatTime(request.SentAt)), aurora.Red(request.StatusCode), aurora.Red(formatTime(request.RecvAt)), aurora.Red(request.Email)))
 			}
 		}
 	}

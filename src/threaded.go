@@ -1,9 +1,11 @@
 package src
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/Liza-Developer/apiGO"
+	"github.com/logrusorgru/aurora"
 )
 
 // code from Alien https://github.com/wwhtrbbtt/AlienSniper
@@ -15,7 +17,7 @@ func CheckAccs() {
 		// check if the last auth was more than a minute ago
 		for _, Accs := range Acc.Bearers {
 			if time.Now().Unix() > Accs.AuthedAt+Accs.AuthInterval {
-				SendI(Accs.Email + " is due for reauth")
+				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("%v is due for reauth\n")), aurora.Red(Accs.Email)))
 
 				// authenticating Account
 				bearers := apiGO.Auth([]string{Accs.Email + ":" + Accs.Password})

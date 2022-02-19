@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Liza-Developer/apiGO"
+	"github.com/logrusorgru/aurora"
 )
 
 func AuthAccs() {
@@ -21,7 +22,7 @@ func AuthAccs() {
 	}
 
 	if len(AccountsVer) == 0 {
-		SendE("Unable to continue, you have no Accounts added.\n")
+		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Unable to continue, you have no Accounts added.\n")), aurora.Red("ERROR")))
 		os.Exit(0)
 	}
 
@@ -29,7 +30,7 @@ func AuthAccs() {
 
 	if !Acc.ManualBearer {
 		if Acc.Bearers == nil {
-			SendE("No Bearers have been found, please check your details.")
+			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] No Bearers have been found, please check your details.\n")), aurora.Red("ERROR")))
 			os.Exit(0)
 		} else {
 			checkifValid()
@@ -53,11 +54,6 @@ func AuthAccs() {
 					}
 				}
 			}
-
-			if Bearers.Details == nil {
-				SendE("Failed to authorize your Bearers, please rerun the sniper.")
-				os.Exit(0)
-			}
 		}
 	}
 }
@@ -78,7 +74,7 @@ func grabDetails(AccountsVer []string) {
 		if Acc.Bearers == nil {
 			bearerz := apiGO.Auth(AccountsVer)
 			if len(bearerz.Details) == 0 {
-				SendE("Unable to authenticate your Account(s), please Reverify your login details.\n")
+				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Unable to authenticate your Account(s), please Reverify your login details.\n")), aurora.Red("ERROR")))
 				return
 			} else {
 				for _, Accs := range bearerz.Details {
@@ -151,13 +147,13 @@ func checkifValid() {
 		j, _ := http.DefaultClient.Do(f)
 
 		if j.StatusCode == 401 {
-			SendI(fmt.Sprintf("Account %v turned up invalid. Attempting to Reauth", Accs.Email))
+			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Account %v turned up invalid. Attempting to Reauth\n")), aurora.Red(Accs.Email)))
 			reAuth = append(reAuth, Accs.Email+":"+Accs.Password)
 		}
 	}
 
 	if len(reAuth) != 0 {
-		SendI(fmt.Sprintf("Reauthing %v Accounts..", len(reAuth)))
+		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Reauthing %v Accounts..\n")), aurora.Red(len(reAuth))))
 		bearerz := apiGO.Auth(reAuth)
 
 		if len(bearerz.Details) != 0 {

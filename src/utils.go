@@ -18,26 +18,6 @@ import (
 	"github.com/logrusorgru/aurora"
 )
 
-func SendE(content string) {
-	fmt.Println(aurora.Sprintf(aurora.White("[%v] "+content), aurora.Bold(aurora.Red("ERROR"))))
-}
-
-func SendI(content string) {
-	fmt.Println(aurora.Sprintf(aurora.White("[%v] "+content), aurora.Yellow("INFO")))
-}
-
-func SendS(content string) {
-	fmt.Println(aurora.Sprintf(aurora.White("[%v] "+content), aurora.Green("SUCCESS")))
-}
-
-func SendW(content string) {
-	fmt.Print(aurora.Sprintf(aurora.White("[%v] "+content), aurora.Green("INPUT")))
-}
-
-func SendT(content string) {
-	fmt.Print(aurora.Sprintf(aurora.White("[%v] "+content), aurora.Green("TIMER")))
-}
-
 func ThreeLetters(option string) ([]string, []int64) {
 	var threeL []string
 	var names []string
@@ -108,11 +88,9 @@ func (Account Details) check(name, searches, AccType string) {
 	json.Unmarshal(body, &details)
 
 	if details.Error != "" {
-		SendE(details.Error)
+		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] %v\n")), aurora.Red("ERROR"), details.Error))
 	} else if details.Sent != "" {
-		SendS(details.Sent)
-	} else {
-		SendE(fmt.Sprintf("Couldnt send the request: %v", resp.StatusCode))
+		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] %v\n")), aurora.Green("200"), details.Sent))
 	}
 
 	removeDetails(Account)

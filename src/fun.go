@@ -15,6 +15,7 @@ import (
 	"github.com/Liza-Developer/apiGO"
 	"github.com/disintegration/imaging"
 	"github.com/go-resty/resty/v2"
+	"github.com/logrusorgru/aurora"
 	"github.com/nfnt/resize"
 )
 
@@ -24,17 +25,17 @@ func Skinart(name, imageFile string) {
 	var bearerNum int = 0
 
 	if !Acc.ManualBearer {
-		SendW("Use config bearer? [yes | no]: ")
+		fmt.Print(aurora.Blink(aurora.Faint(aurora.White("Use config bearer? [yes | no]: "))))
 		fmt.Scan(&choose)
 
 		if strings.ContainsAny(strings.ToLower(choose), "yes ye y") {
 			Acc.LoadState()
 
 			if len(Acc.Bearers) == 0 {
-				SendE("Unable to continue, you have no Bearers added.")
+				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Unable to continue, you have no Bearers added.\n")), aurora.Red("ERROR")))
 			} else {
 				var email string
-				SendW("Email of the Account you will use: ")
+				fmt.Print(aurora.Blink(aurora.Faint(aurora.White("Email of the Account you will use: "))))
 				fmt.Scan(&email)
 
 				fmt.Println()
@@ -48,33 +49,29 @@ func Skinart(name, imageFile string) {
 								Email:       details.Email,
 							})
 							break
-						} else {
-							SendE("Your bearer is empty.")
-							break
 						}
 					}
 				}
 			}
 		} else {
-			SendW("Enter your Account details to continue [email:password]: ")
+			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Enter your Account details to continue [%v:%v]: ")), aurora.Red("Email"), aurora.Red("Password")))
 			fmt.Scan(&Accd)
 			fmt.Println()
 			Bearers = apiGO.Auth([]string{Accd})
 			fmt.Println()
 		}
 	} else {
-		SendW("This will use the first bearer within your Accounts.txt | Press enter to verify: ")
+		fmt.Print(aurora.Faint(aurora.White("This will use the first bearer within your Accounts.txt | Press enter to verify: ")))
 		fmt.Scanf("h")
 
 		AuthAccs()
 	}
-
-	SendW("Would you like to use any previously generated skins [yes:no]: ")
+	fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Would you like to use any previously generated skins [%v:%v]: ")), aurora.Green("Yes"), aurora.Red("No")))
 	fmt.Scan(&choose)
 
 	if strings.ContainsAny(strings.ToLower(choose), "yes ye y") {
 		var folder string
-		SendW("Name of the folder [case sensitive]: ")
+		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Name of the folder [%v]: ")), aurora.Red("case sensitive")))
 		fmt.Scan(&folder)
 
 		fmt.Println()
@@ -90,12 +87,12 @@ func Skinart(name, imageFile string) {
 
 		img, err := readImage("images/" + imageFile)
 		if err != nil {
-			SendE(err.Error())
+			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] %v\n")), aurora.Red("ERROR"), err.Error()))
 		}
 
 		base, err := readImage("images/base.png")
 		if err != nil {
-			SendE(err.Error())
+			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] %v\n")), aurora.Red("ERROR"), err.Error()))
 		}
 
 		if img.Bounds().Size() != image.Pt(72, 24) {
@@ -186,13 +183,13 @@ func changeSkin(bearerNum int, path string) {
 	}).SetFile(path, path).Post("https://api.minecraftservices.com/minecraft/profile/skins")
 
 	if skin.StatusCode() == 200 {
-		SendI("Skin Changed")
+		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Skin Changed")), aurora.Green(skin.StatusCode())))
 	} else {
-		SendE("Failed skin change. (sleeping for 30 seconds)")
+		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Failed skin change. (sleeping for 30 seconds)\n")), aurora.Red("ERROR")))
 		time.Sleep(30 * time.Second)
 	}
 
-	SendW("Press CTRL+C to Continue : ")
+	fmt.Print(aurora.Blink(aurora.Faint(aurora.White("Press CTRL+C to Continue: "))))
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
 	<-stop
@@ -203,7 +200,7 @@ func changeSkin(bearerNum int, path string) {
 func logSnipe(content string, name string) {
 	logFile, err := os.OpenFile(fmt.Sprintf("logs/%v.txt", strings.ToLower(name)), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		SendE(err.Error())
+		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] %v\n")), aurora.Red("ERROR"), err.Error()))
 	}
 
 	defer logFile.Close()
@@ -246,7 +243,7 @@ func MeanPing() (float64, time.Duration) {
 	time1 := time.Now()
 	for i := 1; i < 11; i++ {
 		value := AutoOffset()
-		SendI(fmt.Sprintf("Request Took: %v", math.Round(value)))
+		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Request Took: %v\n")), aurora.Red(math.Round(value))))
 		values = append(values, value)
 	}
 

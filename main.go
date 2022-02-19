@@ -6,9 +6,10 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 
 	"github.com/Liza-Developer/apiGO"
-	"github.com/logrusorgru/aurora"
+	"github.com/logrusorgru/aurora/v3"
 	"github.com/urfave/cli/v2"
 )
 
@@ -54,26 +55,31 @@ func init() {
 	src.Pro = src.GenProxys()
 	src.Setup(src.Pro)
 
-	fmt.Print(aurora.White(`
-    __  _____________  __
-   /  |/  / ___/ __/ |/ /
-  / /|_/ / /___\ \/    / 
- /_/  /_/\___/___/_/|_/
- `))
+	header := aurora.Sprintf(`
+ • ▌ ▄ ·   ▄▄·  ▄▄ ·    ▄ 
+·██ ▐███▪▐█ ▌▪▐█ ▀  •█▌▐█
+▐█ ▌▐▌▐█·██ ▄▄▄▀▀▀█▄▐█▐▐▌
+██ ██▌▐█▌▐███▌▐█▄▪▐███▐█▌
+▀▀  █▪▀▀▀·▀▀▀  ▀▀▀▀ ▀▀ █▪
+%v
 
-	fmt.Print(aurora.Sprintf(aurora.White(`
-    Ver: %v
-   MOTD: %v
-Proxies: %v
+`, aurora.Sprintf(aurora.Faint("Ver: %v / %v"), aurora.BrightBlack("4.75"), aurora.BrightBlack("Made By Liza")))
 
-`), aurora.White(aurora.Sprintf("%v / %v", aurora.Bold(aurora.BrightBlack("4.60")), aurora.Bold(aurora.BrightBlack("Made By Liza")))), aurora.Bold(aurora.BrightBlack(src.MOTD())), aurora.Bold(aurora.BrightBlack(len(src.Pro)))))
+	for _, char := range []string{"•", "·", "▪"} {
+		header = strings.ReplaceAll(header, char, aurora.Sprintf(aurora.Faint(aurora.Red("%v")), char))
+	}
+	for _, char := range []string{"█", "▄", "▌", "▀", "▌", "▀"} {
+		header = strings.ReplaceAll(header, char, aurora.Sprintf(aurora.Faint(aurora.White("%v")), char))
+	}
+	for _, char := range []string{"▐"} {
+		header = strings.ReplaceAll(header, char, aurora.Sprintf(aurora.Faint(aurora.BrightBlack("%v")), char))
+	}
+
+	fmt.Print(header)
 
 	if src.Acc.DiscordID == "" {
-		var ID string
-		src.SendW("Enter a Discord ID: ")
-		fmt.Scan(&ID)
-
-		src.Acc.DiscordID = ID
+		fmt.Print(aurora.Blink(aurora.Faint(aurora.White("Enter a Discord ID: "))))
+		fmt.Scan(&src.Acc.DiscordID)
 
 		src.Acc.SaveConfig()
 		src.Acc.LoadState()
@@ -242,7 +248,7 @@ func main() {
 
 								if !src.Acc.ManualBearer {
 									if len(src.Bearers.Details) == 0 {
-										src.SendE("No more usable Account(s)")
+										fmt.Print(aurora.Faint(aurora.White("No more usable Account(s)\n")))
 										os.Exit(0)
 									}
 								}
@@ -282,7 +288,7 @@ func main() {
 
 								if !src.Acc.ManualBearer {
 									if len(src.Bearers.Details) == 0 {
-										src.SendE("No more usable Account(s)")
+										fmt.Print(aurora.Faint(aurora.White("No more usable Account(s)\n")))
 										os.Exit(0)
 									}
 								}
@@ -323,7 +329,7 @@ func main() {
 
 								if !src.Acc.ManualBearer {
 									if len(src.Bearers.Details) == 0 {
-										src.SendE("No more usable Account(s)")
+										fmt.Print(aurora.Faint(aurora.White("No more usable Account(s)\n")))
 										os.Exit(0)
 									}
 								}

@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/Liza-Developer/apiGO"
+	"github.com/logrusorgru/aurora"
 )
 
 // Proxy code
@@ -28,17 +29,17 @@ func Proxy(name string, delay float64, dropTime int64) {
 
 	searches, _ := apiGO.Search(name)
 
-	SendI(fmt.Sprintf("Name: %v | Delay: %v | Searches: %v | Proxys: %v\n", name, delay, searches, len(Pro)))
+	fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("%v: %v - %v: %v - %v: %v - %v: %v\n")), aurora.Red("Name"), name, aurora.Red("Delay"), delay, aurora.Red("Searches"), searches, aurora.Red("Proxys"), len(Pro)))
 
 	for time.Now().Before(time.Unix(dropTime, 0).Add(-time.Second * 15)) {
-		SendT(fmt.Sprintf("Generating Proxy Connections In: %v      \r", time.Until(time.Unix(dropTime, 0).Add(-time.Second*15)).Round(time.Second).Seconds()))
+		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Generating Proxy Connections In: %v      \r")), aurora.Red(time.Until(time.Unix(dropTime, 0).Add(-time.Second*15)).Round(time.Second).Seconds())))
 		time.Sleep(time.Second * 1)
 	}
 
 	clients := genSockets(Pro, name)
 
 	fmt.Println()
-	SendI(fmt.Sprintf("Sleeping until droptime: %v", time.Unix(dropTime, 0)))
+	fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Sleeping until droptime: %v\n")), aurora.Red(time.Unix(dropTime, 0))))
 
 	time.Sleep(time.Until(time.Unix(dropTime, 0).Add(time.Millisecond * time.Duration(0-delay)).Add(time.Duration(-float64(time.Since(time.Now()).Nanoseconds())/1000000.0) * time.Millisecond)))
 
@@ -116,7 +117,7 @@ func Proxy(name string, delay float64, dropTime int64) {
 	for _, request := range data.Requests {
 		if request.Success {
 			content += fmt.Sprintf("+ Sent @ %v >> [%v] @ %v ~ %v\n", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email)
-			SendS(fmt.Sprintf("Sent @ %v >> [%v] @ %v ~ %v", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email))
+			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Sent @ %v >> [%v] @ %v ~ %v\n")), aurora.Red(formatTime(request.SentAt)), aurora.Green(request.StatusCode), aurora.Red(formatTime(request.RecvAt)), aurora.Red(request.Email)))
 
 			if Acc.ChangeskinOnSnipe {
 				SendInfo := apiGO.ServerInfo{
@@ -125,9 +126,9 @@ func Proxy(name string, delay float64, dropTime int64) {
 
 				resp, _ := SendInfo.ChangeSkin(jsonValue(skinUrls{Url: SendInfo.SkinUrl, Varient: "slim"}), request.Bearer)
 				if resp.StatusCode == 200 {
-					SendS("Succesfully Changed your Skin!")
+					fmt.Print(aurora.Faint(aurora.White("Succesfully Changed your Skin!\n")))
 				} else {
-					SendE("Couldnt Change your Skin..")
+					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Couldnt Change your Skin..\n")), aurora.Red("ERROR")))
 				}
 			}
 
@@ -135,14 +136,14 @@ func Proxy(name string, delay float64, dropTime int64) {
 
 			fmt.Println()
 
-			SendI("If you enjoy using MCSN feel free to join the discord! https://discord.gg/a8EQ97ZfgK")
+			fmt.Print((aurora.Faint(aurora.White("If you enjoy using MCSN feel free to join the discord! https://discord.gg/a8EQ97ZfgK\n"))))
 			break
 		} else {
 			content += fmt.Sprintf("- Sent @ %v >> [%v] @ %v ~ %v\n", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email)
 			if request.Cloudfront {
-				SendE(fmt.Sprintf("[%v] Sent @ %v >> [%v] @ %v ~ %v", "CLOUDFRONT", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email))
+				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Sent @ %v >> [%v] @ %v ~ %v\n")), aurora.Red("CLOUDFRONT"), aurora.Red(formatTime(request.SentAt)), aurora.Red(request.StatusCode), aurora.Red(formatTime(request.RecvAt)), aurora.Red(request.Email)))
 			} else {
-				SendI(fmt.Sprintf("Sent @ %v >> [%v] @ %v ~ %v", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email))
+				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Sent @ %v >> [%v] @ %v ~ %v\n")), aurora.Red(formatTime(request.SentAt)), aurora.Red(request.StatusCode), aurora.Red(formatTime(request.RecvAt)), aurora.Red(request.Email)))
 			}
 		}
 	}
@@ -230,7 +231,7 @@ func genSockets(Pro []string, name string) []Proxys {
 				conn.Read(junk)
 
 				if string(junk[9:12]) == "200" {
-					SendS(fmt.Sprintf("logged into [%v] %v", string(junk[9:12]), strings.Split(proxy, ":")[0]))
+					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("logged into [%v] %v\n")), aurora.Green(string(junk[9:12])), aurora.Red(strings.Split(proxy, ":")[0])))
 
 					tls := tls.Client(conn, &tls.Config{RootCAs: roots, InsecureSkipVerify: true, ServerName: "api.minecraftservices.com"})
 
@@ -240,7 +241,7 @@ func genSockets(Pro []string, name string) []Proxys {
 					})
 
 				} else {
-					SendE(fmt.Sprintf("Couldnt login [%v] %v", string(junk[9:12]), strings.Split(proxy, ":")[0]))
+					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Couldnt login [%v] %v\n")), aurora.Red("ERROR"), aurora.Red(string(junk[9:12])), aurora.Red(strings.Split(proxy, ":")[0])))
 				}
 			}
 		}

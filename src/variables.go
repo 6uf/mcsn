@@ -84,7 +84,7 @@ type Conns struct {
 var (
 	Bearers   apiGO.MCbearers
 	list      []string = []string{"Liza#0002 ~ If your seeing this, join up https://discord.gg/a8EQ97ZfgK", "Liza#0002 ~ Nice Ass", "or#0001 ~ i got a dragon cock", "Noobyte#0000 ~ MMMMMMMMMM", "Noobyte#0000 ~ Touhou Epik", "peet v3#4245 ~ Cool Coder Man", "Steven's Weird#9468 ~ fuck plot armor", "Paid Snipers ~ Not worth the bill", "Steven's Weird#9468 ~ Renting a GF, id rather just buy the girl", "Pock#3483 ~ i still miss soothe", "Kqzz#0001 ~ Money Generator", "Liza#0002 ~ Taddy Was The King?", "; everest ?#7184 ~ Shit Coder"}
-	Pro     []string
+	Pro       []string
 	used      = make(map[string]bool)
 	Acc       apiGO.Config
 	images    []image.Image
