@@ -13,7 +13,7 @@ import (
 
 func AuthAccs() {
 	var AccountsVer []string
-	file, _ := os.Open("Accounts.txt")
+	file, _ := os.Open("accounts.txt")
 
 	scanner := bufio.NewScanner(file)
 
