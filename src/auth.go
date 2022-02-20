@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/Liza-Developer/apiGO"
@@ -26,39 +27,50 @@ func AuthAccs() {
 		os.Exit(0)
 	}
 
-	grabDetails(AccountsVer)
+	AccountsVer = CheckDupes(AccountsVer)
+	AccountsVer = grabDetails(AccountsVer)
 
 	if !Acc.ManualBearer {
-		if Acc.Bearers == nil {
-			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] No Bearers have been found, please check your details.\n")), aurora.Red("ERROR")))
+		if len(Acc.Bearers) == 0 {
+			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("\n[%v] No Bearers have been found, please check your details.\n")), aurora.Red("ERROR")))
+
+			rewrite("accounts.txt", strings.Join(AccountsVer, "\n"))
+
 			os.Exit(0)
 		} else {
-			checkifValid()
+			AccountsVer = checkifValid(AccountsVer)
 
-			for _, Accs := range Acc.Bearers {
-				if Accs.NameChange {
-					if Accs.Type == "Giftcard" {
-						Bearers.Details = append(Bearers.Details, apiGO.Info{
-							Bearer:      Accs.Bearer,
-							AccountType: Accs.Type,
-							Email:       Accs.Email,
-							Requests:    Acc.GcReq,
-						})
-					} else {
-						Bearers.Details = append(Bearers.Details, apiGO.Info{
-							Bearer:      Accs.Bearer,
-							AccountType: Accs.Type,
-							Email:       Accs.Email,
-							Requests:    Acc.MFAReq,
-						})
+			rewrite("accounts.txt", strings.Join(AccountsVer, "\n"))
+
+			if len(AccountsVer) != 0 {
+				for _, Accs := range Acc.Bearers {
+					if Accs.NameChange {
+						if Accs.Type == "Giftcard" {
+							Bearers.Details = append(Bearers.Details, apiGO.Info{
+								Bearer:      Accs.Bearer,
+								AccountType: Accs.Type,
+								Email:       Accs.Email,
+								Requests:    Acc.GcReq,
+							})
+						} else {
+							Bearers.Details = append(Bearers.Details, apiGO.Info{
+								Bearer:      Accs.Bearer,
+								AccountType: Accs.Type,
+								Email:       Accs.Email,
+								Requests:    Acc.MFAReq,
+							})
+						}
 					}
 				}
+			} else {
+				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("\n[%v] Unable to find any usable Accounts.\n")), aurora.Red("ERROR")))
+				os.Exit(0)
 			}
 		}
 	}
 }
 
-func grabDetails(AccountsVer []string) {
+func grabDetails(AccountsVer []string) []string {
 	if Acc.ManualBearer {
 		for _, bearer := range AccountsVer {
 			if apiGO.CheckChange(bearer) {
@@ -72,25 +84,31 @@ func grabDetails(AccountsVer []string) {
 		}
 	} else {
 		if Acc.Bearers == nil {
+			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Attempting to authenticate %v account(s)\n\n")), aurora.Red(len(AccountsVer))))
 			bearerz := apiGO.Auth(AccountsVer)
 			if len(bearerz.Details) == 0 {
 				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Unable to authenticate your Account(s), please Reverify your login details.\n")), aurora.Red("ERROR")))
-				return
 			} else {
 				for _, Accs := range bearerz.Details {
 					if Accs.Error != "" {
+						AccountsVer = remove(AccountsVer, Accs.Email+":"+Accs.Password)
 						fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Account %v came up Invalid: %v\n")), aurora.Red("ERROR"), aurora.Red(Accs.Email), aurora.Red(Accs.Error)))
 					} else {
-						fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Succesfully Authed %v\n")), aurora.Green(Accs.Email)))
-						Acc.Bearers = append(Acc.Bearers, apiGO.Bearers{
-							Bearer:       Accs.Bearer,
-							AuthInterval: 86400,
-							AuthedAt:     time.Now().Unix(),
-							Type:         Accs.AccountType,
-							Email:        Accs.Email,
-							Password:     Accs.Password,
-							NameChange:   apiGO.CheckChange(Accs.Bearer),
-						})
+						if apiGO.CheckChange(Accs.Bearer) {
+							fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Succesfully Authed %v\n")), aurora.Green(Accs.Email)))
+							Acc.Bearers = append(Acc.Bearers, apiGO.Bearers{
+								Bearer:       Accs.Bearer,
+								AuthInterval: 86400,
+								AuthedAt:     time.Now().Unix(),
+								Type:         Accs.AccountType,
+								Email:        Accs.Email,
+								Password:     Accs.Password,
+								NameChange:   true,
+							})
+						} else {
+							AccountsVer = remove(AccountsVer, Accs.Email+":"+Accs.Password)
+							fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Account %v Cannot Name Change.\n")), aurora.Red("ERROR"), aurora.Red(Accs.Email)))
+						}
 					}
 				}
 				Acc.SaveConfig()
@@ -111,23 +129,30 @@ func grabDetails(AccountsVer []string) {
 					}
 				}
 
+				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Attempting to authenticate %v account(s)\n\n")), aurora.Red(len(auth))))
 				bearerz := apiGO.Auth(auth)
 
 				if len(bearerz.Details) != 0 {
 					for _, Accs := range bearerz.Details {
 						if Accs.Error != "" {
+							AccountsVer = remove(AccountsVer, Accs.Email+":"+Accs.Password)
 							fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Account %v came up Invalid: %v\n")), aurora.Red("ERROR"), aurora.Red(Accs.Email), aurora.Red(Accs.Error)))
 						} else {
-							fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Succesfully Authed %v\n")), aurora.Green(Accs.Email)))
-							Acc.Bearers = append(Acc.Bearers, apiGO.Bearers{
-								Bearer:       Accs.Bearer,
-								AuthInterval: 86400,
-								AuthedAt:     time.Now().Unix(),
-								Type:         Accs.AccountType,
-								Email:        Accs.Email,
-								Password:     Accs.Password,
-								NameChange:   apiGO.CheckChange(Accs.Bearer),
-							})
+							if apiGO.CheckChange(Accs.Bearer) {
+								fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Succesfully Authed %v\n")), aurora.Green(Accs.Email)))
+								Acc.Bearers = append(Acc.Bearers, apiGO.Bearers{
+									Bearer:       Accs.Bearer,
+									AuthInterval: 86400,
+									AuthedAt:     time.Now().Unix(),
+									Type:         Accs.AccountType,
+									Email:        Accs.Email,
+									Password:     Accs.Password,
+									NameChange:   true,
+								})
+							} else {
+								AccountsVer = remove(AccountsVer, Accs.Email+":"+Accs.Password)
+								fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Account %v Cannot Name Change.\n")), aurora.Red("ERROR"), aurora.Red(Accs.Email)))
+							}
 						}
 					}
 
@@ -142,14 +167,17 @@ func grabDetails(AccountsVer []string) {
 						}
 					}
 				}
+
 				Acc.SaveConfig()
 				Acc.LoadState()
 			}
 		}
 	}
+
+	return AccountsVer
 }
 
-func checkifValid() {
+func checkifValid(AccountsVer []string) []string {
 	var reAuth []string
 	for _, Accs := range Acc.Bearers {
 		f, _ := http.NewRequest("GET", "https://api.minecraftservices.com/minecraft/profile/name/boom/available", nil)
@@ -170,18 +198,24 @@ func checkifValid() {
 			for point, data := range Acc.Bearers {
 				for _, Accs := range bearerz.Details {
 					if Accs.Error != "" {
+						AccountsVer = remove(AccountsVer, Accs.Email+":"+Accs.Password)
 						fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Account %v came up Invalid: %v\n")), aurora.Red("ERROR"), aurora.Red(Accs.Email), aurora.Red(Accs.Error)))
 					} else {
-						fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Succesfully Reuthed %v\n")), aurora.Green(Accs.Email)))
-						if data.Email == Accs.Email {
-							data.Bearer = Accs.Bearer
-							data.NameChange = apiGO.CheckChange(Accs.Bearer)
-							data.Type = Accs.AccountType
-							data.Password = Accs.Password
-							data.Email = Accs.Email
-							data.AuthedAt = time.Now().Unix()
-							Acc.Bearers[point] = data
-							Acc.SaveConfig()
+						if apiGO.CheckChange(Accs.Bearer) {
+							fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Succesfully Reuthed %v\n")), aurora.Green(Accs.Email)))
+							if data.Email == Accs.Email {
+								data.Bearer = Accs.Bearer
+								data.NameChange = true
+								data.Type = Accs.AccountType
+								data.Password = Accs.Password
+								data.Email = Accs.Email
+								data.AuthedAt = time.Now().Unix()
+								Acc.Bearers[point] = data
+								Acc.SaveConfig()
+							}
+						} else {
+							AccountsVer = remove(AccountsVer, Accs.Email+":"+Accs.Password)
+							fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Account %v Cannot Name Change.\n")), aurora.Red("ERROR"), aurora.Red(Accs.Email)))
 						}
 					}
 				}
@@ -190,4 +224,41 @@ func checkifValid() {
 	}
 
 	Acc.LoadState()
+
+	return AccountsVer
+}
+
+func remove(l []string, item string) []string {
+	for i, other := range l {
+		if other == item {
+			l = append(l[:i], l[i+1:]...)
+		}
+	}
+	return l
+}
+
+func rewrite(path, accounts string) {
+	os.Create(path)
+
+	file, _ := os.OpenFile(path, os.O_RDWR, 0644)
+	defer file.Close()
+
+	file.WriteAt([]byte(accounts), 0)
+}
+
+// _diamondburned_#4507 thanks to them for the epic example below.
+
+func CheckDupes(strs []string) []string {
+	dedup := strs[:0] // re-use the backing array
+	track := make(map[string]bool, len(strs))
+
+	for _, str := range strs {
+		if track[str] {
+			continue
+		}
+		dedup = append(dedup, str)
+		track[str] = true
+	}
+
+	return dedup
 }

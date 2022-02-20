@@ -149,15 +149,6 @@ func removeDetails(Account Details) {
 	Acc.LoadState()
 }
 
-func rewrite(path, Accounts string) {
-	os.Create(path)
-
-	file, _ := os.OpenFile(path, os.O_RDWR, 0644)
-	defer file.Close()
-
-	file.WriteAt([]byte(Accounts), 0)
-}
-
 func isGC(bearer string) string {
 	conn, _ := tls.Dial("tcp", "api.minecraftservices.com"+":443", nil)
 
