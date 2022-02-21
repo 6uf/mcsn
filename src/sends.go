@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 
@@ -178,24 +177,17 @@ func checkVer(name string, delay float64, dropTime int64) {
 		for i := 0; float64(i) < float64(Account.Requests); i++ {
 			wg.Add(1)
 			go func(e int, Account apiGO.Info) {
-				fmt.Fprintln(conn, payload.Payload[e])
-				SendTime := time.Now()
-
-				var ea = make([]byte, 4096)
-				conn.Read(ea)
-
-				recvTime := time.Now()
+				SendTime, recvTime, Status := payload.SocketSending(conn, payload.Payload[e])
 
 				data.Requests = append(data.Requests, Details{
 					Bearer:     Account.Bearer,
 					SentAt:     SendTime,
 					RecvAt:     recvTime,
-					StatusCode: string(ea[9:12]),
-					Success:    string(ea[9:12]) == "200",
+					StatusCode: Status,
+					Success:    Status == "200",
 					UnixRecv:   recvTime.Unix(),
 					Email:      Account.Email,
 					Type:       Account.AccountType,
-					Cloudfront: strings.Contains(string(ea), "Error from cloudfront") && strings.Contains(string(ea), "We can't connect to the server for this app or website at this time. There might be too much traffic or a configuration error. Try again later, or contact the app or website owner."),
 				})
 
 				wg.Done()

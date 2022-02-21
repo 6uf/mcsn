@@ -51,50 +51,40 @@ func Proxy(name string, delay float64, dropTime int64) {
 				if Acc.AccountType == "Giftcard" {
 					for i := 0; i < Acc.Requests; i++ {
 						wgs.Add(1)
-						go func(Acc apiGO.Info, payload string) {
-							fmt.Fprintln(config.Conn, payload)
-							SendTime := time.Now()
-
-							var ea = make([]byte, 4096)
-							config.Conn.Read(ea)
-							recvTime := time.Now()
+						go func(Account apiGO.Info, payloads string) {
+							SendTime, recvTime, Status := apiGO.Payload{}.SocketSending(config.Conn, payloads)
 
 							data.Requests = append(data.Requests, Details{
-								Bearer:     Acc.Bearer,
+								Bearer:     Account.Bearer,
 								SentAt:     SendTime,
 								RecvAt:     recvTime,
-								StatusCode: string(ea[9:12]),
-								Success:    string(ea[9:12]) == "200",
+								StatusCode: Status,
+								Success:    Status == "200",
 								UnixRecv:   recvTime.Unix(),
-								Email:      Acc.Email,
-								Type:       Acc.AccountType,
-								Cloudfront: strings.Contains(string(ea), "Error from cloudfront") && strings.Contains(string(ea), "We can't connect to the server for this app or website at this time. There might be too much traffic or a configuration error. Try again later, or contact the app or website owner."),
+								Email:      Account.Email,
+								Type:       Account.AccountType,
 							})
+
 							wgs.Done()
 						}(Acc, fmt.Sprintf("POST /minecraft/profile HTTP/1.1\r\nHost: api.minecraftservices.com\r\nConnection: open\r\nContent-Length:%s\r\nContent-Type: application/json\r\nAccept: application/json\r\nAuthorization: Bearer %s\r\n\r\n"+string([]byte(`{"profileName":"`+name+`"}`))+"\r\n", strconv.Itoa(len(string([]byte(`{"profileName":"`+name+`"}`)))), Acc.Bearer))
 					}
 				} else {
 					for i := 0; i < Acc.Requests; i++ {
 						wgs.Add(1)
-						go func(Acc apiGO.Info, payload string) {
-							fmt.Fprintln(config.Conn, payload)
-							SendTime := time.Now()
-
-							var ea = make([]byte, 4096)
-							config.Conn.Read(ea)
-							recvTime := time.Now()
+						go func(Account apiGO.Info, payloads string) {
+							SendTime, recvTime, Status := apiGO.Payload{}.SocketSending(config.Conn, payloads)
 
 							data.Requests = append(data.Requests, Details{
-								Bearer:     Acc.Bearer,
+								Bearer:     Account.Bearer,
 								SentAt:     SendTime,
 								RecvAt:     recvTime,
-								StatusCode: string(ea[9:12]),
-								Success:    string(ea[9:12]) == "200",
+								StatusCode: Status,
+								Success:    Status == "200",
 								UnixRecv:   recvTime.Unix(),
-								Email:      Acc.Email,
-								Type:       Acc.AccountType,
-								Cloudfront: strings.Contains(string(ea), "Error from cloudfront") && strings.Contains(string(ea), "We can't connect to the server for this app or website at this time. There might be too much traffic or a configuration error. Try again later, or contact the app or website owner."),
+								Email:      Account.Email,
+								Type:       Account.AccountType,
 							})
+
 							wgs.Done()
 						}(Acc, "PUT /minecraft/profile/name/"+name+" HTTP/1.1\r\nHost: api.minecraftservices.com\r\nConnection: open\r\nUser-Agent: MCSN/1.0\r\nAuthorization: bearer "+Acc.Bearer+"\r\n\r\n")
 					}
