@@ -25,14 +25,16 @@ func CheckAccs() {
 				if bearers.Details != nil {
 					for point, data := range Acc.Bearers {
 						for _, Accs := range bearers.Details {
-							if data.Email == Accs.Email {
-								data.Bearer = Accs.Bearer
-								data.NameChange = apiGO.CheckChange(Accs.Bearer)
-								data.Type = Accs.AccountType
-								data.Password = Accs.Password
-								data.Email = Accs.Email
-								data.AuthedAt = time.Now().Unix()
-								Acc.Bearers[point] = data
+							if Accs.Bearer != "" {
+								if data.Email == Accs.Email {
+									data.Bearer = Accs.Bearer
+									data.NameChange = apiGO.CheckChange(Accs.Bearer).NameChange
+									data.Type = Accs.AccountType
+									data.Password = Accs.Password
+									data.Email = Accs.Email
+									data.AuthedAt = time.Now().Unix()
+									Acc.Bearers[point] = data
+								}
 							}
 						}
 					}

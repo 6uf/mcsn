@@ -156,9 +156,9 @@ func checkVer(name string, delay float64, dropTime int64) {
 	var content string
 	var data SentRequests
 
-	searches, _ := apiGO.Search(name)
+	searches := apiGO.Search(name)
 
-	fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Name: %v - Delay: %v - Searches: %v\n")), aurora.Red(name), aurora.Red(delay), aurora.Red(searches)))
+	fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Name: %v - Delay: %v - Searches: %v\n")), aurora.Red(name), aurora.Red(delay), aurora.Red(searches.Searches)))
 
 	var wg sync.WaitGroup
 
@@ -169,8 +169,6 @@ func checkVer(name string, delay float64, dropTime int64) {
 
 	payload := Bearers.CreatePayloads(name)
 	conn, _ := tls.Dial("tcp", "api.minecraftservices.com:443", nil)
-
-	fmt.Println()
 
 	fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("\nSleeping until droptime: %v\n")), aurora.Red(time.Unix(dropTime, 0))))
 
@@ -233,7 +231,7 @@ func checkVer(name string, delay float64, dropTime int64) {
 				}
 			}
 
-			request.check(name, searches, request.Type)
+			request.check(name, searches.Searches, request.Type)
 
 			fmt.Println()
 

@@ -127,7 +127,7 @@ func removeDetails(Account Details) {
 	Bearers.Details = meow
 
 	var Accz []string
-	file, _ := os.Open("Accounts.txt")
+	file, _ := os.Open("accounts.txt")
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
@@ -136,7 +136,7 @@ func removeDetails(Account Details) {
 		}
 	}
 
-	rewrite("Accounts.txt", strings.Join(Accz, "\n"))
+	rewrite("accounts.txt", strings.Join(Accz, "\n"))
 
 	Acc.Logs = append(Acc.Logs, apiGO.Logs{
 		Email:   Account.Email,

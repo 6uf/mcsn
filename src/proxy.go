@@ -27,8 +27,8 @@ func Proxy(name string, delay float64, dropTime int64) {
 	var data SentRequests
 	var content string
 
-	searches, _ := apiGO.Search(name)
-	fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Name: %v - Delay: %v - Searches: %v - Proxys: %v\n")), aurora.Red(name), aurora.Red(delay), aurora.Red(searches), aurora.Red(len(Pro))))
+	searches := apiGO.Search(name)
+	fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Name: %v - Delay: %v - Searches: %v - Proxys: %v\n")), aurora.Red(name), aurora.Red(delay), aurora.Red(searches.Searches), aurora.Red(len(Pro))))
 
 	for time.Now().Before(time.Unix(dropTime, 0).Add(-time.Second * 15)) {
 		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Generating Proxy Connections In: %v      \r")), aurora.Red(time.Until(time.Unix(dropTime, 0).Add(-time.Second*15)).Round(time.Second).Seconds())))
@@ -133,7 +133,7 @@ func Proxy(name string, delay float64, dropTime int64) {
 				}
 			}
 
-			request.check(name, searches, request.Type)
+			request.check(name, searches.Searches, request.Type)
 
 			fmt.Println()
 
