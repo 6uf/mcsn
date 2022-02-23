@@ -37,6 +37,10 @@ github.com/Liza-Developer/apiGO v0.0.0-20220221035047-384050e5890c h1:mZ49zXrRJX
 github.com/Liza-Developer/apiGO v0.0.0-20220221035047-384050e5890c/go.mod h1:hV4/hjKybmdhDmwv6VyediO/Jc5W9tnwCxRlNXzeWa4=
 github.com/Liza-Developer/apiGO v0.0.0-20220221054134-b2dc4e30dd6e h1:YpqDWBvQ4tvt8RMi3Sfb8wn6C0Mh8xFeK99PER/emes=
 github.com/Liza-Developer/apiGO v0.0.0-20220221054134-b2dc4e30dd6e/go.mod h1:hV4/hjKybmdhDmwv6VyediO/Jc5W9tnwCxRlNXzeWa4=
+github.com/Liza-Developer/apiGO v0.0.0-20220222222616-fb7f62c003dd h1:MbZYOMUkL6RexS+wJSdOWUvxGScftQp4ddAd6lqFSVM=
+github.com/Liza-Developer/apiGO v0.0.0-20220222222616-fb7f62c003dd/go.mod h1:hV4/hjKybmdhDmwv6VyediO/Jc5W9tnwCxRlNXzeWa4=
+github.com/Liza-Developer/apiGO v0.0.0-20220223041856-8784ade7b9ea h1:u63oRVD2FXcgnkYs7vdVW1DWl8xog01lhHYkKpYHAXY=
+github.com/Liza-Developer/apiGO v0.0.0-20220223041856-8784ade7b9ea/go.mod h1:hV4/hjKybmdhDmwv6VyediO/Jc5W9tnwCxRlNXzeWa4=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
 github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5PlCu98SY8svDHJxuZscDgtXS6KTTbou5AhLI=

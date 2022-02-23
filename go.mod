@@ -3,7 +3,7 @@ module mcsn
 go 1.17
 
 require (
-	github.com/Liza-Developer/apiGO v0.0.0-20220221054134-b2dc4e30dd6e
+	github.com/Liza-Developer/apiGO v0.0.0-20220223041856-8784ade7b9ea
 	github.com/disintegration/imaging v1.6.2
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible

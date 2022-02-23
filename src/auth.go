@@ -71,7 +71,7 @@ func AuthAccs() {
 func grabDetails(AccountsVer []string) []string {
 	if Acc.ManualBearer {
 		for _, bearer := range AccountsVer {
-			if apiGO.CheckChange(bearer).NameChange {
+			if apiGO.CheckChange(bearer) {
 				Bearers.Details = append(Bearers.Details, apiGO.Info{
 					Bearer:      bearer,
 					AccountType: isGC(bearer),
@@ -94,7 +94,7 @@ func grabDetails(AccountsVer []string) []string {
 						fmt.Printf("[%v] Account %v came up Invalid: %v\n", "ERROR", Accs.Email, Accs.Error)
 					} else {
 						if Accs.Bearer != "" {
-							if Accs.AccountType == "Giftcard" {
+							if apiGO.CheckChange(Accs.Bearer) {
 								fmt.Printf("Succesfully Authed %v\n", Accs.Email)
 								Acc.Bearers = append(Acc.Bearers, apiGO.Bearers{
 									Bearer:       Accs.Bearer,
@@ -106,21 +106,8 @@ func grabDetails(AccountsVer []string) []string {
 									NameChange:   true,
 								})
 							} else {
-								if apiGO.CheckChange(Accs.Bearer).NameChange {
-									fmt.Printf("Succesfully Authed %v\n", Accs.Email)
-									Acc.Bearers = append(Acc.Bearers, apiGO.Bearers{
-										Bearer:       Accs.Bearer,
-										AuthInterval: 86400,
-										AuthedAt:     time.Now().Unix(),
-										Type:         Accs.AccountType,
-										Email:        Accs.Email,
-										Password:     Accs.Password,
-										NameChange:   true,
-									})
-								} else {
-									AccountsVer = remove(AccountsVer, Accs.Email+":"+Accs.Password)
-									fmt.Printf("[%v] Account %v Cannot Name Change.\n", "ERROR", Accs.Email)
-								}
+								AccountsVer = remove(AccountsVer, Accs.Email+":"+Accs.Password)
+								fmt.Printf("[%v] Account %v Cannot Name Change.\n", "ERROR", Accs.Email)
 							}
 						} else {
 							fmt.Printf("[ERROR] Account %v bearer is nil.\n", Accs.Email)
@@ -157,7 +144,7 @@ func grabDetails(AccountsVer []string) []string {
 							fmt.Printf("[%v] Account %v came up Invalid: %v\n", "ERROR", Accs.Email, Accs.Error)
 						} else {
 							if Accs.Bearer != "" {
-								if Accs.AccountType == "Giftcard" {
+								if apiGO.CheckChange(Accs.Bearer) {
 									fmt.Printf("Succesfully Authed %v\n", Accs.Email)
 									Acc.Bearers = append(Acc.Bearers, apiGO.Bearers{
 										Bearer:       Accs.Bearer,
@@ -169,22 +156,8 @@ func grabDetails(AccountsVer []string) []string {
 										NameChange:   true,
 									})
 								} else {
-									if apiGO.CheckChange(Accs.Bearer).NameChange {
-										fmt.Printf("Succesfully Authed %v\n", Accs.Email)
-										Acc.Bearers = append(Acc.Bearers, apiGO.Bearers{
-											Bearer:       Accs.Bearer,
-											AuthInterval: 86400,
-											AuthedAt:     time.Now().Unix(),
-											Type:         Accs.AccountType,
-											Email:        Accs.Email,
-											Password:     Accs.Password,
-											NameChange:   true,
-										})
-									} else {
-										fmt.Println(Accs.AccountType)
-										AccountsVer = remove(AccountsVer, Accs.Email+":"+Accs.Password)
-										fmt.Printf("[%v] Account %v Cannot Name Change.\n", "ERROR", Accs.Email)
-									}
+									AccountsVer = remove(AccountsVer, Accs.Email+":"+Accs.Password)
+									fmt.Printf("[%v] Account %v Cannot Name Change.\n", "ERROR", Accs.Email)
 								}
 							} else {
 								fmt.Printf("[ERROR] Account %v bearer is nil.\n", Accs.Email)
@@ -237,7 +210,7 @@ func checkifValid(AccountsVer []string) []string {
 						fmt.Printf("[%v] Account %v came up Invalid: %v\n", "ERROR", Accs.Email, Accs.Error)
 					} else {
 						if Accs.Bearer != "" {
-							if Accs.AccountType == "Giftcard" {
+							if apiGO.CheckChange(Accs.Bearer) {
 								fmt.Printf("Succesfully Reauthed %v\n", Accs.Email)
 								if data.Email == Accs.Email {
 									data.Bearer = Accs.Bearer
@@ -250,22 +223,8 @@ func checkifValid(AccountsVer []string) []string {
 									Acc.SaveConfig()
 								}
 							} else {
-								if apiGO.CheckChange(Accs.Bearer).NameChange {
-									fmt.Printf("Succesfully Reauthed %v\n", Accs.Email)
-									if data.Email == Accs.Email {
-										data.Bearer = Accs.Bearer
-										data.NameChange = true
-										data.Type = Accs.AccountType
-										data.Password = Accs.Password
-										data.Email = Accs.Email
-										data.AuthedAt = time.Now().Unix()
-										Acc.Bearers[point] = data
-										Acc.SaveConfig()
-									}
-								} else {
-									AccountsVer = remove(AccountsVer, Accs.Email+":"+Accs.Password)
-									fmt.Printf("[%v] Account %v Cannot Name Change.\n", "ERROR", Accs.Email)
-								}
+								AccountsVer = remove(AccountsVer, Accs.Email+":"+Accs.Password)
+								fmt.Printf("[%v] Account %v Cannot Name Change.\n", "ERROR", Accs.Email)
 							}
 						} else {
 							fmt.Printf("[ERROR] Account %v bearer is nil.\n", Accs.Email)

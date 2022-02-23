@@ -28,7 +28,7 @@ func CheckAccs() {
 							if Accs.Bearer != "" {
 								if data.Email == Accs.Email {
 									data.Bearer = Accs.Bearer
-									data.NameChange = apiGO.CheckChange(Accs.Bearer).NameChange
+									data.NameChange = apiGO.CheckChange(Accs.Bearer)
 									data.Type = Accs.AccountType
 									data.Password = Accs.Password
 									data.Email = Accs.Email
