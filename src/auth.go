@@ -237,7 +237,7 @@ func checkifValid(AccountsVer []string) []string {
 						fmt.Printf("[%v] Account %v came up Invalid: %v\n", "ERROR", Accs.Email, Accs.Error)
 					} else {
 						if Accs.Bearer != "" {
-							if apiGO.CheckChange(Accs.Bearer).NameChange {
+							if Accs.AccountType == "Giftcard" {
 								fmt.Printf("Succesfully Reauthed %v\n", Accs.Email)
 								if data.Email == Accs.Email {
 									data.Bearer = Accs.Bearer
@@ -250,8 +250,22 @@ func checkifValid(AccountsVer []string) []string {
 									Acc.SaveConfig()
 								}
 							} else {
-								AccountsVer = remove(AccountsVer, Accs.Email+":"+Accs.Password)
-								fmt.Printf("[%v] Account %v Cannot Name Change.\n", "ERROR", Accs.Email)
+								if apiGO.CheckChange(Accs.Bearer).NameChange {
+									fmt.Printf("Succesfully Reauthed %v\n", Accs.Email)
+									if data.Email == Accs.Email {
+										data.Bearer = Accs.Bearer
+										data.NameChange = true
+										data.Type = Accs.AccountType
+										data.Password = Accs.Password
+										data.Email = Accs.Email
+										data.AuthedAt = time.Now().Unix()
+										Acc.Bearers[point] = data
+										Acc.SaveConfig()
+									}
+								} else {
+									AccountsVer = remove(AccountsVer, Accs.Email+":"+Accs.Password)
+									fmt.Printf("[%v] Account %v Cannot Name Change.\n", "ERROR", Accs.Email)
+								}
 							}
 						} else {
 							fmt.Printf("[ERROR] Account %v bearer is nil.\n", Accs.Email)
