@@ -6,9 +6,10 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
-	"strings"
 
 	"github.com/Liza-Developer/apiGO"
+	"github.com/iskaa02/qalam/gradient"
+	"github.com/jwalton/go-supportscolor"
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/urfave/cli/v2"
 )
@@ -24,58 +25,22 @@ func init() {
 		cmd.Run()
 	}
 
+	src.CheckFiles()
 	src.Acc.LoadState()
-
-	_, err := os.Stat("logs")
-
-	if os.IsNotExist(err) {
-		os.Mkdir("logs", 0755)
-	}
-
-	_, err = os.Open("accounts.txt")
-	if os.IsNotExist(err) {
-		os.Create("accounts.txt")
-	}
-
-	_, err = os.Open("proxys.txt")
-	if os.IsNotExist(err) {
-		os.Create("proxys.txt")
-	}
-
-	_, err = os.Open("names.txt")
-	if os.IsNotExist(err) {
-		os.Create("names.txt")
-	}
-
-	_, err = os.Stat("cropped")
-	if os.IsNotExist(err) {
-		os.MkdirAll("cropped/logs", 0755)
-	}
 
 	src.Pro = src.GenProxys()
 	src.Setup(src.Pro)
 
-	header := aurora.Sprintf(`
- • ▌ ▄ ·   ▄▄·  ▄▄ ·    ▄ 
-·██ ▐███▪▐█ ▌▪▐█ ▀  •█▌▐█
-▐█ ▌▐▌▐█·██ ▄▄▄▀▀▀█▄▐█▐▐▌
-██ ██▌▐█▌▐███▌▐█▄▪▐███▐█▌
-▀▀  █▪▀▀▀·▀▀▀  ▀▀▀▀ ▀▀ █▪
-%v
-
-`, aurora.Sprintf(aurora.Faint("Ver: %v / %v"), aurora.BrightBlack("4.75"), aurora.BrightBlack("Made By Liza")))
-
-	for _, char := range []string{"•", "·", "▪"} {
-		header = strings.ReplaceAll(header, char, aurora.Sprintf(aurora.Faint(aurora.Red("%v")), char))
-	}
-	for _, char := range []string{"█", "▄", "▌", "▀", "▌", "▀"} {
-		header = strings.ReplaceAll(header, char, aurora.Sprintf(aurora.Faint(aurora.White("%v")), char))
-	}
-	for _, char := range []string{"▐"} {
-		header = strings.ReplaceAll(header, char, aurora.Sprintf(aurora.Faint(aurora.BrightBlack("%v")), char))
-	}
-
-	fmt.Print(header)
+	supportscolor.Stdout()
+	g, _ := gradient.
+		NewGradient("#FEAC5E", "#C779D0", "#4BC0C8")
+	fmt.Println(g.Mutline(`
+	• ▌ ▄ ·   ▄▄·  ▄▄ ·    ▄ 
+	·██ ▐███▪▐█ ▌▪▐█ ▀  •█▌▐█
+	▐█ ▌▐▌▐█·██ ▄▄▄▀▀▀█▄▐█▐▐▌
+	██ ██▌▐█▌▐███▌▐█▄▪▐███▐█▌
+	▀▀  █▪▀▀▀·▀▀▀  ▀▀▀▀ ▀▀ █▪
+	`))
 
 	if src.Acc.DiscordID == "" {
 		fmt.Print(aurora.Blink(aurora.Faint(aurora.White("Enter a Discord ID: "))))
@@ -89,6 +54,7 @@ func init() {
 }
 
 func main() {
+
 	app := &cli.App{
 		Commands: []*cli.Command{
 			{

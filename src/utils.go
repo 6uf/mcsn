@@ -164,3 +164,31 @@ func isGC(bearer string) string {
 		return "Microsoft"
 	}
 }
+
+func CheckFiles() {
+	_, err := os.Stat("logs")
+
+	if os.IsNotExist(err) {
+		os.Mkdir("logs", 0755)
+	}
+
+	_, err = os.Open("accounts.txt")
+	if os.IsNotExist(err) {
+		os.Create("accounts.txt")
+	}
+
+	_, err = os.Open("proxys.txt")
+	if os.IsNotExist(err) {
+		os.Create("proxys.txt")
+	}
+
+	_, err = os.Open("names.txt")
+	if os.IsNotExist(err) {
+		os.Create("names.txt")
+	}
+
+	_, err = os.Stat("cropped")
+	if os.IsNotExist(err) {
+		os.MkdirAll("cropped/logs", 0755)
+	}
+}

@@ -178,15 +178,18 @@ func DecodePixelsFromImage(img image.Image, offsetX, offsetY int) []*Pixel {
 
 func changeSkin(bearerNum int, path string) {
 	client := resty.New()
-	skin, _ := client.R().SetAuthToken(Bearers.Details[bearerNum].Bearer).SetFormData(map[string]string{
+	skin, err := client.R().SetAuthToken(Bearers.Details[bearerNum].Bearer).SetFormData(map[string]string{
 		"variant": "slim",
 	}).SetFile(path, path).Post("https://api.minecraftservices.com/minecraft/profile/skins")
-
-	if skin.StatusCode() == 200 {
-		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Skin Changed")), aurora.Green(skin.StatusCode())))
+	if err != nil {
+		fmt.Println(err)
 	} else {
-		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Failed skin change. (sleeping for 30 seconds)\n")), aurora.Red("ERROR")))
-		time.Sleep(30 * time.Second)
+		if skin.StatusCode() == 200 {
+			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Skin Changed")), aurora.Green(skin.StatusCode())))
+		} else {
+			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Failed skin change. (sleeping for 30 seconds)\n")), aurora.Red("ERROR")))
+			time.Sleep(30 * time.Second)
+		}
 	}
 
 	fmt.Print(aurora.Blink(aurora.Faint(aurora.White("Press CTRL+C to Continue: "))))

@@ -4,11 +4,8 @@ import (
 	"bufio"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/base64"
 	"fmt"
-	"log"
 	"math/rand"
-	"net"
 	"os"
 	"sort"
 	"strconv"
@@ -18,6 +15,7 @@ import (
 
 	"github.com/Liza-Developer/apiGO"
 	"github.com/logrusorgru/aurora"
+	"golang.org/x/net/proxy"
 )
 
 // Proxy code
@@ -172,71 +170,52 @@ func Setup(proxy []string) {
 	}
 }
 
-func genSockets(Pro []string, name string) []Proxys {
-	var payload string
-
-	var pro []Proxys
+func genSockets(Pro []string, name string) (pro []Proxys) {
 	var Accs [][]apiGO.Info
 	var incr int
 	var use int
-
 	roots := x509.NewCertPool()
-	ok := roots.AppendCertsFromPEM([]byte(rootCert))
-	if !ok {
-		log.Fatal("failed to parse root certificate")
-	} else {
-		for _, Acc := range Bearers.Details {
-			if len(Accs) == 0 {
-				Accs = append(Accs, []apiGO.Info{
-					Acc,
-				})
-			} else {
-				if incr == 3 {
-					incr = 0
-					use++
-					Accs = append(Accs, []apiGO.Info{})
-				}
-
-				Accs[use] = append(Accs[use], Acc)
+	roots.AppendCertsFromPEM([]byte(rootCert))
+	for _, Acc := range Bearers.Details {
+		if len(Accs) == 0 {
+			Accs = append(Accs, []apiGO.Info{
+				Acc,
+			})
+		} else {
+			if incr == 3 {
+				incr = 0
+				use++
+				Accs = append(Accs, []apiGO.Info{})
 			}
-
-			incr++
+			Accs[use] = append(Accs[use], Acc)
 		}
-
-		for _, Accs := range Accs {
-
-			proxy := randomInt(Pro)
-
-			if conn, err := net.Dial("tcp", strings.Split(proxy, ":")[0]+":"+strings.Split(proxy, ":")[1]); err != nil {
-				fmt.Println(err)
+		incr++
+	}
+	for _, Accs := range Accs {
+		var user, pass, ip, port string
+		auth := strings.Split(randomInt(Pro), ":")
+		ip, port = auth[0], auth[1]
+		if len(auth) > 2 {
+			user, pass = auth[2], auth[3]
+		}
+		req, err := proxy.SOCKS5("tcp", fmt.Sprintf("%v:%v", ip, port), &proxy.Auth{
+			User:     user,
+			Password: pass,
+		}, proxy.Direct)
+		if err != nil {
+			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Couldnt login: %v - %v\n")), aurora.Red(ip), aurora.Red(err.Error())))
+		} else {
+			conn, err := req.Dial("tcp", "api.minecraftservices.com:443")
+			if err != nil {
+				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Couldnt login: %v - %v\n")), aurora.Red(ip), aurora.Red(err.Error())))
 			} else {
-				if len(strings.Split(proxy, ":")) > 2 {
-					payload = fmt.Sprintf("Proxy-Authorization: Basic %v\r\n", base64.StdEncoding.EncodeToString([]byte(strings.Split(proxy, ":")[2]+":"+strings.Split(proxy, ":")[3])))
-				} else {
-					payload = ""
-				}
-
-				conn.Write([]byte(fmt.Sprintf("CONNECT api.minecraftservices.com:443 HTTP/1.1\r\nHost: api.minecraftservices.com\r\nUser-Agent: MCSN/1.1\r\nProxy-Connection: keep-alive\r\n%v\r\n", payload)))
-
-				var junk = make([]byte, 4096)
-				conn.Read(junk)
-
-				if string(junk[9:12]) == "200" {
-					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("logged into [%v] %v\n")), aurora.Green(string(junk[9:12])), aurora.Red(strings.Split(proxy, ":")[0])))
-
-					tls := tls.Client(conn, &tls.Config{RootCAs: roots, InsecureSkipVerify: true, ServerName: "api.minecraftservices.com"})
-
-					pro = append(pro, Proxys{
-						Accounts: Accs,
-						Conn:     tls,
-					})
-
-				} else {
-					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Couldnt login [%v] %v\n")), aurora.Red("ERROR"), aurora.Red(string(junk[9:12])), aurora.Red(strings.Split(proxy, ":")[0])))
-				}
+				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("logged into: %v\n")), aurora.Red(ip)))
+				pro = append(pro, Proxys{
+					Accounts: Accs,
+					Conn:     tls.Client(conn, &tls.Config{RootCAs: roots, InsecureSkipVerify: true, ServerName: "api.minecraftservices.com"}),
+				})
 			}
 		}
 	}
-
 	return pro
 }
