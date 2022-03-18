@@ -13,7 +13,6 @@ import (
 func CheckAccs() {
 	for {
 		time.Sleep(time.Second * 10)
-
 		// check if the last auth was more than a minute ago
 		for _, Accs := range Acc.Bearers {
 			if time.Now().Unix() > Accs.AuthedAt+Accs.AuthInterval {
@@ -21,20 +20,17 @@ func CheckAccs() {
 
 				// authenticating Account
 				bearers := apiGO.Auth([]string{Accs.Email + ":" + Accs.Password})
-
-				if bearers.Details != nil {
-					for point, data := range Acc.Bearers {
-						for _, Accs := range bearers.Details {
-							if Accs.Bearer != "" {
-								if data.Email == Accs.Email {
-									data.Bearer = Accs.Bearer
-									data.NameChange = apiGO.CheckChange(Accs.Bearer)
-									data.Type = Accs.AccountType
-									data.Password = Accs.Password
-									data.Email = Accs.Email
-									data.AuthedAt = time.Now().Unix()
-									Acc.Bearers[point] = data
-								}
+				for point, data := range Acc.Bearers {
+					for _, Accs := range bearers.Details {
+						if Accs.Bearer != "" {
+							if data.Email == Accs.Email {
+								data.Bearer = Accs.Bearer
+								data.NameChange = apiGO.CheckChange(Accs.Bearer)
+								data.Type = Accs.AccountType
+								data.Password = Accs.Password
+								data.Email = Accs.Email
+								data.AuthedAt = time.Now().Unix()
+								Acc.Bearers[point] = data
 							}
 						}
 					}

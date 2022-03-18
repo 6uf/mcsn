@@ -8,8 +8,6 @@ import (
 	"runtime"
 
 	"github.com/Liza-Developer/apiGO"
-	"github.com/iskaa02/qalam/gradient"
-	"github.com/jwalton/go-supportscolor"
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/urfave/cli/v2"
 )
@@ -31,16 +29,13 @@ func init() {
 	src.Pro = src.GenProxys()
 	src.Setup(src.Pro)
 
-	supportscolor.Stdout()
-	g, _ := gradient.
-		NewGradient("#FEAC5E", "#C779D0", "#4BC0C8")
-	fmt.Println(g.Mutline(`
-	• ▌ ▄ ·   ▄▄·  ▄▄ ·    ▄ 
-	·██ ▐███▪▐█ ▌▪▐█ ▀  •█▌▐█
-	▐█ ▌▐▌▐█·██ ▄▄▄▀▀▀█▄▐█▐▐▌
-	██ ██▌▐█▌▐███▌▐█▄▪▐███▐█▌
-	▀▀  █▪▀▀▀·▀▀▀  ▀▀▀▀ ▀▀ █▪
-	`))
+	fmt.Print(aurora.Faint(aurora.White(`
+ • ▌ ▄ ·   ▄▄·  ▄▄ ·    ▄ 
+·██ ▐███▪▐█ ▌▪▐█ ▀  •█▌▐█
+▐█ ▌▐▌▐█·██ ▄▄▄▀▀▀█▄▐█▐▐▌
+██ ██▌▐█▌▐███▌▐█▄▪▐███▐█▌
+▀▀  █▪▀▀▀·▀▀▀  ▀▀▀▀ ▀▀ █▪
+`)))
 
 	if src.Acc.DiscordID == "" {
 		fmt.Print(aurora.Blink(aurora.Faint(aurora.White("Enter a Discord ID: "))))
@@ -54,7 +49,6 @@ func init() {
 }
 
 func main() {
-
 	app := &cli.App{
 		Commands: []*cli.Command{
 			{

@@ -15,23 +15,6 @@ type Proxys struct {
 	Conn     *tls.Conn
 }
 
-type embeds struct {
-	Content interface{} `json:"content"`
-	Embeds  []embed     `json:"embeds"`
-}
-
-type embed struct {
-	Description interface{} `json:"description"`
-	Color       interface{} `json:"color"`
-	Footer      footer      `json:"footer"`
-	Time        interface{} `json:"timestamp"`
-}
-
-type footer struct {
-	Text interface{} `json:"text"`
-	Icon interface{} `json:"icon_url"`
-}
-
 type skinUrls struct {
 	Url     interface{} `json:"url"`
 	Varient interface{} `json:"variant"`
@@ -53,11 +36,6 @@ type Data struct {
 	Unix   int64  `json:"unix"`
 	Config string `json:"config"`
 	Id     string `json:"id"`
-}
-
-type checkDetails struct {
-	Error string `json:"error"`
-	Sent  string `json:"sent"`
 }
 
 type SentRequests struct {

@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"os"
-	"os/signal"
 	"sort"
 	"sync"
 	"time"
@@ -26,7 +25,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 		if dropTime < int64(10000) {
 			fmt.Print(aurora.Faint(aurora.White("Droptime [UNIX]: ")))
 			fmt.Scan(&dropTime)
-			fmt.Println()
+			fmt.Print("\n")
 		}
 
 		checkVer(name, delay, dropTime)
@@ -119,7 +118,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 
 			for _, status := range data.Requests {
 				if status.Success {
-					status.check(name, "0", status.Type)
+					removeDetails(status)
 
 					if Acc.ChangeskinOnSnipe {
 						SendInfo := apiGO.ServerInfo{
@@ -142,22 +141,13 @@ func Snipe(name string, delay float64, option string, charType string) {
 			fmt.Println()
 		}
 	}
-
-	fmt.Println()
-
-	fmt.Print((aurora.Faint(aurora.White("CTRL+C To Continue: "))))
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt)
-	<-stop
 }
 
 func checkVer(name string, delay float64, dropTime int64) {
 	var content string
 	var data SentRequests
 
-	searches := apiGO.Search(name)
-
-	fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Name: %v - Delay: %v - Searches: %v\n")), aurora.Red(name), aurora.Red(delay), aurora.Red(searches.Searches)))
+	fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Name: %v - Delay: %v\n")), aurora.Red(name), aurora.Red(delay)))
 
 	var wg sync.WaitGroup
 
@@ -223,7 +213,7 @@ func checkVer(name string, delay float64, dropTime int64) {
 				}
 			}
 
-			request.check(name, searches.Searches, request.Type)
+			removeDetails(request)
 
 			fmt.Println()
 

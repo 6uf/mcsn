@@ -2,7 +2,6 @@ package src
 
 import (
 	"bufio"
-	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -15,7 +14,6 @@ import (
 	"time"
 
 	"github.com/Liza-Developer/apiGO"
-	"github.com/logrusorgru/aurora"
 )
 
 func ThreeLetters(option string) ([]string, []int64) {
@@ -75,25 +73,6 @@ func ThreeLetters(option string) ([]string, []int64) {
 	}
 
 	return threeL, drop
-}
-
-func (Account Details) check(name, searches, AccType string) {
-	var details checkDetails
-	body, _ := json.Marshal(Data{Name: name, Bearer: Account.Bearer, Id: Acc.DiscordID, Unix: Account.UnixRecv, Config: string(jsonValue(embeds{Content: "<@" + Acc.DiscordID + ">", Embeds: []embed{{Description: fmt.Sprintf("[%v] Succesfully sniped %v with %v searches :bow_and_arrow:", AccType, name, searches), Color: 770000, Footer: footer{Text: "MCSN"}, Time: time.Now().Format(time.RFC3339)}}}))})
-
-	req, _ := http.NewRequest("POST", "https://droptime.herokuapp.com/webhook", bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-	resp, _ := http.DefaultClient.Do(req)
-	body, _ = ioutil.ReadAll(resp.Body)
-	json.Unmarshal(body, &details)
-
-	if details.Error != "" {
-		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] %v\n")), aurora.Red("ERROR"), details.Error))
-	} else if details.Sent != "" {
-		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] %v\n")), aurora.Green("200"), details.Sent))
-	}
-
-	removeDetails(Account)
 }
 
 func jsonValue(f interface{}) []byte {

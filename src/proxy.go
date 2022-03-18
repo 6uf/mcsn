@@ -25,8 +25,7 @@ func Proxy(name string, delay float64, dropTime int64) {
 	var data SentRequests
 	var content string
 
-	searches := apiGO.Search(name)
-	fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Name: %v - Delay: %v - Searches: %v - Proxys: %v\n")), aurora.Red(name), aurora.Red(delay), aurora.Red(searches.Searches), aurora.Red(len(Pro))))
+	fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Name: %v - Delay: %v - Proxys: %v\n")), aurora.Red(name), aurora.Red(delay), aurora.Red(len(Pro))))
 
 	for time.Now().Before(time.Unix(dropTime, 0).Add(-time.Second * 15)) {
 		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Generating Proxy Connections In: %v      \r")), aurora.Red(time.Until(time.Unix(dropTime, 0).Add(-time.Second*15)).Round(time.Second).Seconds())))
@@ -44,7 +43,6 @@ func Proxy(name string, delay float64, dropTime int64) {
 		wg.Add(1)
 		go func(config Proxys) {
 			var wgs sync.WaitGroup
-
 			for _, Acc := range config.Accounts {
 				if Acc.AccountType == "Giftcard" {
 					for i := 0; i < Acc.Requests; i++ {
@@ -121,7 +119,7 @@ func Proxy(name string, delay float64, dropTime int64) {
 				}
 			}
 
-			request.check(name, searches.Searches, request.Type)
+			removeDetails(request)
 
 			fmt.Println()
 
@@ -191,6 +189,7 @@ func genSockets(Pro []string, name string) (pro []Proxys) {
 		}
 		incr++
 	}
+
 	for _, Accs := range Accs {
 		var user, pass, ip, port string
 		auth := strings.Split(randomInt(Pro), ":")

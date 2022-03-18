@@ -27,7 +27,6 @@ func Skinart(name, imageFile string) {
 	if !Acc.ManualBearer {
 		fmt.Print(aurora.Blink(aurora.Faint(aurora.White("Use config bearer? [yes | no]: "))))
 		fmt.Scan(&choose)
-
 		if strings.ContainsAny(strings.ToLower(choose), "yes ye y") {
 			Acc.LoadState()
 
@@ -66,6 +65,7 @@ func Skinart(name, imageFile string) {
 
 		AuthAccs()
 	}
+
 	fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Would you like to use any previously generated skins [%v:%v]: ")), aurora.Green("Yes"), aurora.Red("No")))
 	fmt.Scan(&choose)
 
@@ -185,7 +185,7 @@ func changeSkin(bearerNum int, path string) {
 		fmt.Println(err)
 	} else {
 		if skin.StatusCode() == 200 {
-			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Skin Changed")), aurora.Green(skin.StatusCode())))
+			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Skin Changed\n")), aurora.Green(skin.StatusCode())))
 		} else {
 			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Failed skin change. (sleeping for 30 seconds)\n")), aurora.Red("ERROR")))
 			time.Sleep(30 * time.Second)
