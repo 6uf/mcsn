@@ -39,7 +39,3 @@ Now that your config files have been generated, open the accounts.txt file and a
 # Whats next?
 
 Navigate to the commands tutorial to be further told what to do!
-
-# Trouble?
-
-if you are having any issues with this tutorial please visit our: [<img src='https://media.discordapp.net/attachments/921132825795776543/923024561694474240/download_cropped_1.png' height='40'>](https://discord.gg/a8EQ97ZfgK)
