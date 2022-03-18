@@ -40,7 +40,3 @@ Other info, you do NOT need to add a -d value to the auto snipe commands.
 
 - `go run . auto 3c` this functions normally like the other auto commands, but instead uses the build in delay calculator to grab your delay for snipes.
 - `go run . proxy 3c` this functions like the normal auto 3c functions, instead it uses thedelay it gets from the autooffset function as stated above aswell ^^
-
-# Trouble?
-
-if you are having any issues with this tutorial please visit our: [<img src='https://media.discordapp.net/attachments/921132825795776543/923024561694474240/download_cropped_1.png' height='40'>](https://discord.gg/a8EQ97ZfgK)
