@@ -189,32 +189,39 @@ func genSockets(Pro []string, name string) (pro []Proxys) {
 		}
 		incr++
 	}
-
+	var wg sync.WaitGroup
 	for _, Accs := range Accs {
-		var user, pass, ip, port string
-		auth := strings.Split(randomInt(Pro), ":")
-		ip, port = auth[0], auth[1]
-		if len(auth) > 2 {
-			user, pass = auth[2], auth[3]
-		}
-		req, err := proxy.SOCKS5("tcp", fmt.Sprintf("%v:%v", ip, port), &proxy.Auth{
-			User:     user,
-			Password: pass,
-		}, proxy.Direct)
-		if err != nil {
-			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Couldnt login: %v - %v\n")), aurora.Red(ip), aurora.Red(err.Error())))
-		} else {
-			conn, err := req.Dial("tcp", "api.minecraftservices.com:443")
+		wg.Add(1)
+		go func(Accs []apiGO.Info) {
+			var user, pass, ip, port string
+			auth := strings.Split(randomInt(Pro), ":")
+			ip, port = auth[0], auth[1]
+			if len(auth) > 2 {
+				user, pass = auth[2], auth[3]
+			}
+			req, err := proxy.SOCKS5("tcp", fmt.Sprintf("%v:%v", ip, port), &proxy.Auth{
+				User:     user,
+				Password: pass,
+			}, proxy.Direct)
 			if err != nil {
 				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Couldnt login: %v - %v\n")), aurora.Red(ip), aurora.Red(err.Error())))
 			} else {
-				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("logged into: %v\n")), aurora.Red(ip)))
-				pro = append(pro, Proxys{
-					Accounts: Accs,
-					Conn:     tls.Client(conn, &tls.Config{RootCAs: roots, InsecureSkipVerify: true, ServerName: "api.minecraftservices.com"}),
-				})
+				conn, err := req.Dial("tcp", "api.minecraftservices.com:443")
+				if err != nil {
+					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Couldnt login: %v - %v\n")), aurora.Red(ip), aurora.Red(err.Error())))
+				} else {
+					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("logged into: %v\n")), aurora.Red(ip)))
+					pro = append(pro, Proxys{
+						Accounts: Accs,
+						Conn:     tls.Client(conn, &tls.Config{RootCAs: roots, InsecureSkipVerify: true, ServerName: "api.minecraftservices.com"}),
+					})
+				}
 			}
-		}
+
+			wg.Done()
+		}(Accs)
 	}
+
+	wg.Wait()
 	return pro
 }
