@@ -34,7 +34,6 @@ These commands are mainly added for preference or user experience.
 
 - `go run . namemc -n nameofskinart -i skinartimg.jpg` This applies skin art to your account, it handles any image type PNG JPG etc. For this to function, navigate to your namemc profile from your browser, everytime your skin is changed refresh your profiles page until namemc caches your skin!~
 - `go run . turbo -u name` this turbos a name, essentially sending requests every minute or so (typically to a name that isnt available) this is just in case a drop drops for no reason because of mojang support.
-- `go run . bot` this command launches a discord bot that you host, you will need to add your bots key to the config, "DiscordBotKey".
 
 Other info, you do NOT need to add a -d value to the auto snipe commands.
 
