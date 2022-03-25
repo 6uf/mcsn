@@ -3,5 +3,8 @@ This project was made for fun slowly it turned into something bigger, what seeme
 
 A guide to the sniper can be found [here](https://github.com/6uf/mcsn/tree/main/documents)
 
-![GitHub metrics](https://metrics.lecoq.io/6uf)  
+![GitHub metrics](https://metrics.lecoq.io/6uf)
 
+Where ive been:
+
+Quit. alot of drama icba to continue staying in the comm. ill continue to procude updates to mcsn but dont come looking for me.
