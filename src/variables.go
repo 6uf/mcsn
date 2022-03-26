@@ -7,7 +7,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/Liza-Developer/apiGO"
+	"github.com/6uf/apiGO"
 )
 
 type Proxys struct {

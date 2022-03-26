@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Liza-Developer/apiGO"
+	"github.com/6uf/apiGO"
 	"github.com/disintegration/imaging"
 	"github.com/go-resty/resty/v2"
 	"github.com/logrusorgru/aurora"

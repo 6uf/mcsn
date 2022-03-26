@@ -3,7 +3,6 @@ module mcsn
 go 1.17
 
 require (
-	github.com/Liza-Developer/apiGO v0.0.0-20220307213607-1d28685e23be
 	github.com/disintegration/imaging v1.6.2
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
@@ -14,6 +13,7 @@ require (
 )
 
 require (
+	github.com/6uf/apiGO v0.0.0-20220326004558-562e057e92bf // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/digitalocean/godo v1.75.0 // indirect
 	github.com/golang/protobuf v1.3.5 // indirect

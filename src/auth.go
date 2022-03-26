@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Liza-Developer/apiGO"
+	"github.com/6uf/apiGO"
 	"github.com/logrusorgru/aurora"
 )
 

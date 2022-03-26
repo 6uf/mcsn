@@ -16,7 +16,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Liza-Developer/apiGO"
+	"github.com/6uf/apiGO"
 	"github.com/logrusorgru/aurora"
 	"golang.org/x/net/proxy"
 )
