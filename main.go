@@ -6,8 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 
-	"github.com/Liza-Developer/apiGO"
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/urfave/cli/v2"
 )
@@ -29,13 +29,25 @@ func init() {
 	src.Pro = src.GenProxys()
 	src.Setup(src.Pro)
 
-	fmt.Print(aurora.Faint(aurora.White(`
- • ▌ ▄ ·   ▄▄·  ▄▄ ·    ▄ 
+	header := `
+ •   ▄ ·   ▄▄·  ▄▄ ·    ▄ 
 ·██ ▐███▪▐█ ▌▪▐█ ▀  •█▌▐█
 ▐█ ▌▐▌▐█·██ ▄▄▄▀▀▀█▄▐█▐▐▌
 ██ ██▌▐█▌▐███▌▐█▄▪▐███▐█▌
 ▀▀  █▪▀▀▀·▀▀▀  ▀▀▀▀ ▀▀ █▪
-`)))
+`
+
+	for _, char := range []string{"•", "·", "▪"} {
+		header = strings.ReplaceAll(header, char, aurora.Sprintf(aurora.Faint(aurora.Red("%v")), char))
+	}
+	for _, char := range []string{"█", "▄", "▌", "▀", "▌", "▀"} {
+		header = strings.ReplaceAll(header, char, aurora.Sprintf(aurora.Faint(aurora.White("%v")), char))
+	}
+	for _, char := range []string{"▐"} {
+		header = strings.ReplaceAll(header, char, aurora.Sprintf(aurora.Faint(aurora.BrightBlack("%v")), char))
+	}
+
+	fmt.Println(header)
 
 	if src.Acc.DiscordID == "" {
 		fmt.Print(aurora.Blink(aurora.Faint(aurora.White("Enter a Discord ID: "))))
@@ -49,7 +61,6 @@ func init() {
 }
 
 func main() {
-
 	app := &cli.App{
 		Commands: []*cli.Command{
 			{
@@ -156,10 +167,8 @@ func main() {
 				Aliases: []string{"p"},
 				Usage:   "ping helps give you a rough estimate of your connection to the minecraft API.",
 				Action: func(c *cli.Context) error {
-
 					delay, time := src.MeanPing()
 					fmt.Printf("Estimated (Mean) Delay: %v ~ Took: %v\n", delay, time)
-
 					return nil
 				},
 			},
@@ -172,8 +181,7 @@ func main() {
 					src.AuthAccs()
 					fmt.Println()
 					go src.CheckAccs()
-					src.Proxy(c.String("u"), c.Float64("d"), apiGO.DropTime(c.String("u")))
-
+					src.Snipe(c.String("u"), c.Float64("d"), "proxy", "")
 					return nil
 				},
 
@@ -196,30 +204,7 @@ func main() {
 							src.AuthAccs()
 							fmt.Println()
 							go src.CheckAccs()
-
-							var names []string
-							var drops []int64
-							delay := c.Float64("d")
-							names, drops = src.ThreeLetters("3c")
-
-							for e, name := range names {
-								if delay == 0 {
-									delay = float64(src.AutoOffset())
-								}
-
-								if !src.Acc.ManualBearer {
-									if len(src.Bearers.Details) == 0 {
-										fmt.Print(aurora.Faint(aurora.White("No more usable Account(s)\n")))
-										os.Exit(0)
-									}
-								}
-
-								src.Proxy(name, c.Float64("d"), drops[e])
-
-								src.Setup(src.Pro)
-
-								fmt.Println()
-							}
+							src.Snipe(c.String("u"), c.Float64("d"), "proxy", "3c")
 							return nil
 						},
 						Flags: []cli.Flag{
@@ -236,31 +221,7 @@ func main() {
 							src.AuthAccs()
 							fmt.Println()
 							go src.CheckAccs()
-
-							var names []string
-							var drops []int64
-							delay := c.Float64("d")
-							names, drops = src.ThreeLetters("3l")
-
-							for e, name := range names {
-								if delay == 0 {
-									delay = float64(src.AutoOffset())
-								}
-
-								if !src.Acc.ManualBearer {
-									if len(src.Bearers.Details) == 0 {
-										fmt.Print(aurora.Faint(aurora.White("No more usable Account(s)\n")))
-										os.Exit(0)
-									}
-								}
-
-								src.Proxy(name, c.Float64("d"), drops[e])
-
-								src.Setup(src.Pro)
-
-								fmt.Println()
-							}
-
+							src.Snipe(c.String("u"), c.Float64("d"), "proxy", "3l")
 							return nil
 						},
 						Flags: []cli.Flag{
@@ -277,31 +238,24 @@ func main() {
 							src.AuthAccs()
 							fmt.Println()
 							go src.CheckAccs()
-
-							var names []string
-							var drops []int64
-							delay := c.Float64("d")
-							names, drops = src.ThreeLetters("3n")
-
-							for e, name := range names {
-								if delay == 0 {
-									delay = float64(src.AutoOffset())
-								}
-
-								if !src.Acc.ManualBearer {
-									if len(src.Bearers.Details) == 0 {
-										fmt.Print(aurora.Faint(aurora.White("No more usable Account(s)\n")))
-										os.Exit(0)
-									}
-								}
-
-								src.Proxy(name, c.Float64("d"), drops[e])
-
-								src.Setup(src.Pro)
-
-								fmt.Println()
-							}
-
+							src.Snipe(c.String("u"), c.Float64("d"), "proxy", "3n")
+							return nil
+						},
+						Flags: []cli.Flag{
+							&cli.Float64Flag{
+								Name:  "d",
+								Usage: "Snipes a few ms earlier so you can counter ping lag.",
+							},
+						},
+					},
+					{
+						Name:  "list",
+						Usage: "Snipe only Numeric names.",
+						Action: func(c *cli.Context) error {
+							src.AuthAccs()
+							fmt.Println()
+							go src.CheckAccs()
+							src.Snipe(c.String("u"), c.Float64("d"), "proxy", "list")
 							return nil
 						},
 						Flags: []cli.Flag{
@@ -322,13 +276,18 @@ func main() {
 					src.AuthAccs()
 					fmt.Println()
 					go src.CheckAccs()
-					src.Snipe(c.String("u"), 0, "turbo", "")
+					src.Snipe(c.String("u"), float64(c.Int64("t")), "turbo", "")
 					return nil
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:  "u",
 						Usage: "username to snipe",
+					},
+					&cli.Int64Flag{
+						Name:  "t",
+						Usage: "the seconds between each request",
+						Value: 60,
 					},
 				},
 			},
@@ -344,7 +303,7 @@ func main() {
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:  "n",
-						Usage: "Name of your Art",
+						Usage: "Name of your Art (this will be used for the folder name)",
 					},
 					&cli.StringFlag{
 						Name:  "i",
@@ -353,11 +312,9 @@ func main() {
 				},
 			},
 		},
-
-		HideHelp: false,
-		Name:     "MCSN",
-		Usage:    "A name sniper dedicated to premium free services",
-		Version:  "4.60",
+		Name:    "MCSN",
+		Usage:   "A name sniper dedicated to premium free services",
+		Version: "5.15",
 	}
 
 	app.Run(os.Args)
