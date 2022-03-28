@@ -91,7 +91,7 @@ func main() {
 					} else {
 						src.Bearers.Details = append(src.Bearers.Details, apiGO.Info{
 							Bearer:      "testbearer",
-							AccountType: "Giftcard",
+							AccountType: "Microsoft",
 							Email:       "testcommand@mcsn.com",
 							Requests:    src.Acc.GcReq,
 						})
