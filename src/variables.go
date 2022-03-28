@@ -43,15 +43,14 @@ type SentRequests struct {
 }
 
 type Details struct {
-	Bearer     string
-	SentAt     time.Time
-	RecvAt     time.Time
-	StatusCode string
-	UnixRecv   int64
-	Success    bool
-	Email      string
-	Type       string
-	Cloudfront bool
+	ResponseDetails struct {
+		SentAt     time.Time
+		RecvAt     time.Time
+		StatusCode string
+	}
+	Bearer string
+	Email  string
+	Type   string
 }
 
 type Conns struct {

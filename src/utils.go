@@ -124,9 +124,9 @@ func removeDetails(Account Details) {
 
 	Acc.Logs = append(Acc.Logs, apiGO.Logs{
 		Email:   Account.Email,
-		Send:    Account.SentAt,
-		Recv:    Account.RecvAt,
-		Success: Account.Success,
+		Send:    Account.ResponseDetails.SentAt,
+		Recv:    Account.ResponseDetails.RecvAt,
+		Success: Account.ResponseDetails.StatusCode == "100",
 	})
 
 	Acc.SaveConfig()
@@ -357,14 +357,14 @@ func Snipe(name string, delay float64, option string, charType string) {
 						recvTime := time.Now()
 
 						data.Requests = append(data.Requests, Details{
-							Bearer:     Account.Bearer,
-							SentAt:     SendTime,
-							RecvAt:     recvTime,
-							StatusCode: string(ea[9:12]),
-							Success:    string(ea[9:12]) == "200",
-							UnixRecv:   recvTime.Unix(),
-							Email:      Account.Email,
-							Type:       Account.AccountType,
+							ResponseDetails: apiGO.Resp{
+								SentAt:     SendTime,
+								RecvAt:     recvTime,
+								StatusCode: string(ea[9:12]),
+							},
+							Bearer: Account.Bearer,
+							Email:  Account.Email,
+							Type:   Account.AccountType,
 						})
 
 						wg.Done()
@@ -376,7 +376,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 			wg.Wait()
 
 			for _, status := range data.Requests {
-				if status.Success {
+				if status.ResponseDetails.StatusCode == "200" {
 					removeDetails(status)
 
 					if Acc.ChangeskinOnSnipe {
@@ -387,11 +387,11 @@ func Snipe(name string, delay float64, option string, charType string) {
 						SendInfo.ChangeSkin(jsonValue(skinUrls{Url: SendInfo.SkinUrl, Varient: "slim"}), status.Bearer)
 					}
 
-					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] %v Claimed %v\n")), aurora.Green(status.StatusCode), aurora.Green("Succesfully"), aurora.Red(name)))
+					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] %v Claimed %v\n")), aurora.Green(status.ResponseDetails.StatusCode), aurora.Green("Succesfully"), aurora.Red(name)))
 
 					break
 				} else {
-					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] %v to claim %v\n")), aurora.Green(status.StatusCode), aurora.Red("Failed"), aurora.Red(name)))
+					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] %v to claim %v\n")), aurora.Green(status.ResponseDetails.StatusCode), aurora.Red("Failed"), aurora.Red(name)))
 				}
 			}
 

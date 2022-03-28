@@ -44,17 +44,11 @@ func (Info *ReqConfig) SnipeReq() {
 						for i := 0; i < Acc.Requests; i++ {
 							wgs.Add(1)
 							go func(Account apiGO.Info, payloads string) {
-								SendTime, recvTime, Status := apiGO.SocketSending(config.Conn, payloads)
-
 								data.Requests = append(data.Requests, Details{
-									Bearer:     Account.Bearer,
-									SentAt:     SendTime,
-									RecvAt:     recvTime,
-									StatusCode: Status,
-									Success:    Status == "200",
-									UnixRecv:   recvTime.Unix(),
-									Email:      Account.Email,
-									Type:       Account.AccountType,
+									ResponseDetails: apiGO.SocketSending(config.Conn, payloads),
+									Bearer:          Account.Bearer,
+									Email:           Account.Email,
+									Type:            Account.AccountType,
 								})
 
 								wgs.Done()
@@ -64,17 +58,11 @@ func (Info *ReqConfig) SnipeReq() {
 						for i := 0; i < Acc.Requests; i++ {
 							wgs.Add(1)
 							go func(Account apiGO.Info, payloads string) {
-								SendTime, recvTime, Status := apiGO.SocketSending(config.Conn, payloads)
-
 								data.Requests = append(data.Requests, Details{
-									Bearer:     Account.Bearer,
-									SentAt:     SendTime,
-									RecvAt:     recvTime,
-									StatusCode: Status,
-									Success:    Status == "200",
-									UnixRecv:   recvTime.Unix(),
-									Email:      Account.Email,
-									Type:       Account.AccountType,
+									ResponseDetails: apiGO.SocketSending(config.Conn, payloads),
+									Bearer:          Account.Bearer,
+									Email:           Account.Email,
+									Type:            Account.AccountType,
 								})
 
 								wgs.Done()
@@ -96,19 +84,12 @@ func (Info *ReqConfig) SnipeReq() {
 			for i := 0; float64(i) < float64(Account.Requests); i++ {
 				wg.Add(1)
 				go func(e int, Account apiGO.Info) {
-					SendTime, recvTime, Status := apiGO.SocketSending(conn, payload.Payload[e])
-
 					data.Requests = append(data.Requests, Details{
-						Bearer:     Account.Bearer,
-						SentAt:     SendTime,
-						RecvAt:     recvTime,
-						StatusCode: Status,
-						Success:    Status == "200",
-						UnixRecv:   recvTime.Unix(),
-						Email:      Account.Email,
-						Type:       Account.AccountType,
+						ResponseDetails: apiGO.SocketSending(conn, payload.Payload[e]),
+						Bearer:          Account.Bearer,
+						Email:           Account.Email,
+						Type:            Account.AccountType,
 					})
-
 					wg.Done()
 				}(e, Account)
 				time.Sleep(time.Duration(Acc.SpreadPerReq) * time.Microsecond)
@@ -120,21 +101,17 @@ func (Info *ReqConfig) SnipeReq() {
 	fmt.Println()
 
 	sort.Slice(data.Requests, func(i, j int) bool {
-		return data.Requests[i].SentAt.Before(data.Requests[j].SentAt)
+		return data.Requests[i].ResponseDetails.SentAt.Before(data.Requests[j].ResponseDetails.SentAt)
 	})
 
 	for _, request := range data.Requests {
-		if request.Success {
-			content += fmt.Sprintf("+ Sent @ %v | [%v] @ %v ~ %v\n", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email)
-			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("%v >> [%v] @ %v O %v\n")), aurora.Green(formatTime(request.SentAt)), aurora.Green(request.StatusCode), aurora.Green(formatTime(request.RecvAt)), aurora.Green(request.Email)))
-
-			fmt.Println()
-
+		if request.ResponseDetails.StatusCode == "200" {
+			content += fmt.Sprintf("+ Sent @ %v | [%v] @ %v ~ %v\n", formatTime(request.ResponseDetails.SentAt), request.ResponseDetails.StatusCode, formatTime(request.ResponseDetails.RecvAt), request.Email)
+			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("%v >> [%v] @ %v O %v\n\n")), aurora.Green(formatTime(request.ResponseDetails.SentAt)), aurora.Green(request.ResponseDetails.StatusCode), aurora.Green(formatTime(request.ResponseDetails.RecvAt)), aurora.Green(request.Email)))
 			if Acc.ChangeskinOnSnipe {
 				SendInfo := apiGO.ServerInfo{
 					SkinUrl: Acc.ChangeSkinLink,
 				}
-
 				resp, _ := SendInfo.ChangeSkin(jsonValue(skinUrls{Url: SendInfo.SkinUrl, Varient: "slim"}), request.Bearer)
 				if resp.StatusCode == 200 {
 					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Succesfully Changed your Skin!\n")), aurora.Green(resp.StatusCode)))
@@ -142,19 +119,13 @@ func (Info *ReqConfig) SnipeReq() {
 					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Couldnt Change your Skin..\n")), aurora.Red("ERROR")))
 				}
 			}
-
 			removeDetails(request)
 			fmt.Print(aurora.Faint(aurora.White("\nIf you enjoy using MCSN feel free to join the discord! https://discord.gg/a8EQ97ZfgK\n")))
 			break
 		} else {
-			content += fmt.Sprintf("- Sent @ %v >> [%v] @ %v ~ %v\n", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email)
-			if request.Cloudfront {
-				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] %v >> [%v] @ %v X %v\n")), aurora.Red("CLOUDFRONT"), aurora.Red(formatTime(request.SentAt)), aurora.Red(request.StatusCode), aurora.Red(formatTime(request.RecvAt)), aurora.Red(request.Email)))
-			} else {
-				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("%v >> [%v] @ %v X %v\n")), aurora.Red(formatTime(request.SentAt)), aurora.Red(request.StatusCode), aurora.Red(formatTime(request.RecvAt)), aurora.Red(request.Email)))
-			}
+			content += fmt.Sprintf("- Sent @ %v >> [%v] @ %v ~ %v\n", formatTime(request.ResponseDetails.SentAt), request.ResponseDetails.StatusCode, formatTime(request.ResponseDetails.RecvAt), request.Email)
+			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("%v >> [%v] @ %v X %v\n")), aurora.Red(formatTime(request.ResponseDetails.SentAt)), aurora.Red(request.ResponseDetails.StatusCode), aurora.Red(formatTime(request.ResponseDetails.RecvAt)), aurora.Red(request.Email)))
 		}
 	}
-
 	logSnipe(content, Info.Name)
 }
