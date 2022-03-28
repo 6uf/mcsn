@@ -6,7 +6,6 @@ import (
 	"image"
 	"image/png"
 	"math"
-	"math/rand"
 	"os"
 	"os/signal"
 	"strings"
@@ -15,7 +14,7 @@ import (
 	"github.com/6uf/apiGO"
 	"github.com/disintegration/imaging"
 	"github.com/go-resty/resty/v2"
-	"github.com/logrusorgru/aurora"
+	"github.com/logrusorgru/aurora/v3"
 	"github.com/nfnt/resize"
 )
 
@@ -209,11 +208,6 @@ func logSnipe(content string, name string) {
 	defer logFile.Close()
 
 	logFile.WriteString(content)
-}
-
-func MOTD() string {
-	rand.Seed(time.Now().UnixNano())
-	return list[rand.Intn(len(list))]
 }
 
 func AutoOffset() float64 {

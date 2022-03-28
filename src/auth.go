@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/6uf/apiGO"
-	"github.com/logrusorgru/aurora"
+	"github.com/logrusorgru/aurora/v3"
 )
 
 func AuthAccs() {
@@ -27,8 +27,8 @@ func AuthAccs() {
 		os.Exit(0)
 	}
 
-	AccountsVer = CheckDupes(AccountsVer)
-	AccountsVer = grabDetails(AccountsVer)
+	CheckDupes(AccountsVer)
+	grabDetails(AccountsVer)
 
 	if !Acc.ManualBearer {
 		if len(Acc.Bearers) == 0 {
@@ -37,10 +37,8 @@ func AuthAccs() {
 
 			os.Exit(0)
 		} else {
-			AccountsVer = checkifValid(AccountsVer)
-
+			checkifValid(AccountsVer)
 			rewrite("accounts.txt", strings.Join(AccountsVer, "\n"))
-
 			if len(AccountsVer) != 0 {
 				for _, Accs := range Acc.Bearers {
 					if Accs.NameChange {
@@ -90,7 +88,7 @@ func grabDetails(AccountsVer []string) []string {
 			} else {
 				if Accs.Bearer != "" {
 					if apiGO.CheckChange(Accs.Bearer) {
-						fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Succesfully Reauthed %v\n")), aurora.Green(Accs.Email)))
+						fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Succesfully authed %v\n")), aurora.Green(Accs.Email)))
 						Acc.Bearers = append(Acc.Bearers, apiGO.Bearers{
 							Bearer:       Accs.Bearer,
 							AuthInterval: 86400,
@@ -131,7 +129,7 @@ func grabDetails(AccountsVer []string) []string {
 			} else {
 				if Accs.Bearer != "" {
 					if apiGO.CheckChange(Accs.Bearer) {
-						fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Succesfully Reauthed %v\n")), aurora.Green(Accs.Email)))
+						fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Succesfully authed %v\n")), aurora.Green(Accs.Email)))
 						Acc.Bearers = append(Acc.Bearers, apiGO.Bearers{
 							Bearer:       Accs.Bearer,
 							AuthInterval: 86400,

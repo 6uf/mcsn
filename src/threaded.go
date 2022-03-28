@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/6uf/apiGO"
-	"github.com/logrusorgru/aurora"
+	"github.com/logrusorgru/aurora/v3"
 )
 
 // code from Alien https://github.com/wwhtrbbtt/AlienSniper

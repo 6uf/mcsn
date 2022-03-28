@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/6uf/apiGO"
-	"github.com/logrusorgru/aurora"
+	"github.com/logrusorgru/aurora/v3"
 )
 
 type ReqConfig struct {
@@ -25,10 +25,10 @@ func (Info *ReqConfig) SnipeReq() {
 	var content string
 	var data SentRequests
 
-	fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Name: %v - Delay: %v\n")), aurora.Red(Info.Name), aurora.Red(Info.Delay)))
+	fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Name: %v - Delay: %v - Droptime: %v\n")), aurora.Red(Info.Name), aurora.Red(Info.Delay), aurora.Red(time.Unix(Info.Droptime, 0))))
 
 	for time.Now().Before(time.Unix(Info.Droptime, 0).Add(-time.Second * 10)) {
-		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Generating Payloads/TLS Connection In: %v      \r")), aurora.Red(time.Until(time.Unix(Info.Droptime, 0).Add(-time.Second*5)).Round(time.Second).Seconds())))
+		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Generating Payloads/TLS Connection In: %v      \r")), aurora.Red(time.Until(time.Unix(Info.Droptime, 0).Add(-time.Second*10)).Round(time.Second).Seconds())))
 		time.Sleep(time.Second * 1)
 	}
 
@@ -44,7 +44,7 @@ func (Info *ReqConfig) SnipeReq() {
 						for i := 0; i < Acc.Requests; i++ {
 							wgs.Add(1)
 							go func(Account apiGO.Info, payloads string) {
-								SendTime, recvTime, Status := apiGO.Payload{}.SocketSending(config.Conn, payloads)
+								SendTime, recvTime, Status := apiGO.SocketSending(config.Conn, payloads)
 
 								data.Requests = append(data.Requests, Details{
 									Bearer:     Account.Bearer,
@@ -64,7 +64,7 @@ func (Info *ReqConfig) SnipeReq() {
 						for i := 0; i < Acc.Requests; i++ {
 							wgs.Add(1)
 							go func(Account apiGO.Info, payloads string) {
-								SendTime, recvTime, Status := apiGO.Payload{}.SocketSending(config.Conn, payloads)
+								SendTime, recvTime, Status := apiGO.SocketSending(config.Conn, payloads)
 
 								data.Requests = append(data.Requests, Details{
 									Bearer:     Account.Bearer,
@@ -96,7 +96,7 @@ func (Info *ReqConfig) SnipeReq() {
 			for i := 0; float64(i) < float64(Account.Requests); i++ {
 				wg.Add(1)
 				go func(e int, Account apiGO.Info) {
-					SendTime, recvTime, Status := payload.SocketSending(conn, payload.Payload[e])
+					SendTime, recvTime, Status := apiGO.SocketSending(conn, payload.Payload[e])
 
 					data.Requests = append(data.Requests, Details{
 						Bearer:     Account.Bearer,
@@ -126,7 +126,7 @@ func (Info *ReqConfig) SnipeReq() {
 	for _, request := range data.Requests {
 		if request.Success {
 			content += fmt.Sprintf("+ Sent @ %v | [%v] @ %v ~ %v\n", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email)
-			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Sent @ %v >> [%v] @ %v ~ %v\n")), aurora.Green(formatTime(request.SentAt)), aurora.Green(request.StatusCode), aurora.Green(formatTime(request.RecvAt)), aurora.Green(request.Email)))
+			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("%v >> [%v] @ %v O %v\n")), aurora.Green(formatTime(request.SentAt)), aurora.Green(request.StatusCode), aurora.Green(formatTime(request.RecvAt)), aurora.Green(request.Email)))
 
 			fmt.Println()
 
@@ -144,17 +144,14 @@ func (Info *ReqConfig) SnipeReq() {
 			}
 
 			removeDetails(request)
-
-			fmt.Println()
-
-			fmt.Print((aurora.Faint(aurora.White("If you enjoy using MCSN feel free to join the discord! https://discord.gg/a8EQ97ZfgK\n"))))
+			fmt.Print(aurora.Faint(aurora.White("\nIf you enjoy using MCSN feel free to join the discord! https://discord.gg/a8EQ97ZfgK\n")))
 			break
 		} else {
 			content += fmt.Sprintf("- Sent @ %v >> [%v] @ %v ~ %v\n", formatTime(request.SentAt), request.StatusCode, formatTime(request.RecvAt), request.Email)
 			if request.Cloudfront {
-				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Sent @ %v >> [%v] @ %v ~ %v\n")), aurora.Red("CLOUDFRONT"), aurora.Red(formatTime(request.SentAt)), aurora.Red(request.StatusCode), aurora.Red(formatTime(request.RecvAt)), aurora.Red(request.Email)))
+				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] %v >> [%v] @ %v X %v\n")), aurora.Red("CLOUDFRONT"), aurora.Red(formatTime(request.SentAt)), aurora.Red(request.StatusCode), aurora.Red(formatTime(request.RecvAt)), aurora.Red(request.Email)))
 			} else {
-				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Sent @ %v >> [%v] @ %v ~ %v\n")), aurora.Red(formatTime(request.SentAt)), aurora.Red(request.StatusCode), aurora.Red(formatTime(request.RecvAt)), aurora.Red(request.Email)))
+				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("%v >> [%v] @ %v X %v\n")), aurora.Red(formatTime(request.SentAt)), aurora.Red(request.StatusCode), aurora.Red(formatTime(request.RecvAt)), aurora.Red(request.Email)))
 			}
 		}
 	}

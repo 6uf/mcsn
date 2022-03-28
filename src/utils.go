@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"github.com/6uf/apiGO"
-	"github.com/logrusorgru/aurora"
+	"github.com/logrusorgru/aurora/v3"
 	"golang.org/x/net/proxy"
 )
 
