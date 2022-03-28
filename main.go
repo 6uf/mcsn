@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/6uf/apiGO"
 	"github.com/logrusorgru/aurora/v3"
 	"github.com/urfave/cli/v2"
 )
@@ -71,6 +72,39 @@ func main() {
 					&cli.Float64Flag{
 						Name:  "d",
 						Usage: "Snipes a few ms earlier so you can counter ping lag.",
+					},
+				},
+			},
+
+			{
+				Name:    "test",
+				Aliases: []string{"t", "ts"},
+				Usage:   "Test uses a dummy bearer and email etc to test your speed etc.",
+				Action: func(c *cli.Context) error {
+					if c.Bool("gc") {
+						src.Bearers.Details = append(src.Bearers.Details, apiGO.Info{
+							Bearer:      "testbearer",
+							AccountType: "Giftcard",
+							Email:       "testcommand@mcsn.com",
+							Requests:    src.Acc.GcReq,
+						})
+					} else {
+						src.Bearers.Details = append(src.Bearers.Details, apiGO.Info{
+							Bearer:      "testbearer",
+							AccountType: "Giftcard",
+							Email:       "testcommand@mcsn.com",
+							Requests:    src.Acc.GcReq,
+						})
+					}
+
+					src.Snipe("test", 100, "single", "")
+
+					return nil
+				},
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:  "gc",
+						Usage: "username to snipe",
 					},
 				},
 			},
