@@ -10,7 +10,9 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"os/exec"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -27,52 +29,37 @@ func ThreeLetters(option string) ([]string, []int64) {
 	var droptime []int64
 	var drop []int64
 
-	if option == "list" {
-		file, _ := os.Open("names.txt")
+	isAlpha := regexp.MustCompile(`^[A-Za-z]+$`).MatchString
 
-		scanner := bufio.NewScanner(file)
+	grabName, _ := http.NewRequest("GET", "http://api.coolkidmacho.com/three", nil)
+	jsonBody, _ := http.DefaultClient.Do(grabName)
+	jsonGather, _ := ioutil.ReadAll(jsonBody.Body)
 
-		for scanner.Scan() {
-			if scanner.Text() == "" {
-				break
+	var name []Name
+	json.Unmarshal(jsonGather, &name)
+
+	for i := range name {
+		names = append(names, name[i].Names)
+		droptime = append(droptime, int64(name[i].Drop))
+	}
+
+	switch option {
+	case "3c":
+		threeL = names
+		drop = droptime
+	case "3l":
+		for i, username := range names {
+			if !isAlpha(username) {
 			} else {
-				threeL = append(threeL, scanner.Text())
-				drop = append(drop, apiGO.DropTime(scanner.Text()))
+				threeL = append(threeL, username)
+				drop = append(drop, droptime[i])
 			}
 		}
-	} else {
-		isAlpha := regexp.MustCompile(`^[A-Za-z]+$`).MatchString
-
-		grabName, _ := http.NewRequest("GET", "http://api.coolkidmacho.com/three", nil)
-		jsonBody, _ := http.DefaultClient.Do(grabName)
-		jsonGather, _ := ioutil.ReadAll(jsonBody.Body)
-
-		var name []Name
-		json.Unmarshal(jsonGather, &name)
-
-		for i := range name {
-			names = append(names, name[i].Names)
-			droptime = append(droptime, int64(name[i].Drop))
-		}
-
-		switch option {
-		case "3c":
-			threeL = names
-			drop = droptime
-		case "3l":
-			for i, username := range names {
-				if !isAlpha(username) {
-				} else {
-					threeL = append(threeL, username)
-					drop = append(drop, droptime[i])
-				}
-			}
-		case "3n":
-			for i, username := range names {
-				if _, err := strconv.Atoi(username); err == nil {
-					threeL = append(threeL, username)
-					drop = append(drop, droptime[i])
-				}
+	case "3n":
+		for i, username := range names {
+			if _, err := strconv.Atoi(username); err == nil {
+				threeL = append(threeL, username)
+				drop = append(drop, droptime[i])
 			}
 		}
 	}
@@ -306,7 +293,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 
 			for e, name := range names {
 				if delay == 0 {
-					delay = float64(AutoOffset())
+					delay = PingMC()
 				}
 
 				if !Acc.ManualBearer {
@@ -421,7 +408,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 
 				for e, name := range names {
 					if delay == 0 {
-						delay = float64(AutoOffset())
+						delay = PingMC()
 					}
 
 					if !Acc.ManualBearer {
@@ -456,5 +443,17 @@ func Snipe(name string, delay float64, option string, charType string) {
 		}
 
 		Data.SnipeReq()
+	}
+}
+
+func Clear() {
+	if runtime.GOOS == "windows" {
+		cmd := exec.Command("cmd", "/c", "cls")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	} else {
+		cmd := exec.Command("clear")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
 	}
 }

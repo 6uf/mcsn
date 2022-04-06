@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"mcsn/src"
 	"os"
-	"os/exec"
-	"runtime"
-	"strings"
 
 	"github.com/6uf/apiGO"
 	"github.com/logrusorgru/aurora/v3"
@@ -14,41 +11,12 @@ import (
 )
 
 func init() {
-	if runtime.GOOS == "windows" {
-		cmd := exec.Command("cmd", "/c", "cls")
-		cmd.Stdout = os.Stdout
-		cmd.Run()
-	} else {
-		cmd := exec.Command("clear")
-		cmd.Stdout = os.Stdout
-		cmd.Run()
-	}
-
+	src.Clear()
 	src.CheckFiles()
 	src.Acc.LoadState()
-
 	src.Pro = src.GenProxys()
 	src.Setup(src.Pro)
-
-	header := `
- •   ▄ ·   ▄▄·  ▄▄ ·    ▄ 
-·██ ▐███▪▐█ ▌▪▐█ ▀  •█▌▐█
-▐█ ▌▐▌▐█·██ ▄▄▄▀▀▀█▄▐█▐▐▌
-██ ██▌▐█▌▐███▌▐█▄▪▐███▐█▌
-▀▀  █▪▀▀▀·▀▀▀  ▀▀▀▀ ▀▀ █▪
-`
-
-	for _, char := range []string{"•", "·", "▪"} {
-		header = strings.ReplaceAll(header, char, aurora.Sprintf(aurora.Faint(aurora.Red("%v")), char))
-	}
-	for _, char := range []string{"█", "▄", "▌", "▀", "▌", "▀"} {
-		header = strings.ReplaceAll(header, char, aurora.Sprintf(aurora.Faint(aurora.White("%v")), char))
-	}
-	for _, char := range []string{"▐"} {
-		header = strings.ReplaceAll(header, char, aurora.Sprintf(aurora.Faint(aurora.BrightBlack("%v")), char))
-	}
-
-	fmt.Println(header)
+	fmt.Println(src.Logo())
 }
 
 func main() {
@@ -75,7 +43,6 @@ func main() {
 					},
 				},
 			},
-
 			{
 				Name:    "test",
 				Aliases: []string{"t", "ts"},
@@ -108,7 +75,6 @@ func main() {
 					},
 				},
 			},
-
 			{
 				Name:    "auto",
 				Aliases: []string{"as", "a"},
@@ -185,18 +151,16 @@ func main() {
 					},
 				},
 			},
-
 			{
 				Name:    "ping",
 				Aliases: []string{"p"},
 				Usage:   "ping helps give you a rough estimate of your connection to the minecraft API.",
 				Action: func(c *cli.Context) error {
-					delay, time := src.MeanPing()
-					fmt.Printf("Estimated (Mean) Delay: %v ~ Took: %v\n", delay, time)
+					time := src.PingMC()
+					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Estimated Delay (Milliseconds): %v\n")), aurora.Red(time)))
 					return nil
 				},
 			},
-
 			{
 				Name:    "proxy",
 				Aliases: []string{"p"},
@@ -291,7 +255,6 @@ func main() {
 					},
 				},
 			},
-
 			{
 				Name:    "turbo",
 				Aliases: []string{"t"},
@@ -315,7 +278,6 @@ func main() {
 					},
 				},
 			},
-
 			{
 				Name:    "namemc",
 				Aliases: []string{"n", "nmc", "skinart"},
@@ -338,7 +300,7 @@ func main() {
 		},
 		Name:    "MCSN",
 		Usage:   "A name sniper dedicated to premium free services",
-		Version: "5.15",
+		Version: "5.25",
 	}
 
 	app.Run(os.Args)

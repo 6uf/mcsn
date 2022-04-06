@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"image"
 	"image/png"
-	"math"
 	"os"
 	"os/signal"
 	"strings"
@@ -210,39 +209,35 @@ func logSnipe(content string, name string) {
 	logFile.WriteString(content)
 }
 
-func AutoOffset() float64 {
-	var pingTimes int64
+// https://github.com/overestimate/awm-src/blob/master/httping.go (used from emmas awm sniper check it out)
+
+func PingMC() float64 {
 	conn, _ := tls.Dial("tcp", "api.minecraftservices.com:443", nil)
-	defer conn.Close()
-	for i := 0; i < 3; i++ {
-		recv := make([]byte, 4096)
-		time1 := time.Now()
-		conn.Write([]byte("PUT /minecraft/profile/name/test HTTP/1.1\r\nHost: api.minecraftservices.com\r\nAuthorization: Bearer TestToken\r\n\r\n"))
-		conn.Read(recv)
-		pingTimes += time.Since(time1).Milliseconds()
-	}
-
-	return (float64(pingTimes) / float64(6000)) * 10000
+	tmpVar := make([]byte, 4096)
+	t1 := time.Now()
+	conn.Write([]byte("HEAD /minecraft/profile HTTP/1.1\r\nUser-Agent: httping.go/0.1\r\n\r\n"))
+	conn.Read(tmpVar)
+	return float64(time.Now().Sub(t1).Milliseconds())
 }
 
-func mean(values []float64) float64 {
-	total := 0.0
+func Logo() string {
+	header := `
+ •   ▄ ·   ▄▄·  ▄▄ ·    ▄ 
+·██ ▐███▪▐█ ▌▪▐█ ▀  •█▌▐█
+▐█ ▌▐▌▐█·██ ▄▄▄▀▀▀█▄▐█▐▐▌
+██ ██▌▐█▌▐███▌▐█▄▪▐███▐█▌
+▀▀  █▪▀▀▀·▀▀▀  ▀▀▀▀ ▀▀ █▪
+`
 
-	for _, v := range values {
-		total += float64(v)
+	for _, char := range []string{"•", "·", "▪"} {
+		header = strings.ReplaceAll(header, char, aurora.Sprintf(aurora.Faint(aurora.Red("%v")), char))
+	}
+	for _, char := range []string{"█", "▄", "▌", "▀", "▌", "▀"} {
+		header = strings.ReplaceAll(header, char, aurora.Sprintf(aurora.Faint(aurora.White("%v")), char))
+	}
+	for _, char := range []string{"▐"} {
+		header = strings.ReplaceAll(header, char, aurora.Sprintf(aurora.Faint(aurora.BrightBlack("%v")), char))
 	}
 
-	return math.Round(total / float64(len(values)))
-}
-
-func MeanPing() (float64, time.Duration) {
-	var values []float64
-	time1 := time.Now()
-	for i := 1; i < 11; i++ {
-		value := AutoOffset()
-		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Request Took: %v\n")), aurora.Red(math.Round(value))))
-		values = append(values, value)
-	}
-
-	return mean(values), time.Since(time1)
+	return header
 }
