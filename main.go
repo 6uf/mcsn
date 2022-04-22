@@ -11,11 +11,11 @@ import (
 )
 
 func init() {
-	src.Clear()
-	src.CheckFiles()
+	apiGO.Clear()
+	apiGO.CheckFiles()
 	src.Acc.LoadState()
-	src.Pro = src.GenProxys()
-	src.Setup(src.Pro)
+	src.Proxys.GetProxys()
+	src.Proxys.Setup()
 	fmt.Println(src.Logo())
 }
 
@@ -28,7 +28,7 @@ func main() {
 				Action: func(c *cli.Context) error {
 					src.AuthAccs()
 					fmt.Println()
-					go src.CheckAccs()
+					go apiGO.CheckAccs()
 					src.Snipe(c.String("u"), c.Float64("d"), "single", "")
 					return nil
 				},
@@ -86,7 +86,7 @@ func main() {
 						Action: func(c *cli.Context) error {
 							src.AuthAccs()
 							fmt.Println()
-							go src.CheckAccs()
+							go apiGO.CheckAccs()
 							src.Snipe("", c.Float64("d"), "auto", "3c")
 							return nil
 						},
@@ -103,7 +103,7 @@ func main() {
 						Action: func(c *cli.Context) error {
 							src.AuthAccs()
 							fmt.Println()
-							go src.CheckAccs()
+							go apiGO.CheckAccs()
 							src.Snipe("", c.Float64("d"), "auto", "3l")
 							return nil
 						},
@@ -120,7 +120,7 @@ func main() {
 						Action: func(c *cli.Context) error {
 							src.AuthAccs()
 							fmt.Println()
-							go src.CheckAccs()
+							go apiGO.CheckAccs()
 							src.Snipe("", c.Float64("d"), "auto", "3n")
 							return nil
 						},
@@ -138,7 +138,7 @@ func main() {
 						Action: func(c *cli.Context) error {
 							src.AuthAccs()
 							fmt.Println()
-							go src.CheckAccs()
+							go apiGO.CheckAccs()
 							src.Snipe("", c.Float64("d"), "auto", "list")
 							return nil
 						},
@@ -156,7 +156,7 @@ func main() {
 				Aliases: []string{"p"},
 				Usage:   "ping helps give you a rough estimate of your connection to the minecraft API.",
 				Action: func(c *cli.Context) error {
-					time := src.PingMC()
+					time := apiGO.PingMC()
 					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Estimated Delay (Milliseconds): %v\n")), aurora.Red(time)))
 					return nil
 				},
@@ -168,7 +168,7 @@ func main() {
 				Action: func(c *cli.Context) error {
 					src.AuthAccs()
 					fmt.Println()
-					go src.CheckAccs()
+					go apiGO.CheckAccs()
 					src.Snipe(c.String("u"), c.Float64("d"), "proxy", "")
 					return nil
 				},
@@ -191,7 +191,7 @@ func main() {
 						Action: func(c *cli.Context) error {
 							src.AuthAccs()
 							fmt.Println()
-							go src.CheckAccs()
+							go apiGO.CheckAccs()
 							src.Snipe(c.String("u"), c.Float64("d"), "proxy", "3c")
 							return nil
 						},
@@ -208,7 +208,7 @@ func main() {
 						Action: func(c *cli.Context) error {
 							src.AuthAccs()
 							fmt.Println()
-							go src.CheckAccs()
+							go apiGO.CheckAccs()
 							src.Snipe(c.String("u"), c.Float64("d"), "proxy", "3l")
 							return nil
 						},
@@ -225,7 +225,7 @@ func main() {
 						Action: func(c *cli.Context) error {
 							src.AuthAccs()
 							fmt.Println()
-							go src.CheckAccs()
+							go apiGO.CheckAccs()
 							src.Snipe(c.String("u"), c.Float64("d"), "proxy", "3n")
 							return nil
 						},
@@ -242,7 +242,7 @@ func main() {
 						Action: func(c *cli.Context) error {
 							src.AuthAccs()
 							fmt.Println()
-							go src.CheckAccs()
+							go apiGO.CheckAccs()
 							src.Snipe(c.String("u"), c.Float64("d"), "proxy", "list")
 							return nil
 						},
@@ -262,7 +262,7 @@ func main() {
 				Action: func(c *cli.Context) error {
 					src.AuthAccs()
 					fmt.Println()
-					go src.CheckAccs()
+					go apiGO.CheckAccs()
 					src.Snipe(c.String("u"), float64(c.Int64("t")), "turbo", "")
 					return nil
 				},

@@ -1,7 +1,6 @@
 package src
 
 import (
-	"crypto/tls"
 	"fmt"
 	"image"
 	"image/png"
@@ -196,28 +195,6 @@ func changeSkin(bearerNum int, path string) {
 	<-stop
 
 	fmt.Println()
-}
-
-func logSnipe(content string, name string) {
-	logFile, err := os.OpenFile(fmt.Sprintf("logs/%v.txt", strings.ToLower(name)), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] %v\n")), aurora.Red("ERROR"), err.Error()))
-	}
-
-	defer logFile.Close()
-
-	logFile.WriteString(content)
-}
-
-// https://github.com/overestimate/awm-src/blob/master/httping.go (used from emmas awm sniper check it out)
-
-func PingMC() float64 {
-	conn, _ := tls.Dial("tcp", "api.minecraftservices.com:443", nil)
-	tmpVar := make([]byte, 4096)
-	t1 := time.Now()
-	conn.Write([]byte("HEAD /minecraft/profile HTTP/1.1\r\nUser-Agent: httping.go/0.1\r\n\r\n"))
-	conn.Read(tmpVar)
-	return float64(time.Now().Sub(t1).Milliseconds())
 }
 
 func Logo() string {

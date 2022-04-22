@@ -73,7 +73,7 @@ func grabDetails(AccountsVer []string) []string {
 			if apiGO.CheckChange(bearer) {
 				Bearers.Details = append(Bearers.Details, apiGO.Info{
 					Bearer:      bearer,
-					AccountType: isGC(bearer),
+					AccountType: apiGO.IsGC(bearer),
 				})
 			}
 

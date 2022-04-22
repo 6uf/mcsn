@@ -2,81 +2,21 @@ package src
 
 import (
 	"bufio"
-	"crypto/tls"
-	"crypto/x509"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"math/rand"
-	"net/http"
 	"os"
-	"os/exec"
-	"regexp"
-	"runtime"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/6uf/apiGO"
 	"github.com/logrusorgru/aurora/v3"
-	"golang.org/x/net/proxy"
 )
-
-func ThreeLetters(option string) ([]string, []int64) {
-	var threeL []string
-	var names []string
-	var droptime []int64
-	var drop []int64
-
-	isAlpha := regexp.MustCompile(`^[A-Za-z]+$`).MatchString
-
-	grabName, _ := http.NewRequest("GET", "http://api.coolkidmacho.com/three", nil)
-	jsonBody, _ := http.DefaultClient.Do(grabName)
-	jsonGather, _ := ioutil.ReadAll(jsonBody.Body)
-
-	var name []Name
-	json.Unmarshal(jsonGather, &name)
-
-	for i := range name {
-		names = append(names, name[i].Names)
-		droptime = append(droptime, int64(name[i].Drop))
-	}
-
-	switch option {
-	case "3c":
-		threeL = names
-		drop = droptime
-	case "3l":
-		for i, username := range names {
-			if !isAlpha(username) {
-			} else {
-				threeL = append(threeL, username)
-				drop = append(drop, droptime[i])
-			}
-		}
-	case "3n":
-		for i, username := range names {
-			if _, err := strconv.Atoi(username); err == nil {
-				threeL = append(threeL, username)
-				drop = append(drop, droptime[i])
-			}
-		}
-	}
-
-	return threeL, drop
-}
-
-func jsonValue(f interface{}) []byte {
-	g, _ := json.Marshal(f)
-	return g
-}
 
 func formatTime(t time.Time) string {
 	return t.Format("05.00000")
 }
 
-func removeDetails(Account Details) {
+func removeDetails(Account apiGO.Details) {
 	var new []apiGO.Bearers
 	for _, Accs := range Acc.Bearers {
 		if Account.Email != Accs.Email {
@@ -113,144 +53,11 @@ func removeDetails(Account Details) {
 		Email:   Account.Email,
 		Send:    Account.ResponseDetails.SentAt,
 		Recv:    Account.ResponseDetails.RecvAt,
-		Success: Account.ResponseDetails.StatusCode == "100",
+		Success: Account.ResponseDetails.StatusCode == "200",
 	})
 
 	Acc.SaveConfig()
 	Acc.LoadState()
-}
-
-func isGC(bearer string) string {
-	conn, _ := tls.Dial("tcp", "api.minecraftservices.com"+":443", nil)
-
-	fmt.Fprintln(conn, "GET /minecraft/profile/namechange HTTP/1.1\r\nHost: api.minecraftservices.com\r\nUser-Agent: Dismal/1.0\r\nAuthorization: Bearer "+bearer+"\r\n\r\n")
-
-	e := make([]byte, 12)
-	conn.Read(e)
-
-	switch string(e[9:12]) {
-	case `404`:
-		return "Giftcard"
-	default:
-		return "Microsoft"
-	}
-}
-
-func CheckFiles() {
-	_, err := os.Stat("logs")
-
-	if os.IsNotExist(err) {
-		os.Mkdir("logs", 0755)
-	}
-
-	_, err = os.Open("accounts.txt")
-	if os.IsNotExist(err) {
-		os.Create("accounts.txt")
-	}
-
-	_, err = os.Open("proxys.txt")
-	if os.IsNotExist(err) {
-		os.Create("proxys.txt")
-	}
-
-	_, err = os.Open("names.txt")
-	if os.IsNotExist(err) {
-		os.Create("names.txt")
-	}
-
-	_, err = os.Stat("cropped")
-	if os.IsNotExist(err) {
-		os.MkdirAll("cropped/logs", 0755)
-	}
-}
-
-func GenProxys() []string {
-	var Proxys []string
-
-	f, _ := os.Open("Proxys.txt")
-	defer f.Close()
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		Proxys = append(Proxys, scanner.Text())
-	}
-
-	return Proxys
-}
-
-func randomInt(Proxys []string) string {
-	for {
-		rand.Seed(time.Now().UnixNano())
-		proxy := Proxys[rand.Intn(len(Proxys))]
-		if !used[proxy] {
-			used[proxy] = true
-			return proxy
-		}
-	}
-}
-
-func Setup(proxy []string) {
-	for _, proxy := range proxy {
-		used[proxy] = false
-	}
-}
-
-func genSockets(Pro []string, name string) (pro []Proxys) {
-	var Accs [][]apiGO.Info
-	var incr int
-	var use int
-	roots := x509.NewCertPool()
-	roots.AppendCertsFromPEM([]byte(rootCert))
-	for _, Acc := range Bearers.Details {
-		if len(Accs) == 0 {
-			Accs = append(Accs, []apiGO.Info{
-				Acc,
-			})
-		} else {
-			if incr == 3 {
-				incr = 0
-				use++
-				Accs = append(Accs, []apiGO.Info{})
-			}
-			Accs[use] = append(Accs[use], Acc)
-		}
-		incr++
-	}
-
-	var wg sync.WaitGroup
-	for _, Accs := range Accs {
-		wg.Add(1)
-		go func(Accs []apiGO.Info) {
-			var user, pass, ip, port string
-			auth := strings.Split(randomInt(Pro), ":")
-			ip, port = auth[0], auth[1]
-			if len(auth) > 2 {
-				user, pass = auth[2], auth[3]
-			}
-			req, err := proxy.SOCKS5("tcp", fmt.Sprintf("%v:%v", ip, port), &proxy.Auth{
-				User:     user,
-				Password: pass,
-			}, proxy.Direct)
-			if err != nil {
-				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Couldnt login: %v - %v\n")), aurora.Red(ip), aurora.Red(err.Error())))
-			} else {
-				conn, err := req.Dial("tcp", "api.minecraftservices.com:443")
-				if err != nil {
-					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Couldnt login: %v - %v\n")), aurora.Red(ip), aurora.Red(err.Error())))
-				} else {
-					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("logged into: %v\n")), aurora.Red(ip)))
-					pro = append(pro, Proxys{
-						Accounts: Accs,
-						Conn:     tls.Client(conn, &tls.Config{RootCAs: roots, InsecureSkipVerify: true, ServerName: "api.minecraftservices.com"}),
-					})
-				}
-			}
-
-			wg.Done()
-		}(Accs)
-	}
-
-	wg.Wait()
-	return pro
 }
 
 func Snipe(name string, delay float64, option string, charType string) {
@@ -263,14 +70,18 @@ func Snipe(name string, delay float64, option string, charType string) {
 			fmt.Print("\n")
 		}
 
-		Data := ReqConfig{
+		Data := apiGO.ReqConfig{
 			Name:     name,
 			Delay:    delay,
 			Droptime: dropTime,
 			Proxy:    false,
+			Bearers:  Bearers,
+			Proxys:   Proxys,
 		}
 
-		Data.SnipeReq()
+		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Name: %v - Delay: %v - Droptime: %v\n")), aurora.Red(Data.Name), aurora.Red(Data.Delay), aurora.Red(time.Unix(Data.Droptime, 0))))
+
+		ReadReqs(Data.SnipeReq())
 	case "auto":
 		for {
 			var names []string
@@ -288,12 +99,12 @@ func Snipe(name string, delay float64, option string, charType string) {
 					time.Sleep(1 * time.Second)
 				}
 			} else {
-				names, drops = ThreeLetters(charType)
+				names, drops = apiGO.ThreeLetters(charType)
 			}
 
 			for e, name := range names {
 				if delay == 0 {
-					delay = PingMC()
+					delay = apiGO.PingMC()
 				}
 
 				if !Acc.ManualBearer {
@@ -303,14 +114,18 @@ func Snipe(name string, delay float64, option string, charType string) {
 					}
 				}
 
-				Data := ReqConfig{
+				Data := apiGO.ReqConfig{
 					Name:     name,
 					Delay:    delay,
 					Droptime: drops[e],
 					Proxy:    false,
+					Proxys:   Proxys,
+					Bearers:  Bearers,
 				}
 
-				Data.SnipeReq()
+				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Name: %v - Delay: %v - Droptime: %v\n")), aurora.Red(Data.Name), aurora.Red(Data.Delay), aurora.Red(time.Unix(Data.Droptime, 0))))
+
+				ReadReqs(Data.SnipeReq())
 				fmt.Println()
 			}
 
@@ -321,7 +136,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 	case "turbo":
 		for {
 			var leng float64
-			var data SentRequests
+			var data apiGO.SentRequests
 			var wg sync.WaitGroup
 
 			payload := Bearers.CreatePayloads(name)
@@ -343,7 +158,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 						payload.Conns[e].Read(ea)
 						recvTime := time.Now()
 
-						data.Requests = append(data.Requests, Details{
+						data.Requests = append(data.Requests, apiGO.Details{
 							ResponseDetails: apiGO.Resp{
 								SentAt:     SendTime,
 								RecvAt:     recvTime,
@@ -371,7 +186,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 							SkinUrl: Acc.ChangeSkinLink,
 						}
 
-						SendInfo.ChangeSkin(jsonValue(skinUrls{Url: SendInfo.SkinUrl, Varient: "slim"}), status.Bearer)
+						SendInfo.ChangeSkin(apiGO.JsonValue(SkinUrls{Url: SendInfo.SkinUrl, Varient: "slim"}), status.Bearer)
 					}
 
 					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] %v Claimed %v\n")), aurora.Green(status.ResponseDetails.StatusCode), aurora.Green("Succesfully"), aurora.Red(name)))
@@ -403,12 +218,12 @@ func Snipe(name string, delay float64, option string, charType string) {
 						time.Sleep(1 * time.Second)
 					}
 				} else {
-					names, drops = ThreeLetters(charType)
+					names, drops = apiGO.ThreeLetters(charType)
 				}
 
 				for e, name := range names {
 					if delay == 0 {
-						delay = PingMC()
+						delay = apiGO.PingMC()
 					}
 
 					if !Acc.ManualBearer {
@@ -418,14 +233,18 @@ func Snipe(name string, delay float64, option string, charType string) {
 						}
 					}
 
-					Data := ReqConfig{
+					Data := apiGO.ReqConfig{
 						Name:     name,
 						Delay:    delay,
 						Droptime: drops[e],
 						Proxy:    true,
+						Proxys:   Proxys,
+						Bearers:  Bearers,
 					}
 
-					Data.SnipeReq()
+					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Name: %v - Delay: %v - Droptime: %v\n")), aurora.Red(Data.Name), aurora.Red(Data.Delay), aurora.Red(time.Unix(Data.Droptime, 0))))
+
+					ReadReqs(Data.SnipeReq())
 					fmt.Println()
 				}
 
@@ -435,25 +254,43 @@ func Snipe(name string, delay float64, option string, charType string) {
 			}
 		}
 
-		Data := ReqConfig{
+		Data := apiGO.ReqConfig{
 			Name:     name,
 			Delay:    delay,
 			Droptime: apiGO.DropTime(name),
 			Proxy:    true,
+			Proxys:   Proxys,
+			Bearers:  Bearers,
 		}
 
-		Data.SnipeReq()
+		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Name: %v - Delay: %v - Droptime: %v\n")), aurora.Red(Data.Name), aurora.Red(Data.Delay), aurora.Red(time.Unix(Data.Droptime, 0))))
+
+		ReadReqs(Data.SnipeReq())
 	}
 }
 
-func Clear() {
-	if runtime.GOOS == "windows" {
-		cmd := exec.Command("cmd", "/c", "cls")
-		cmd.Stdout = os.Stdout
-		cmd.Run()
-	} else {
-		cmd := exec.Command("clear")
-		cmd.Stdout = os.Stdout
-		cmd.Run()
+func ReadReqs(Data apiGO.SentRequests) {
+	for _, request := range Data.Requests {
+		switch request.ResponseDetails.StatusCode {
+		case "200":
+			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("%v >> [%v] @ %v O %v\n\n")), aurora.Green(formatTime(request.ResponseDetails.SentAt)), aurora.Green(request.ResponseDetails.StatusCode), aurora.Green(formatTime(request.ResponseDetails.RecvAt)), aurora.Green(request.Email)))
+			switch Acc.ChangeskinOnSnipe {
+			case true:
+				SendInfo := apiGO.ServerInfo{
+					SkinUrl: Acc.ChangeSkinLink,
+				}
+				resp, err := SendInfo.ChangeSkin(apiGO.JsonValue(SkinUrls{Url: SendInfo.SkinUrl, Varient: "slim"}), request.Bearer)
+				if err == nil {
+					if resp.StatusCode == 200 {
+						fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Succesfully Changed your Skin!\n")), aurora.Green(resp.StatusCode)))
+					} else {
+						fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Couldnt Change your Skin..\n")), aurora.Red("ERROR")))
+					}
+				}
+			}
+			removeDetails(request)
+		default:
+			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("%v >> [%v] @ %v X %v\n")), aurora.Red(formatTime(request.ResponseDetails.SentAt)), aurora.Red(request.ResponseDetails.StatusCode), aurora.Red(formatTime(request.ResponseDetails.RecvAt)), aurora.Red(request.Email)))
+		}
 	}
 }
