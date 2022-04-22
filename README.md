@@ -3,4 +3,10 @@ This project was made for fun slowly it turned into something bigger, what seeme
 
 A guide to the sniper can be found [here](https://github.com/6uf/mcsn/tree/main/documents)
 
+- Supports proxies
+- Has auto sniping features names.txt or auto 3c commands.
+- Namemc skin art
+
+And much more!
+
 ![GitHub metrics](https://metrics.lecoq.io/6uf)
