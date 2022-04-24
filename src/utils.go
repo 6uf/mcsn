@@ -84,25 +84,26 @@ func Snipe(name string, delay float64, option string, charType string) {
 		ReadReqs(Data.SnipeReq())
 	case "auto":
 		for {
-			var names []string
-			var drops []int64
-
+			var Data []apiGO.Names
 			if charType == "list" {
 				file, _ := os.Open("names.txt")
 
 				scanner := bufio.NewScanner(file)
 
 				for scanner.Scan() {
-					drops = append(drops, apiGO.DropTime(scanner.Text()))
-					names = append(names, scanner.Text())
-
-					time.Sleep(1 * time.Second)
+					Data = append(Data,
+						apiGO.Names{
+							Name:     scanner.Text(),
+							Droptime: apiGO.DropTime(scanner.Text()),
+							Search:   "0",
+						},
+					)
 				}
 			} else {
-				names, drops = apiGO.ThreeLetters(charType)
+				Data = apiGO.ThreeLetters(charType)
 			}
 
-			for e, name := range names {
+			for _, name := range Data {
 				if delay == 0 {
 					delay = apiGO.PingMC()
 				}
@@ -115,9 +116,9 @@ func Snipe(name string, delay float64, option string, charType string) {
 				}
 
 				Data := apiGO.ReqConfig{
-					Name:     name,
+					Name:     name.Name,
 					Delay:    delay,
-					Droptime: drops[e],
+					Droptime: name.Droptime,
 					Proxy:    false,
 					Proxys:   Proxys,
 					Bearers:  Bearers,
@@ -203,25 +204,25 @@ func Snipe(name string, delay float64, option string, charType string) {
 	case "proxy":
 		if charType != "" {
 			for {
-				var names []string
-				var drops []int64
+				var Data []apiGO.Names
 
 				if charType == "list" {
 					file, _ := os.Open("names.txt")
-
 					scanner := bufio.NewScanner(file)
-
 					for scanner.Scan() {
-						drops = append(drops, apiGO.DropTime(scanner.Text()))
-						names = append(names, scanner.Text())
-
-						time.Sleep(1 * time.Second)
+						Data = append(Data,
+							apiGO.Names{
+								Name:     scanner.Text(),
+								Droptime: apiGO.DropTime(scanner.Text()),
+								Search:   "0",
+							},
+						)
 					}
 				} else {
-					names, drops = apiGO.ThreeLetters(charType)
+					Data = apiGO.ThreeLetters(charType)
 				}
 
-				for e, name := range names {
+				for _, name := range Data {
 					if delay == 0 {
 						delay = apiGO.PingMC()
 					}
@@ -234,10 +235,10 @@ func Snipe(name string, delay float64, option string, charType string) {
 					}
 
 					Data := apiGO.ReqConfig{
-						Name:     name,
+						Name:     name.Name,
 						Delay:    delay,
-						Droptime: drops[e],
-						Proxy:    true,
+						Droptime: name.Droptime,
+						Proxy:    false,
 						Proxys:   Proxys,
 						Bearers:  Bearers,
 					}

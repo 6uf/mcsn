@@ -2,6 +2,8 @@ github.com/6uf/apiGO v0.0.0-20220422190035-8bffb89683fe h1:fGolrIpDDXTQ9pjZp6jW1
 github.com/6uf/apiGO v0.0.0-20220422190035-8bffb89683fe/go.mod h1:zZspvUWIMvgK8olcEVxeJQXS8l5UWjVRZVwQpPVCvpw=
 github.com/6uf/apiGO v0.0.0-20220422192034-5110e3e00394 h1:0tT2NgvNmfjvBwsfd0fvJ+lwKkdn/R7BBcC7yQsZ8Fc=
 github.com/6uf/apiGO v0.0.0-20220422192034-5110e3e00394/go.mod h1:zZspvUWIMvgK8olcEVxeJQXS8l5UWjVRZVwQpPVCvpw=
+github.com/6uf/apiGO v0.0.0-20220424191353-0a77bfdb14e3 h1:XN07xl5/gBeSgdg9DJmnY2v5nXMm+oFyTg0ct5qef1M=
+github.com/6uf/apiGO v0.0.0-20220424191353-0a77bfdb14e3/go.mod h1:zZspvUWIMvgK8olcEVxeJQXS8l5UWjVRZVwQpPVCvpw=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/cpuguy83/go-md2man/v2 v2.0.1 h1:r/myEWzV9lfsM1tFLgDyu0atFtJ1fXn261LKYj/3DxU=
 github.com/cpuguy83/go-md2man/v2 v2.0.1/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
