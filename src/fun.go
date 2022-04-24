@@ -30,6 +30,7 @@ func Skinart(name, imageFile string) {
 
 			if len(Acc.Bearers) == 0 {
 				PrintGrad("Unable to continue, you have no Bearers added.\n")
+				os.Exit(0)
 			} else {
 				var email string
 				PrintGrad("Email of the Account you will use: ")
@@ -187,7 +188,7 @@ func changeSkin(bearerNum int, path string) {
 			time.Sleep(30 * time.Second)
 		}
 	}
-	
+
 	PrintGrad("Press CTRL+C to Continue: ")
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
