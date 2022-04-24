@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/6uf/apiGO"
-	"github.com/logrusorgru/aurora/v3"
 )
 
 func formatTime(t time.Time) string {
@@ -65,7 +64,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 	case "single":
 		dropTime := apiGO.DropTime(name)
 		if dropTime < int64(10000) {
-			fmt.Print(aurora.Faint(aurora.White("Droptime [UNIX]: ")))
+			PrintGrad("Droptime [UNIX]: ")
 			fmt.Scan(&dropTime)
 			fmt.Print("\n")
 		}
@@ -78,8 +77,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 			Bearers:  Bearers,
 			Proxys:   Proxys,
 		}
-
-		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Name: %v - Delay: %v - Droptime: %v\n")), aurora.Red(Data.Name), aurora.Red(Data.Delay), aurora.Red(time.Unix(Data.Droptime, 0))))
+		PrintGrad(fmt.Sprintf("Name: %v - Delay: %v - Droptime: %v\n", Data.Name, Data.Delay, time.Unix(Data.Droptime, 0)))
 
 		ReadReqs(Data.SnipeReq())
 	case "auto":
@@ -110,7 +108,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 
 				if !Acc.ManualBearer {
 					if len(Bearers.Details) == 0 {
-						fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] No more usable Account(s)\n")), aurora.Red("ERROR")))
+						PrintGrad("[ERROR] No more usable Account(s)\n")
 						os.Exit(0)
 					}
 				}
@@ -124,7 +122,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 					Bearers:  Bearers,
 				}
 
-				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Name: %v - Delay: %v - Droptime: %v\n")), aurora.Red(Data.Name), aurora.Red(Data.Delay), aurora.Red(time.Unix(Data.Droptime, 0))))
+				PrintGrad(fmt.Sprintf("Name: %v - Delay: %v - Droptime: %v\n", Data.Name, Data.Delay, time.Unix(Data.Droptime, 0)))
 
 				ReadReqs(Data.SnipeReq())
 				fmt.Println()
@@ -189,12 +187,10 @@ func Snipe(name string, delay float64, option string, charType string) {
 
 						SendInfo.ChangeSkin(apiGO.JsonValue(SkinUrls{Url: SendInfo.SkinUrl, Varient: "slim"}), status.Bearer)
 					}
-
-					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] %v Claimed %v\n")), aurora.Green(status.ResponseDetails.StatusCode), aurora.Green("Succesfully"), aurora.Red(name)))
-
+					PrintGrad(fmt.Sprintf("[%v] Succesfully Claimed %v\n", status.ResponseDetails.StatusCode, name))
 					break
 				} else {
-					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] %v to claim %v\n")), aurora.Green(status.ResponseDetails.StatusCode), aurora.Red("Failed"), aurora.Red(name)))
+					PrintGrad(fmt.Sprintf("[%v] Unuccesfully Claimed %v\n", status.ResponseDetails.StatusCode, name))
 				}
 			}
 
@@ -229,7 +225,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 
 					if !Acc.ManualBearer {
 						if len(Bearers.Details) == 0 {
-							fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] No more usable Account(s)\n")), aurora.Red("ERROR")))
+							PrintGrad("[ERROR] No more usable Account(s)\n")
 							os.Exit(0)
 						}
 					}
@@ -243,7 +239,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 						Bearers:  Bearers,
 					}
 
-					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Name: %v - Delay: %v - Droptime: %v\n")), aurora.Red(Data.Name), aurora.Red(Data.Delay), aurora.Red(time.Unix(Data.Droptime, 0))))
+					PrintGrad(fmt.Sprintf("Name: %v - Delay: %v - Droptime: %v\n", Data.Name, Data.Delay, time.Unix(Data.Droptime, 0)))
 
 					ReadReqs(Data.SnipeReq())
 					fmt.Println()
@@ -264,7 +260,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 			Bearers:  Bearers,
 		}
 
-		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Name: %v - Delay: %v - Droptime: %v\n")), aurora.Red(Data.Name), aurora.Red(Data.Delay), aurora.Red(time.Unix(Data.Droptime, 0))))
+		PrintGrad(fmt.Sprintf("Name: %v - Delay: %v - Droptime: %v\n", Data.Name, Data.Delay, time.Unix(Data.Droptime, 0)))
 
 		ReadReqs(Data.SnipeReq())
 	}
@@ -274,7 +270,7 @@ func ReadReqs(Data apiGO.SentRequests) {
 	for _, request := range Data.Requests {
 		switch request.ResponseDetails.StatusCode {
 		case "200":
-			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("%v >> [%v] @ %v O %v\n\n")), aurora.Green(formatTime(request.ResponseDetails.SentAt)), aurora.Green(request.ResponseDetails.StatusCode), aurora.Green(formatTime(request.ResponseDetails.RecvAt)), aurora.Green(request.Email)))
+			PrintGrad(fmt.Sprintf("%v >> [%v] @ %v O %v\n", formatTime(request.ResponseDetails.SentAt), request.ResponseDetails.StatusCode, formatTime(request.ResponseDetails.RecvAt), request.Email))
 			switch Acc.ChangeskinOnSnipe {
 			case true:
 				SendInfo := apiGO.ServerInfo{
@@ -283,15 +279,15 @@ func ReadReqs(Data apiGO.SentRequests) {
 				resp, err := SendInfo.ChangeSkin(apiGO.JsonValue(SkinUrls{Url: SendInfo.SkinUrl, Varient: "slim"}), request.Bearer)
 				if err == nil {
 					if resp.StatusCode == 200 {
-						fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Succesfully Changed your Skin!\n")), aurora.Green(resp.StatusCode)))
+						PrintGrad("Succesfully Changed your Skin!\n")
 					} else {
-						fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Couldnt Change your Skin..\n")), aurora.Red("ERROR")))
+						PrintGrad("Couldnt Change your Skin..\n")
 					}
 				}
 			}
 			removeDetails(request)
 		default:
-			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("%v >> [%v] @ %v X %v\n")), aurora.Red(formatTime(request.ResponseDetails.SentAt)), aurora.Red(request.ResponseDetails.StatusCode), aurora.Red(formatTime(request.ResponseDetails.RecvAt)), aurora.Red(request.Email)))
+			PrintGrad(fmt.Sprintf("%v >> [%v] @ %v X %v\n", formatTime(request.ResponseDetails.SentAt), request.ResponseDetails.StatusCode, formatTime(request.ResponseDetails.RecvAt), request.Email))
 		}
 	}
 }

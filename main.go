@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/6uf/apiGO"
-	"github.com/logrusorgru/aurora/v3"
 	"github.com/urfave/cli/v2"
 )
 
@@ -16,7 +15,13 @@ func init() {
 	src.Acc.LoadState()
 	src.Proxys.GetProxys()
 	src.Proxys.Setup()
-	fmt.Println(src.Logo())
+	fmt.Println(src.Logo(`
+•     ·   ▄▄·  ▄▄ ·    ▄ 
+·██ ▐███▪▐█ ▌▪▐█ ▀  •█▌▐█
+▐█ ▌▐▌▐█·██ ▄▄▄▀▀▀█▄▐█▐▐▌
+██ ██▌▐█▌▐███▌▐█▄▪▐███▐█▌
+▀▀  █▪▀▀▀·▀▀▀  ▀▀▀▀ ▀▀ █▪
+   `))
 }
 
 func main() {
@@ -157,7 +162,7 @@ func main() {
 				Usage:   "ping helps give you a rough estimate of your connection to the minecraft API.",
 				Action: func(c *cli.Context) error {
 					time := apiGO.PingMC()
-					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Estimated Delay (Milliseconds): %v\n")), aurora.Red(time)))
+					src.PrintGrad(fmt.Sprintf("Estimated Delay (Milliseconds): %v\n", time))
 					return nil
 				},
 			},

@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/6uf/apiGO"
-	"github.com/logrusorgru/aurora/v3"
 )
 
 func AuthAccs() {
@@ -23,7 +22,7 @@ func AuthAccs() {
 	}
 
 	if len(AccountsVer) == 0 {
-		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Unable to continue, you have no Accounts added.\n")), aurora.Red("ERROR")))
+		PrintGrad("Unable to continue, you have no Accounts added.\n")
 		os.Exit(0)
 	}
 
@@ -32,7 +31,7 @@ func AuthAccs() {
 
 	if !Acc.ManualBearer {
 		if len(Acc.Bearers) == 0 {
-			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] No Bearers have been found, please check your details.\n")), aurora.Red("ERROR")))
+			PrintGrad("No Bearers have been found, please check your details.\n")
 			rewrite("accounts.txt", strings.Join(AccountsVer, "\n"))
 
 			os.Exit(0)
@@ -60,7 +59,7 @@ func AuthAccs() {
 					}
 				}
 			} else {
-				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Unable to find any usable Accounts.\n")), aurora.Red("ERROR")))
+				PrintGrad("Unable to find any usable Accounts.\n")
 				os.Exit(0)
 			}
 		}
@@ -80,15 +79,15 @@ func grabDetails(AccountsVer []string) []string {
 			time.Sleep(time.Second)
 		}
 	} else if Acc.Bearers == nil {
-		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Attempting to authenticate %v account(s)\n\n")), aurora.Red(len(AccountsVer))))
+		PrintGrad(fmt.Sprintf("Attempting to authenticate %v account(s)\n\n", len(AccountsVer)))
 		for _, Accs := range apiGO.Auth(AccountsVer).Details {
 			if Accs.Error != "" {
 				AccountsVer = remove(AccountsVer, Accs.Email+":"+Accs.Password)
-				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Account %v came up Invalid: %v\n")), aurora.Red("ERROR"), aurora.Red(Accs.Email), aurora.Red(Accs.Error)))
+				PrintGrad(fmt.Sprintf("Account %v came up Invalid: %v\n", Accs.Email, Accs.Error))
 			} else {
 				if Accs.Bearer != "" {
 					if apiGO.CheckChange(Accs.Bearer) {
-						fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Succesfully authed %v\n")), aurora.Green(Accs.Email)))
+						PrintGrad(fmt.Sprintf("Succesfully authed %v\n", Accs.Email))
 						Acc.Bearers = append(Acc.Bearers, apiGO.Bearers{
 							Bearer:       Accs.Bearer,
 							AuthInterval: 86400,
@@ -100,10 +99,10 @@ func grabDetails(AccountsVer []string) []string {
 						})
 					} else {
 						AccountsVer = remove(AccountsVer, Accs.Email+":"+Accs.Password)
-						fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Account %v Cannot Name Change.\n")), aurora.Red("ERROR"), aurora.Red(Accs.Email)))
+						PrintGrad(fmt.Sprintf("Account %v Cannot Name Change.\n", Accs.Email))
 					}
 				} else {
-					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Account %v bearer is nil.\n")), aurora.Red("ERROR"), aurora.Red(Accs.Email)))
+					PrintGrad(fmt.Sprintf("Account %v bearer is nil.\n", Accs.Email))
 				}
 			}
 		}
@@ -121,15 +120,15 @@ func grabDetails(AccountsVer []string) []string {
 			}
 		}
 
-		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Attempting to authenticate %v account(s)\n\n")), aurora.Red(len(AccountsVer))))
+		PrintGrad(fmt.Sprintf("Attempting to authenticate %v account(s)\n\n", len(AccountsVer)))
 		for _, Accs := range apiGO.Auth(auth).Details {
 			if Accs.Error != "" {
 				AccountsVer = remove(AccountsVer, Accs.Email+":"+Accs.Password)
-				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Account %v came up Invalid: %v\n")), aurora.Red("ERROR"), aurora.Red(Accs.Email), aurora.Red(Accs.Error)))
+				PrintGrad(fmt.Sprintf("Account %v came up Invalid: %v\n", Accs.Email, Accs.Error))
 			} else {
 				if Accs.Bearer != "" {
 					if apiGO.CheckChange(Accs.Bearer) {
-						fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Succesfully authed %v\n")), aurora.Green(Accs.Email)))
+						PrintGrad(fmt.Sprintf("Succesfully authed %v\n", Accs.Email))
 						Acc.Bearers = append(Acc.Bearers, apiGO.Bearers{
 							Bearer:       Accs.Bearer,
 							AuthInterval: 86400,
@@ -141,10 +140,10 @@ func grabDetails(AccountsVer []string) []string {
 						})
 					} else {
 						AccountsVer = remove(AccountsVer, Accs.Email+":"+Accs.Password)
-						fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Account %v Cannot Name Change.\n")), aurora.Red("ERROR"), aurora.Red(Accs.Email)))
+						PrintGrad(fmt.Sprintf("Account %v Cannot Name Change.\n", Accs.Email))
 					}
 				} else {
-					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Account %v bearer is nil.\n")), aurora.Red("ERROR"), aurora.Red(Accs.Email)))
+					PrintGrad(fmt.Sprintf("Account %v bearer is nil.\n", Accs.Email))
 				}
 			}
 		}
@@ -172,25 +171,25 @@ func checkifValid(AccountsVer []string) []string {
 		j, _ := http.DefaultClient.Do(f)
 
 		if j.StatusCode == 401 {
-			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Account %v turned up invalid. Attempting to Reauth\n")), aurora.Red(Accs.Email)))
+			PrintGrad(fmt.Sprintf("Account %v turned up invalid. Attempting to Reauth\n", Accs.Email))
 			reAuth = append(reAuth, Accs.Email+":"+Accs.Password)
 		}
 	}
 
 	if len(reAuth) != 0 {
-		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("\nReauthing %v Accounts..\n\n")), aurora.Red(len(reAuth))))
+		PrintGrad(fmt.Sprintf("\nReauthing %v Accounts..\n\n", len(reAuth)))
 		bearerz := apiGO.Auth(reAuth)
 
 		for point, data := range Acc.Bearers {
 			for _, Accs := range bearerz.Details {
 				if Accs.Error != "" {
 					AccountsVer = remove(AccountsVer, Accs.Email+":"+Accs.Password)
-					fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Account %v came up Invalid: %v\n")), aurora.Red("ERROR"), aurora.Red(Accs.Email), aurora.Red(Accs.Error)))
+					PrintGrad(fmt.Sprintf("Account %v came up Invalid: %v\n", Accs.Email, Accs.Error))
 				} else if Accs.Bearer != "" {
 					if data.Email == Accs.Email {
 						if Accs.Bearer != "" {
 							if apiGO.CheckChange(Accs.Bearer) {
-								fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Succesfully Reauthed %v\n")), aurora.Green(Accs.Email)))
+								PrintGrad(fmt.Sprintf("Succesfully Reauthed %v\n", Accs.Email))
 								data.Bearer = Accs.Bearer
 								data.NameChange = true
 								data.Type = Accs.AccountType
@@ -200,10 +199,10 @@ func checkifValid(AccountsVer []string) []string {
 								Acc.Bearers[point] = data
 							} else {
 								AccountsVer = remove(AccountsVer, Accs.Email+":"+Accs.Password)
-								fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Account %v Cannot Name Change.\n")), aurora.Red("ERROR"), aurora.Red(Accs.Email)))
+								PrintGrad(fmt.Sprintf("Account %v Cannot Name Change.\n", Accs.Email))
 							}
 						} else {
-							fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Account %v bearer is nil.\n")), aurora.Red("ERROR"), aurora.Red(Accs.Email)))
+							PrintGrad(fmt.Sprintf("Account %v bearer is nil.\n", Accs.Email))
 						}
 					}
 				}

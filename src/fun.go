@@ -12,7 +12,8 @@ import (
 	"github.com/6uf/apiGO"
 	"github.com/disintegration/imaging"
 	"github.com/go-resty/resty/v2"
-	"github.com/logrusorgru/aurora/v3"
+	"github.com/iskaa02/qalam"
+	"github.com/iskaa02/qalam/gradient"
 	"github.com/nfnt/resize"
 )
 
@@ -22,16 +23,16 @@ func Skinart(name, imageFile string) {
 	var bearerNum int = 0
 
 	if !Acc.ManualBearer {
-		fmt.Print(aurora.Blink(aurora.Faint(aurora.White("Use config bearer? [yes | no]: "))))
+		PrintGrad("Use config bearer? [yes | no]: ")
 		fmt.Scan(&choose)
 		if strings.ContainsAny(strings.ToLower(choose), "yes ye y") {
 			Acc.LoadState()
 
 			if len(Acc.Bearers) == 0 {
-				fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Unable to continue, you have no Bearers added.\n")), aurora.Red("ERROR")))
+				PrintGrad("Unable to continue, you have no Bearers added.\n")
 			} else {
 				var email string
-				fmt.Print(aurora.Blink(aurora.Faint(aurora.White("Email of the Account you will use: "))))
+				PrintGrad("Email of the Account you will use: ")
 				fmt.Scan(&email)
 
 				fmt.Println()
@@ -50,25 +51,23 @@ func Skinart(name, imageFile string) {
 				}
 			}
 		} else {
-			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Enter your Account details to continue [%v:%v]: ")), aurora.Red("Email"), aurora.Red("Password")))
+			PrintGrad("Enter your Account details to continue [EMAIL:PASS]: ")
 			fmt.Scan(&Accd)
 			fmt.Println()
 			Bearers = apiGO.Auth([]string{Accd})
 			fmt.Println()
 		}
 	} else {
-		fmt.Print(aurora.Faint(aurora.White("This will use the first bearer within your Accounts.txt | Press enter to verify: ")))
+		PrintGrad("This will use the first bearer within your Accounts.txt | Press enter to verify: ")
 		fmt.Scanf("h")
-
 		AuthAccs()
 	}
-
-	fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Would you like to use any previously generated skins [%v:%v]: ")), aurora.Green("Yes"), aurora.Red("No")))
+	PrintGrad("Would you like to use any previously generated skins [YES:NO]: ")
 	fmt.Scan(&choose)
 
 	if strings.ContainsAny(strings.ToLower(choose), "yes ye y") {
 		var folder string
-		fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("Name of the folder [%v]: ")), aurora.Red("case sensitive")))
+		PrintGrad("Name of the folder: ")
 		fmt.Scan(&folder)
 
 		fmt.Println()
@@ -84,12 +83,12 @@ func Skinart(name, imageFile string) {
 
 		img, err := readImage("images/" + imageFile)
 		if err != nil {
-			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] %v\n")), aurora.Red("ERROR"), err.Error()))
+			PrintGrad(err.Error())
 		}
 
 		base, err := readImage("images/base.png")
 		if err != nil {
-			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] %v\n")), aurora.Red("ERROR"), err.Error()))
+			PrintGrad(err.Error())
 		}
 
 		if img.Bounds().Size() != image.Pt(72, 24) {
@@ -182,14 +181,14 @@ func changeSkin(bearerNum int, path string) {
 		fmt.Println(err)
 	} else {
 		if skin.StatusCode() == 200 {
-			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Skin Changed\n")), aurora.Green(skin.StatusCode())))
+			PrintGrad(fmt.Sprintf("[%v] Skin Changed\n", skin.StatusCode()))
 		} else {
-			fmt.Print(aurora.Sprintf(aurora.Faint(aurora.White("[%v] Failed skin change. (sleeping for 30 seconds)\n")), aurora.Red("ERROR")))
+			PrintGrad(fmt.Sprintf("[%v] Failed skin change. (sleeping for 30 seconds)\n", skin.StatusCode()))
 			time.Sleep(30 * time.Second)
 		}
 	}
-
-	fmt.Print(aurora.Blink(aurora.Faint(aurora.White("Press CTRL+C to Continue: "))))
+	
+	PrintGrad("Press CTRL+C to Continue: ")
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
 	<-stop
@@ -197,24 +196,30 @@ func changeSkin(bearerNum int, path string) {
 	fmt.Println()
 }
 
-func Logo() string {
-	header := `
- •   ▄ ·   ▄▄·  ▄▄ ·    ▄ 
-·██ ▐███▪▐█ ▌▪▐█ ▀  •█▌▐█
-▐█ ▌▐▌▐█·██ ▄▄▄▀▀▀█▄▐█▐▐▌
-██ ██▌▐█▌▐███▌▐█▄▪▐███▐█▌
-▀▀  █▪▀▀▀·▀▀▀  ▀▀▀▀ ▀▀ █▪
-`
+func Logo(Data string) string {
+	g, _ := gradient.NewGradientBuilder().
+		HtmlColors(
+			"rgb(125,110,221)",
+			"rgb(90%,45%,97%)",
+			"hsl(229,79%,85%)",
+		).
+		Mode(gradient.BlendRgb).
+		Build()
+	return g.Mutline(Data)
+}
 
-	for _, char := range []string{"•", "·", "▪"} {
-		header = strings.ReplaceAll(header, char, aurora.Sprintf(aurora.Faint(aurora.Red("%v")), char))
-	}
-	for _, char := range []string{"█", "▄", "▌", "▀", "▌", "▀"} {
-		header = strings.ReplaceAll(header, char, aurora.Sprintf(aurora.Faint(aurora.White("%v")), char))
-	}
-	for _, char := range []string{"▐"} {
-		header = strings.ReplaceAll(header, char, aurora.Sprintf(aurora.Faint(aurora.BrightBlack("%v")), char))
-	}
+func PrintGrad(Text string) {
+	g, _ := gradient.NewGradientBuilder().
+		HtmlColors(
+			"rgb(125,110,221)",
+			"rgb(90%,45%,97%)",
+			"hsl(229,79%,85%)",
+		).
+		Mode(gradient.BlendRgb).
+		Build()
+	g.Print(Text)
+}
 
-	return header
+func AddColor(text string, color string) string {
+	return qalam.Sprintf("[%v]%v[/%v]", color, text, color)
 }
