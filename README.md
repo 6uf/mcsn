@@ -9,8 +9,9 @@ A guide to the sniper can be found [here](https://github.com/6uf/mcsn/tree/main/
 
 And much more!
 
-https://buxflip.com/data/3c
-https://buxflip.com/data/droptime/:name
-https://buxflip.com/data/search/:name
+My API
+- https://buxflip.com/data/3c
+- https://buxflip.com/data/droptime/:name
+- https://buxflip.com/data/search/:name
 
 ![GitHub metrics](https://metrics.lecoq.io/6uf)
