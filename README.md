@@ -13,5 +13,6 @@ My API
 - https://buxflip.com/data/3c
 - https://buxflip.com/data/droptime/:name
 - https://buxflip.com/data/search/:name
+- https://buxflip.com/data/profile/test
 
 ![GitHub metrics](https://metrics.lecoq.io/6uf)
