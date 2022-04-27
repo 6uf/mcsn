@@ -27,7 +27,6 @@ func Skinart(name, imageFile string) {
 		fmt.Scan(&choose)
 		if strings.ContainsAny(strings.ToLower(choose), "yes ye y") {
 			Acc.LoadState()
-
 			if len(Acc.Bearers) == 0 {
 				PrintGrad("Unable to continue, you have no Bearers added.\n")
 				os.Exit(0)

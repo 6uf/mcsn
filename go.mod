@@ -3,7 +3,7 @@ module mcsn
 go 1.17
 
 require (
-	github.com/6uf/apiGO v0.0.0-20220424191353-0a77bfdb14e3
+	github.com/6uf/apiGO v0.0.0-20220427004901-ac4a0c47eebc
 	github.com/disintegration/imaging v1.6.2
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/iskaa02/qalam v0.2.4
@@ -18,5 +18,5 @@ require (
 	github.com/mazznoer/csscolorparser v0.1.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	golang.org/x/image v0.0.0-20191009234506-e7c1f5e7dbb8 // indirect
-	golang.org/x/net v0.0.0-20220421235706-1d1ef9303861 // indirect
+	golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4 // indirect
 )

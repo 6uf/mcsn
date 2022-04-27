@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/6uf/apiGO"
+	"github.com/iskaa02/qalam"
 	"github.com/urfave/cli/v2"
 )
 
@@ -15,13 +16,13 @@ func init() {
 	src.Acc.LoadState()
 	src.Proxys.GetProxys()
 	src.Proxys.Setup()
-	fmt.Println(src.Logo(`
+	qalam.Printf(src.Logo(`
 •     ·   ▄▄·  ▄▄ ·    ▄ 
 ·██ ▐███▪▐█ ▌▪▐█ ▀  •█▌▐█
 ▐█ ▌▐▌▐█·██ ▄▄▄▀▀▀█▄▐█▐▐▌
 ██ ██▌▐█▌▐███▌▐█▄▪▐███▐█▌
-▀▀  █▪▀▀▀·▀▀▀  ▀▀▀▀ ▀▀ █▪
-   `))
+▀▀  █▪▀▀▀·▀▀▀  ▀▀▀▀ ▀▀ █▪ 
+LZ `) + "[:crescent_moon:]\n")
 }
 
 func main() {

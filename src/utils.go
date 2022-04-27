@@ -15,6 +15,10 @@ func formatTime(t time.Time) string {
 	return t.Format("05.00000")
 }
 
+func formatTimeStamp(t time.Time) string {
+	return t.Format("15:04:05")
+}
+
 func removeDetails(Account apiGO.Details) {
 	var new []apiGO.Bearers
 	for _, Accs := range Acc.Bearers {
@@ -77,12 +81,12 @@ func Snipe(name string, delay float64, option string, charType string) {
 			Bearers:  Bearers,
 			Proxys:   Proxys,
 		}
-		PrintGrad(fmt.Sprintf("Name: %v - Delay: %v - Droptime: %v\n", Data.Name, Data.Delay, time.Unix(Data.Droptime, 0)))
+		PrintGrad(fmt.Sprintf("Name: %v - Delay: %v - Droptime: %v - Searches: %v\n", Data.Name, Data.Delay, formatTimeStamp(time.Unix(Data.Droptime, 0)), apiGO.Search(Data.Name)))
 
 		ReadReqs(Data.SnipeReq())
 	case "auto":
 		for {
-			var Data []apiGO.Names
+			var Data []apiGO.Droptime
 			if charType == "list" {
 				file, _ := os.Open("names.txt")
 
@@ -90,10 +94,9 @@ func Snipe(name string, delay float64, option string, charType string) {
 
 				for scanner.Scan() {
 					Data = append(Data,
-						apiGO.Names{
+						apiGO.Droptime{
 							Name:     scanner.Text(),
-							Droptime: apiGO.DropTime(scanner.Text()),
-							Search:   "0",
+							Droptime: int(apiGO.DropTime(scanner.Text())),
 						},
 					)
 				}
@@ -116,7 +119,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 				Data := apiGO.ReqConfig{
 					Name:     name.Name,
 					Delay:    delay,
-					Droptime: name.Droptime,
+					Droptime: int64(name.Droptime),
 					Proxy:    false,
 					Proxys:   Proxys,
 					Bearers:  Bearers,
@@ -200,17 +203,16 @@ func Snipe(name string, delay float64, option string, charType string) {
 	case "proxy":
 		if charType != "" {
 			for {
-				var Data []apiGO.Names
+				var Data []apiGO.Droptime
 
 				if charType == "list" {
 					file, _ := os.Open("names.txt")
 					scanner := bufio.NewScanner(file)
 					for scanner.Scan() {
 						Data = append(Data,
-							apiGO.Names{
+							apiGO.Droptime{
 								Name:     scanner.Text(),
-								Droptime: apiGO.DropTime(scanner.Text()),
-								Search:   "0",
+								Droptime: int(apiGO.DropTime(scanner.Text())),
 							},
 						)
 					}
@@ -233,7 +235,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 					Data := apiGO.ReqConfig{
 						Name:     name.Name,
 						Delay:    delay,
-						Droptime: name.Droptime,
+						Droptime: int64(name.Droptime),
 						Proxy:    false,
 						Proxys:   Proxys,
 						Bearers:  Bearers,
