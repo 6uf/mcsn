@@ -34,7 +34,7 @@ func main() {
 				Action: func(c *cli.Context) error {
 					src.AuthAccs()
 					fmt.Println()
-					go apiGO.CheckAccs()
+					go src.CheckAccs()
 					src.Snipe(c.String("u"), c.Float64("d"), "single", "")
 					return nil
 				},
@@ -92,7 +92,7 @@ func main() {
 						Action: func(c *cli.Context) error {
 							src.AuthAccs()
 							fmt.Println()
-							go apiGO.CheckAccs()
+							go src.CheckAccs()
 							src.Snipe("", c.Float64("d"), "auto", "3c")
 							return nil
 						},
@@ -109,7 +109,7 @@ func main() {
 						Action: func(c *cli.Context) error {
 							src.AuthAccs()
 							fmt.Println()
-							go apiGO.CheckAccs()
+							go src.CheckAccs()
 							src.Snipe("", c.Float64("d"), "auto", "3l")
 							return nil
 						},
@@ -126,7 +126,7 @@ func main() {
 						Action: func(c *cli.Context) error {
 							src.AuthAccs()
 							fmt.Println()
-							go apiGO.CheckAccs()
+							go src.CheckAccs()
 							src.Snipe("", c.Float64("d"), "auto", "3n")
 							return nil
 						},
@@ -144,7 +144,7 @@ func main() {
 						Action: func(c *cli.Context) error {
 							src.AuthAccs()
 							fmt.Println()
-							go apiGO.CheckAccs()
+							go src.CheckAccs()
 							src.Snipe("", c.Float64("d"), "auto", "list")
 							return nil
 						},
@@ -174,7 +174,7 @@ func main() {
 				Action: func(c *cli.Context) error {
 					src.AuthAccs()
 					fmt.Println()
-					go apiGO.CheckAccs()
+					go src.CheckAccs()
 					src.Snipe(c.String("u"), c.Float64("d"), "proxy", "")
 					return nil
 				},
@@ -197,7 +197,7 @@ func main() {
 						Action: func(c *cli.Context) error {
 							src.AuthAccs()
 							fmt.Println()
-							go apiGO.CheckAccs()
+							go src.CheckAccs()
 							src.Snipe(c.String("u"), c.Float64("d"), "proxy", "3c")
 							return nil
 						},
@@ -214,7 +214,7 @@ func main() {
 						Action: func(c *cli.Context) error {
 							src.AuthAccs()
 							fmt.Println()
-							go apiGO.CheckAccs()
+							go src.CheckAccs()
 							src.Snipe(c.String("u"), c.Float64("d"), "proxy", "3l")
 							return nil
 						},
@@ -231,7 +231,7 @@ func main() {
 						Action: func(c *cli.Context) error {
 							src.AuthAccs()
 							fmt.Println()
-							go apiGO.CheckAccs()
+							go src.CheckAccs()
 							src.Snipe(c.String("u"), c.Float64("d"), "proxy", "3n")
 							return nil
 						},
@@ -248,7 +248,7 @@ func main() {
 						Action: func(c *cli.Context) error {
 							src.AuthAccs()
 							fmt.Println()
-							go apiGO.CheckAccs()
+							go src.CheckAccs()
 							src.Snipe(c.String("u"), c.Float64("d"), "proxy", "list")
 							return nil
 						},
@@ -268,7 +268,7 @@ func main() {
 				Action: func(c *cli.Context) error {
 					src.AuthAccs()
 					fmt.Println()
-					go apiGO.CheckAccs()
+					go src.CheckAccs()
 					src.Snipe(c.String("u"), float64(c.Int64("t")), "turbo", "")
 					return nil
 				},

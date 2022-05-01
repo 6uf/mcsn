@@ -81,9 +81,10 @@ func Snipe(name string, delay float64, option string, charType string) {
 			Bearers:  Bearers,
 			Proxys:   Proxys,
 		}
+
 		PrintGrad(fmt.Sprintf("Name: %v - Delay: %v - Droptime: %v - Searches: %v\n", Data.Name, Data.Delay, formatTimeStamp(time.Unix(Data.Droptime, 0)), apiGO.Search(Data.Name)))
 
-		ReadReqs(Data.SnipeReq())
+		ReadReqs(Data.SnipeReq(Acc))
 	case "auto":
 		for {
 			var Data []apiGO.Droptime
@@ -127,7 +128,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 
 				PrintGrad(fmt.Sprintf("Name: %v - Delay: %v - Droptime: %v\n", Data.Name, Data.Delay, time.Unix(Data.Droptime, 0)))
 
-				ReadReqs(Data.SnipeReq())
+				ReadReqs(Data.SnipeReq(Acc))
 				fmt.Println()
 			}
 
@@ -243,7 +244,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 
 					PrintGrad(fmt.Sprintf("Name: %v - Delay: %v - Droptime: %v\n", Data.Name, Data.Delay, time.Unix(Data.Droptime, 0)))
 
-					ReadReqs(Data.SnipeReq())
+					ReadReqs(Data.SnipeReq(Acc))
 					fmt.Println()
 				}
 
@@ -264,7 +265,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 
 		PrintGrad(fmt.Sprintf("Name: %v - Delay: %v - Droptime: %v\n", Data.Name, Data.Delay, time.Unix(Data.Droptime, 0)))
 
-		ReadReqs(Data.SnipeReq())
+		ReadReqs(Data.SnipeReq(Acc))
 	}
 }
 
@@ -290,6 +291,60 @@ func ReadReqs(Data apiGO.SentRequests) {
 			removeDetails(request)
 		default:
 			PrintGrad(fmt.Sprintf("%v >> [%v] @ %v X %v\n", formatTime(request.ResponseDetails.SentAt), request.ResponseDetails.StatusCode, formatTime(request.ResponseDetails.RecvAt), request.Email))
+		}
+	}
+}
+
+func CheckAccs() {
+	for {
+		time.Sleep(time.Second * 10)
+		for _, Accs := range Acc.Bearers {
+			if time.Now().Unix() > Accs.AuthedAt+Accs.AuthInterval {
+				bearers := apiGO.Auth([]string{Accs.Email + ":" + Accs.Password})
+				for point, data := range Acc.Bearers {
+					for _, Accs := range bearers.Details {
+						if Accs.Bearer != "" {
+							if data.Email == Accs.Email {
+								data.Bearer = Accs.Bearer
+								data.NameChange = apiGO.CheckChange(Accs.Bearer)
+								data.Type = Accs.AccountType
+								data.Password = Accs.Password
+								data.Email = Accs.Email
+								data.AuthedAt = time.Now().Unix()
+								Acc.Bearers[point] = data
+								UpdateBearer(Accs)
+							}
+						}
+					}
+
+					Acc.SaveConfig()
+					Acc.LoadState()
+					break // break the loop to update the info.
+				}
+
+				// if the Account isnt usable, remove it from the list
+				var ts apiGO.Config
+				for _, i := range Acc.Bearers {
+					if i.Email != Accs.Email {
+						ts.Bearers = append(ts.Bearers, i)
+					}
+				}
+
+				Acc.Bearers = ts.Bearers
+
+				Acc.SaveConfig()
+				Acc.LoadState()
+				break // break the loop to update the info.
+			}
+		}
+	}
+}
+
+func UpdateBearer(B apiGO.Info) {
+	for i, D := range Bearers.Details {
+		if D == B {
+			Bearers.Details[i] = B
+			break
 		}
 	}
 }

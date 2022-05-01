@@ -3,7 +3,7 @@ module mcsn
 go 1.17
 
 require (
-	github.com/6uf/apiGO v0.0.0-20220427004901-ac4a0c47eebc
+	github.com/6uf/apiGO v0.0.0-20220501163544-3235e8ee815d
 	github.com/disintegration/imaging v1.6.2
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/iskaa02/qalam v0.2.4

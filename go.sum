@@ -14,6 +14,12 @@ github.com/6uf/apiGO v0.0.0-20220427004503-5b45f729a486 h1:wbCzlWmqoie/NeyDZr4gU
 github.com/6uf/apiGO v0.0.0-20220427004503-5b45f729a486/go.mod h1:zZspvUWIMvgK8olcEVxeJQXS8l5UWjVRZVwQpPVCvpw=
 github.com/6uf/apiGO v0.0.0-20220427004901-ac4a0c47eebc h1:uLkdxs+eJ2MueNCoLricZFvYi4sDgsLSmBfZtOdOiHk=
 github.com/6uf/apiGO v0.0.0-20220427004901-ac4a0c47eebc/go.mod h1:zZspvUWIMvgK8olcEVxeJQXS8l5UWjVRZVwQpPVCvpw=
+github.com/6uf/apiGO v0.0.0-20220501161658-a3c1988f8010 h1:gksRhUM+T0mzYQJBp9MsL+OsKWvbAOKpi5SkwIkK2Y8=
+github.com/6uf/apiGO v0.0.0-20220501161658-a3c1988f8010/go.mod h1:zZspvUWIMvgK8olcEVxeJQXS8l5UWjVRZVwQpPVCvpw=
+github.com/6uf/apiGO v0.0.0-20220501162437-251f578b3639 h1:zDGYghl6fBYOxKmjrvcT7aiYaWaPYK91FHcDJWGP5wM=
+github.com/6uf/apiGO v0.0.0-20220501162437-251f578b3639/go.mod h1:zZspvUWIMvgK8olcEVxeJQXS8l5UWjVRZVwQpPVCvpw=
+github.com/6uf/apiGO v0.0.0-20220501163544-3235e8ee815d h1:pIADJOYjHjKxQIbQ6UoeHpWw06F4tyBomV6GWt8xZ8c=
+github.com/6uf/apiGO v0.0.0-20220501163544-3235e8ee815d/go.mod h1:zZspvUWIMvgK8olcEVxeJQXS8l5UWjVRZVwQpPVCvpw=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/cpuguy83/go-md2man/v2 v2.0.1 h1:r/myEWzV9lfsM1tFLgDyu0atFtJ1fXn261LKYj/3DxU=
 github.com/cpuguy83/go-md2man/v2 v2.0.1/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
