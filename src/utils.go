@@ -83,7 +83,6 @@ func Snipe(name string, delay float64, option string, charType string) {
 		}
 
 		PrintGrad(fmt.Sprintf("Name: %v - Delay: %v - Droptime: %v - Searches: %v\n", Data.Name, Data.Delay, formatTimeStamp(time.Unix(Data.Droptime, 0)), apiGO.Search(Data.Name)))
-
 		ReadReqs(Data.SnipeReq(Acc))
 	case "auto":
 		for {
