@@ -30,7 +30,7 @@ func main() {
 		Commands: []*cli.Command{
 			{
 				Name:  "snipe",
-				Usage: `Snipes names onto an src.Account.`,
+				Usage: `Attempts to snipe the ign of your choice onto one of your account(s)!`,
 				Action: func(c *cli.Context) error {
 					src.AuthAccs()
 					fmt.Println()
@@ -41,7 +41,7 @@ func main() {
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:  "u",
-						Usage: "username to snipe",
+						Usage: "-u NAME | this is a param value, enter ur name to target it.",
 					},
 					&cli.Float64Flag{
 						Name:  "d",
@@ -105,10 +105,9 @@ func main() {
 							},
 						},
 					},
-
 					{
 						Name:  "list",
-						Usage: "Snipe names are are a combination of Numeric and Alphabetic.",
+						Usage: "Snipe names from your names.txt file.",
 						Action: func(c *cli.Context) error {
 							src.AuthAccs()
 							fmt.Println()
@@ -128,7 +127,7 @@ func main() {
 			{
 				Name:    "ping",
 				Aliases: []string{"p"},
-				Usage:   "ping helps give you a rough estimate of your connection to the minecraft API.",
+				Usage:   "ping helps give you a rough estimate of your delay.",
 				Action: func(c *cli.Context) error {
 					time := apiGO.PingMC()
 					src.PrintGrad(fmt.Sprintf("Estimated Delay (Milliseconds): %v\n", time))
@@ -137,8 +136,8 @@ func main() {
 			},
 			{
 				Name:    "proxy",
-				Aliases: []string{"p"},
-				Usage:   "Proxy snipes names for you",
+				Aliases: []string{"px", "py"},
+				Usage:   "Proxy, this uses proxies to byass rate limits and snipe usernames that way, useful for MFAS",
 				Action: func(c *cli.Context) error {
 					src.AuthAccs()
 					fmt.Println()
@@ -150,7 +149,7 @@ func main() {
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:  "u",
-						Usage: "username to snipe",
+						Usage: "-u NAME | this is a param value, enter ur name to target it.",
 					},
 					&cli.Float64Flag{
 						Name:  "d",
@@ -212,7 +211,7 @@ func main() {
 					},
 					{
 						Name:  "list",
-						Usage: "Snipe only Numeric names.",
+						Usage: "Snipe names from your names.txt file.",
 						Action: func(c *cli.Context) error {
 							src.AuthAccs()
 							fmt.Println()
@@ -232,7 +231,7 @@ func main() {
 			{
 				Name:    "turbo",
 				Aliases: []string{"t"},
-				Usage:   "Turbo a name just in case it drops!",
+				Usage:   "Turbo a name just in case it drops! - Attempts to snipe a ign every minute.",
 				Action: func(c *cli.Context) error {
 					src.AuthAccs()
 					fmt.Println()
@@ -243,7 +242,7 @@ func main() {
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:  "u",
-						Usage: "username to snipe",
+						Usage: "-u NAME | this is a param value, enter ur name to target it.",
 					},
 					&cli.Int64Flag{
 						Name:  "t",
@@ -267,16 +266,6 @@ func main() {
 				Action: func(c *cli.Context) error {
 					src.Skinart(c.String("n"), c.String("i"))
 					return nil
-				},
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:  "n",
-						Usage: "Name of your Art (this will be used for the folder name)",
-					},
-					&cli.StringFlag{
-						Name:  "i",
-						Usage: "Name of your image.",
-					},
 				},
 			},
 			{
