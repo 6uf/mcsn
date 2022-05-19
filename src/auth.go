@@ -47,6 +47,7 @@ func AuthAccs() {
 								AccountType: Accs.Type,
 								Email:       Accs.Email,
 								Requests:    Acc.GcReq,
+								Info:        Accs.Info,
 							})
 						} else {
 							Bearers.Details = append(Bearers.Details, apiGO.Info{
@@ -54,6 +55,7 @@ func AuthAccs() {
 								AccountType: Accs.Type,
 								Email:       Accs.Email,
 								Requests:    Acc.MFAReq,
+								Info:        Accs.Info,
 							})
 						}
 					}
@@ -96,6 +98,7 @@ func grabDetails(AccountsVer []string) []string {
 							Email:        Accs.Email,
 							Password:     Accs.Password,
 							NameChange:   true,
+							Info:         Accs.Info,
 						})
 					} else {
 						AccountsVer = remove(AccountsVer, Accs.Email+":"+Accs.Password)
@@ -137,6 +140,7 @@ func grabDetails(AccountsVer []string) []string {
 							Email:        Accs.Email,
 							Password:     Accs.Password,
 							NameChange:   true,
+							Info:         Accs.Info,
 						})
 					} else {
 						AccountsVer = remove(AccountsVer, Accs.Email+":"+Accs.Password)
@@ -196,6 +200,7 @@ func checkifValid(AccountsVer []string) []string {
 								data.Password = Accs.Password
 								data.Email = Accs.Email
 								data.AuthedAt = time.Now().Unix()
+								data.Info = Accs.Info
 								Acc.Bearers[point] = data
 							} else {
 								AccountsVer = remove(AccountsVer, Accs.Email+":"+Accs.Password)

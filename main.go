@@ -253,6 +253,14 @@ func main() {
 				},
 			},
 			{
+				Name:    "mckey",
+				Aliases: []string{"key", "mccode", "code"},
+				Usage:   "Gets your namemc claim code (for your selected account)",
+				Action: func(c *cli.Context) error {
+					return src.GetNAMEMCKEY()
+				},
+			},
+			{
 				Name:    "namemc",
 				Aliases: []string{"n", "nmc", "skinart"},
 				Usage:   `NameMC Skin Art`,

@@ -53,9 +53,7 @@ func Skinart(name, imageFile string) {
 		} else {
 			PrintGrad("Enter your Account details to continue [EMAIL:PASS]: ")
 			fmt.Scan(&Accd)
-			fmt.Println()
 			Bearers = apiGO.Auth([]string{Accd})
-			fmt.Println()
 		}
 	} else {
 		PrintGrad("This will use the first bearer within your Accounts.txt | Press enter to verify: ")

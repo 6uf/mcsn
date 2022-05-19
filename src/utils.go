@@ -184,16 +184,12 @@ func Snipe(name string, delay float64, option string, charType string) {
 					removeDetails(status)
 
 					if Acc.ChangeskinOnSnipe {
-						SendInfo := apiGO.ServerInfo{
-							SkinUrl: Acc.ChangeSkinLink,
+						if resp, err := apiGO.ChangeSkin(apiGO.JsonValue(SkinUrls{Url: Acc.ChangeSkinLink, Varient: "slim"}), status.Bearer); err == nil && resp.StatusCode == 200 {
+							PrintGrad("Succesfully Changed your Skin!\n")
 						}
-
-						SendInfo.ChangeSkin(apiGO.JsonValue(SkinUrls{Url: SendInfo.SkinUrl, Varient: "slim"}), status.Bearer)
 					}
 					PrintGrad(fmt.Sprintf("[%v] Succesfully Claimed %v\n", status.ResponseDetails.StatusCode, name))
 					break
-				} else {
-					PrintGrad(fmt.Sprintf("[%v] Unuccesfully Claimed %v\n", status.ResponseDetails.StatusCode, name))
 				}
 			}
 
@@ -272,19 +268,14 @@ func ReadReqs(Data apiGO.SentRequests) {
 	for _, request := range Data.Requests {
 		switch request.ResponseDetails.StatusCode {
 		case "200":
-			PrintGrad(fmt.Sprintf("%v >> [%v] @ %v O %v\n", formatTime(request.ResponseDetails.SentAt), request.ResponseDetails.StatusCode, formatTime(request.ResponseDetails.RecvAt), request.Email))
+			if request.Type == "Giftcard" {
+				request.Info = apiGO.GetProfileInformation(request.Bearer)
+			}
+			PrintGrad(fmt.Sprintf("%v >> [%v] @ %v O %v | %v\n", formatTime(request.ResponseDetails.SentAt), request.ResponseDetails.StatusCode, formatTime(request.ResponseDetails.RecvAt), request.Email, request.ClaimNameMC(Acc)))
 			switch Acc.ChangeskinOnSnipe {
 			case true:
-				SendInfo := apiGO.ServerInfo{
-					SkinUrl: Acc.ChangeSkinLink,
-				}
-				resp, err := SendInfo.ChangeSkin(apiGO.JsonValue(SkinUrls{Url: SendInfo.SkinUrl, Varient: "slim"}), request.Bearer)
-				if err == nil {
-					if resp.StatusCode == 200 {
-						PrintGrad("Succesfully Changed your Skin!\n")
-					} else {
-						PrintGrad("Couldnt Change your Skin..\n")
-					}
+				if resp, err := apiGO.ChangeSkin(apiGO.JsonValue(SkinUrls{Url: Acc.ChangeSkinLink, Varient: "slim"}), request.Bearer); err == nil && resp.StatusCode == 200 {
+					PrintGrad("Succesfully Changed your Skin!\n")
 				}
 			}
 			removeDetails(request)
@@ -310,6 +301,7 @@ func CheckAccs() {
 								data.Password = Accs.Password
 								data.Email = Accs.Email
 								data.AuthedAt = time.Now().Unix()
+								data.Info = Accs.Info
 								Acc.Bearers[point] = data
 								UpdateBearer(Accs)
 							}
@@ -346,4 +338,48 @@ func UpdateBearer(B apiGO.Info) {
 			break
 		}
 	}
+}
+
+func GetNAMEMCKEY() error {
+	var choose string
+	PrintGrad("Use config bearer? [yes | no]: ")
+	fmt.Scan(&choose)
+	if strings.ContainsAny(strings.ToLower(choose), "yes ye y") {
+		Acc.LoadState()
+		if len(Acc.Bearers) == 0 {
+			PrintGrad("Unable to continue, you have no Bearers added.\n")
+			os.Exit(0)
+		} else {
+			var email string
+			PrintGrad("Email of the Account you will use: ")
+			fmt.Scan(&email)
+
+			fmt.Println()
+			for _, details := range Acc.Bearers {
+				if strings.EqualFold(strings.ToLower(details.Email), strings.ToLower(email)) {
+					if details.Bearer != "" {
+						Bearers.Details = append(Bearers.Details, apiGO.Info{
+							Bearer:      details.Bearer,
+							AccountType: details.Type,
+							Email:       details.Email,
+						})
+						break
+					}
+				}
+			}
+		}
+	} else {
+		var Accd string
+		PrintGrad("Enter your Account details to continue [EMAIL:PASS]: ")
+		fmt.Scan(&Accd)
+		Bearers = apiGO.Auth([]string{Accd})
+	}
+
+	var data apiGO.Details = apiGO.Details{
+		Bearer: Bearers.Details[0].Bearer,
+		Info:   Bearers.Details[0].Info,
+	}
+
+	PrintGrad(data.ClaimNameMC(Acc))
+	return nil
 }
