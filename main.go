@@ -12,10 +12,6 @@ import (
 
 func init() {
 	apiGO.Clear()
-	apiGO.CheckFiles()
-	src.Acc.LoadState()
-	src.Proxys.GetProxys()
-	src.Proxys.Setup()
 	qalam.Printf(src.Logo(`
 •     ·   ▄▄·  ▄▄ ·    ▄ 
 ·██ ▐███▪▐█ ▌▪▐█ ▀  •█▌▐█
@@ -23,6 +19,10 @@ func init() {
 ██ ██▌▐█▌▐███▌▐█▄▪▐███▐█▌
 ▀▀  █▪▀▀▀·▀▀▀  ▀▀▀▀ ▀▀ █▪ 
 LZ `) + "[:crescent_moon:]\n")
+	apiGO.CheckFiles()
+	src.Acc.LoadState()
+	src.Proxys.GetProxys()
+	src.Proxys.Setup()
 }
 
 func main() {
@@ -267,6 +267,16 @@ func main() {
 					src.Skinart(c.String("n"), c.String("i"))
 					return nil
 				},
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "n",
+						Usage: "Name of your Art (this will be used for the folder name)",
+					},
+					&cli.StringFlag{
+						Name:  "i",
+						Usage: "Name of your image.",
+					},
+				},
 			},
 			{
 				Name:  "docs",
@@ -382,7 +392,7 @@ Please have fun and GL with sniping!
 		},
 		Name:    "MCSN",
 		Usage:   "A minecraft name sniper dedicated to premium free services.",
-		Version: "6.10",
+		Version: "6.25",
 	}
 
 	app.Run(os.Args)
