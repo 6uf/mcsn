@@ -21,7 +21,7 @@ func init() {
 LZ `) + "[:crescent_moon:]\n")
 	apiGO.CheckFiles()
 	src.Acc.LoadState()
-	src.Proxys.GetProxys()
+	src.Proxys.GetProxys(false, nil)
 	src.Proxys.Setup()
 }
 

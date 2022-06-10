@@ -125,7 +125,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 					Bearers:  Bearers,
 				}
 
-				PrintGrad(fmt.Sprintf("Name: %v - Delay: %v - Droptime: %v\n", Data.Name, Data.Delay, time.Unix(Data.Droptime, 0)))
+				PrintGrad(fmt.Sprintf("Name: %v - Delay: %v - Droptime: %v - Searches: %v\n", Data.Name, Data.Delay, formatTimeStamp(time.Unix(Data.Droptime, 0)), apiGO.Search(Data.Name)))
 
 				ReadReqs(Data.SnipeReq(Acc))
 				fmt.Println()
@@ -237,7 +237,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 						Bearers:  Bearers,
 					}
 
-					PrintGrad(fmt.Sprintf("Name: %v - Delay: %v - Droptime: %v\n", Data.Name, Data.Delay, time.Unix(Data.Droptime, 0)))
+					PrintGrad(fmt.Sprintf("Name: %v - Delay: %v - Droptime: %v - Searches: %v\n", Data.Name, Data.Delay, formatTimeStamp(time.Unix(Data.Droptime, 0)), apiGO.Search(Data.Name)))
 
 					ReadReqs(Data.SnipeReq(Acc))
 					fmt.Println()
@@ -258,7 +258,7 @@ func Snipe(name string, delay float64, option string, charType string) {
 			Bearers:  Bearers,
 		}
 
-		PrintGrad(fmt.Sprintf("Name: %v - Delay: %v - Droptime: %v\n", Data.Name, Data.Delay, time.Unix(Data.Droptime, 0)))
+		PrintGrad(fmt.Sprintf("Name: %v - Delay: %v - Droptime: %v - Searches: %v\n", Data.Name, Data.Delay, formatTimeStamp(time.Unix(Data.Droptime, 0)), apiGO.Search(Data.Name)))
 
 		ReadReqs(Data.SnipeReq(Acc))
 	}
