@@ -271,7 +271,7 @@ func ReadReqs(Data apiGO.SentRequests) {
 			if request.Type == "Giftcard" {
 				request.Info = apiGO.GetProfileInformation(request.Bearer)
 			}
-			PrintGrad(fmt.Sprintf("%v >> [%v] @ %v O %v | %v\n", formatTime(request.ResponseDetails.SentAt), request.ResponseDetails.StatusCode, formatTime(request.ResponseDetails.RecvAt), request.Email, request.ClaimNameMC(Acc)))
+			PrintGrad(fmt.Sprintf("%v >> [%v] @ %v O %v | %v\n", formatTime(request.ResponseDetails.SentAt), request.ResponseDetails.StatusCode, formatTime(request.ResponseDetails.RecvAt), request.Email, apiGO.NameMC(request.Bearer)))
 			switch Acc.ChangeskinOnSnipe {
 			case true:
 				if resp, err := apiGO.ChangeSkin(apiGO.JsonValue(SkinUrls{Url: Acc.ChangeSkinLink, Varient: "slim"}), request.Bearer); err == nil && resp.StatusCode == 200 {
@@ -333,8 +333,10 @@ func CheckAccs() {
 
 func UpdateBearer(B apiGO.Info) {
 	for i, D := range Bearers.Details {
-		if D == B {
+		if D.Email == B.Email {
 			Bearers.Details[i] = B
+			Acc.SaveConfig()
+			Acc.LoadState()
 			break
 		}
 	}
@@ -356,14 +358,10 @@ func GetNAMEMCKEY() error {
 
 			fmt.Println()
 			for _, details := range Acc.Bearers {
-				if strings.EqualFold(strings.ToLower(details.Email), strings.ToLower(email)) {
+				if strings.ToLower(details.Email) == strings.ToLower(email) {
 					if details.Bearer != "" {
-						Bearers.Details = append(Bearers.Details, apiGO.Info{
-							Bearer:      details.Bearer,
-							AccountType: details.Type,
-							Email:       details.Email,
-						})
-						break
+						PrintGrad(apiGO.NameMC(details.Bearer))
+						return nil
 					}
 				}
 			}
@@ -372,14 +370,8 @@ func GetNAMEMCKEY() error {
 		var Accd string
 		PrintGrad("Enter your Account details to continue [EMAIL:PASS]: ")
 		fmt.Scan(&Accd)
-		Bearers = apiGO.Auth([]string{Accd})
+		Bearers := apiGO.Auth([]string{Accd})
+		PrintGrad(apiGO.NameMC(Bearers.Details[0].Bearer))
 	}
-
-	var data apiGO.Details = apiGO.Details{
-		Bearer: Bearers.Details[0].Bearer,
-		Info:   Bearers.Details[0].Info,
-	}
-
-	PrintGrad(data.ClaimNameMC(Acc))
 	return nil
 }
